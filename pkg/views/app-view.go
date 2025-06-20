@@ -3,6 +3,7 @@ package views
 import (
 	"fmt"
 	"os"
+	"sort"
 	"time"
 
 	"github.com/HubertBel/lazyorg/internal/calendar"
@@ -97,7 +98,7 @@ func (av *AppView) Update(g *gocui.Gui) error {
 		return err
 	}
 
-	if err = av.updateCurrentView(g); err != nil {
+	if err = av.UpdateCurrentView(g); err != nil {
 		return err
 	}
 
@@ -158,12 +159,12 @@ func (av *AppView) UpdateToPrevWeek() {
 
 func (av *AppView) UpdateToNextDay(g *gocui.Gui) {
 	av.Calendar.UpdateToNextDay()
-	av.updateCurrentView(g)
+	av.UpdateCurrentView(g)
 }
 
 func (av *AppView) UpdateToPrevDay(g *gocui.Gui) {
 	av.Calendar.UpdateToPrevDay()
-	av.updateCurrentView(g)
+	av.UpdateCurrentView(g)
 }
 
 func (av *AppView) UpdateToNextTime(g *gocui.Gui) {
@@ -177,6 +178,71 @@ func (av *AppView) UpdateToPrevTime(g *gocui.Gui) {
 	if _, y := g.CurrentView().Cursor(); y > 0 {
 		av.Calendar.UpdateToPrevTime()
 	}
+}
+
+func (av *AppView) JumpToNextEvent() {
+	allEvents := av.getAllEventsFromWeek()
+	if len(allEvents) == 0 {
+		return
+	}
+
+	currentTime := av.Calendar.CurrentDay.Date
+	
+	// Find the next event after current time
+	for _, event := range allEvents {
+		if event.Time.After(currentTime) {
+			av.Calendar.CurrentDay.Date = event.Time
+			av.Calendar.UpdateWeek()
+			return
+		}
+	}
+	
+	// If no event found after current time, wrap to first event
+	if len(allEvents) > 0 {
+		av.Calendar.CurrentDay.Date = allEvents[0].Time
+		av.Calendar.UpdateWeek()
+	}
+}
+
+func (av *AppView) JumpToPrevEvent() {
+	allEvents := av.getAllEventsFromWeek()
+	if len(allEvents) == 0 {
+		return
+	}
+
+	currentTime := av.Calendar.CurrentDay.Date
+	
+	// Find the previous event before current time (iterate backwards)
+	for i := len(allEvents) - 1; i >= 0; i-- {
+		event := allEvents[i]
+		if event.Time.Before(currentTime) {
+			av.Calendar.CurrentDay.Date = event.Time
+			av.Calendar.UpdateWeek()
+			return
+		}
+	}
+	
+	// If no event found before current time, wrap to last event
+	if len(allEvents) > 0 {
+		av.Calendar.CurrentDay.Date = allEvents[len(allEvents)-1].Time
+		av.Calendar.UpdateWeek()
+	}
+}
+
+func (av *AppView) getAllEventsFromWeek() []*calendar.Event {
+	var allEvents []*calendar.Event
+	
+	// Collect all events from all days in the week
+	for _, day := range av.Calendar.CurrentWeek.Days {
+		allEvents = append(allEvents, day.Events...)
+	}
+	
+	// Sort by time
+	sort.Slice(allEvents, func(i, j int) bool {
+		return allEvents[i].Time.Before(allEvents[j].Time)
+	})
+	
+	return allEvents
 }
 
 func (av *AppView) ShowGotoTimePopup(g *gocui.Gui, v *gocui.View) error {
@@ -310,7 +376,7 @@ func (av *AppView) ReturnToMainView(g *gocui.Gui) error {
 
 	viewName := WeekdayNames[av.Calendar.CurrentDay.Date.Weekday()]
 	g.SetCurrentView(viewName)
-	return av.updateCurrentView(g)
+	return av.UpdateCurrentView(g)
 }
 
 func (av *AppView) DeleteEvent(g *gocui.Gui) {
@@ -594,7 +660,7 @@ func (av *AppView) updateChildViewProperties() {
 	}
 }
 
-func (av *AppView) updateCurrentView(g *gocui.Gui) error {
+func (av *AppView) UpdateCurrentView(g *gocui.Gui) error {
 	if view, ok := av.GetChild("popup"); ok {
 		if popupView, ok := view.(*EventPopupView); ok {
 			if popupView.IsVisible {

@@ -111,7 +111,7 @@ func (ms *ModeSwitcher) ExitCurrentMode() error {
 
 func (ms *ModeSwitcher) removeAllMainKeybindings() error {
 	keysToRemove := []interface{}{
-		'a', 'e', 'c', 'h', 'l', 'j', 'k', 'T', 'H', 'L', 'd', 'D', 'y', 'p', 'u', 'r', 'g',
+		'a', 'e', 'c', 'h', 'l', 'j', 'k', 'T', 'H', 'L', 'd', 'D', 'y', 'p', 'u', 'r', 'g', 'w', 'b',
 		gocui.KeyCtrlN, gocui.KeyCtrlS, '?', 'q',
 		gocui.KeyArrowLeft, gocui.KeyArrowRight, gocui.KeyArrowDown, gocui.KeyArrowUp,
 	}
@@ -155,6 +155,8 @@ func (ms *ModeSwitcher) restoreAllMainKeybindings() error {
 			{'e', func(g *gocui.Gui, v *gocui.View) error { return av.ShowEditEventPopup(g) }},
 			{'c', func(g *gocui.Gui, v *gocui.View) error { return av.ShowColorPicker(g) }},
 			{'g', func(g *gocui.Gui, v *gocui.View) error { return av.ShowGotoMode(g) }},
+			{'w', func(g *gocui.Gui, v *gocui.View) error { av.JumpToNextEvent(); av.UpdateCurrentView(g); return nil }},
+			{'b', func(g *gocui.Gui, v *gocui.View) error { av.JumpToPrevEvent(); av.UpdateCurrentView(g); return nil }},
 			{'h', func(g *gocui.Gui, v *gocui.View) error { av.UpdateToPrevDay(g); return nil }},
 			{'l', func(g *gocui.Gui, v *gocui.View) error { av.UpdateToNextDay(g); return nil }},
 			{'j', func(g *gocui.Gui, v *gocui.View) error { av.UpdateToNextTime(g); return nil }},
