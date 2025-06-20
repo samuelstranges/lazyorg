@@ -28,6 +28,8 @@ type AppView struct {
 	colorPickerEvent  *EventView
 	colorPickerActive bool
 	copiedEvent       *calendar.Event
+	gotoMode          bool
+	modeSwitcher      *ModeSwitcher
 }
 
 func NewAppView(g *gocui.Gui, db *database.Database) *AppView {
@@ -43,6 +45,8 @@ func NewAppView(g *gocui.Gui, db *database.Database) *AppView {
 		EventManager: em,
 		Calendar:     c,
 	}
+	
+	av.modeSwitcher = NewModeSwitcher(g, av)
 
 	av.AddChild("title", NewTitleView(c))
 	av.AddChild("popup", NewEvenPopup(g, c, db))
@@ -164,6 +168,74 @@ func (av *AppView) UpdateToPrevTime(g *gocui.Gui) {
 	}
 }
 
+func (av *AppView) ShowGotoTimePopup(g *gocui.Gui, v *gocui.View) error {
+	if popup, ok := av.FindChildView("popup"); ok {
+		if popupView, ok := popup.(*EventPopupView); ok {
+			return popupView.ShowGotoTimePopup(g)
+		}
+	}
+	return nil
+}
+
+func (av *AppView) ShowGotoDatePopup(g *gocui.Gui, v *gocui.View) error {
+	if popup, ok := av.FindChildView("popup"); ok {
+		if popupView, ok := popup.(*EventPopupView); ok {
+			return popupView.ShowGotoDatePopup(g)
+		}
+	}
+	return nil
+}
+
+func (av *AppView) ShowGotoMode(g *gocui.Gui) error {
+	av.gotoMode = true
+	
+	config := av.modeSwitcher.getGotoConfig()
+	config.OnEnter = func(g *gocui.Gui) error {
+		return av.showGotoModePopup(g)
+	}
+	
+	return av.modeSwitcher.EnterMode(config)
+}
+
+func (av *AppView) IsGotoModeActive() bool {
+	return av.modeSwitcher.IsInMode(ModeGoto)
+}
+
+func (av *AppView) HandleGotoTime(g *gocui.Gui, v *gocui.View) error {
+	if !av.IsGotoModeActive() {
+		return nil
+	}
+	av.CloseGotoMode(g)
+	return av.ShowGotoTimePopup(g, v)
+}
+
+func (av *AppView) HandleGotoDate(g *gocui.Gui, v *gocui.View) error {
+	if !av.IsGotoModeActive() {
+		return nil
+	}
+	av.CloseGotoMode(g)
+	return av.ShowGotoDatePopup(g, v)
+}
+
+func (av *AppView) showGotoModePopup(g *gocui.Gui) error {
+	v, err := g.SetView("gotomode", av.W/2-15, av.H/2-3, av.W/2+15, av.H/2+3)
+	if err != nil && err != gocui.ErrUnknownView {
+		return err
+	}
+	
+	v.Clear()
+	v.Write([]byte("Goto Mode:\n"))
+	v.Write([]byte("t - goto time (HH)\n"))
+	v.Write([]byte("d - goto date (YYYYMMDD)\n"))
+	v.Write([]byte("ESC - cancel"))
+	
+	return nil
+}
+
+func (av *AppView) CloseGotoMode(g *gocui.Gui) error {
+	return av.modeSwitcher.ExitCurrentMode()
+}
+
 func (av *AppView) ChangeToNotepadView(g *gocui.Gui) error {
 	_, err := g.SetCurrentView("notepad")
 	if err != nil {
@@ -283,10 +355,13 @@ func (av *AppView) ShowColorPicker(g *gocui.Gui) error {
 	if eventView, ok := hoveredView.(*EventView); ok {
 		av.colorPickerEvent = eventView
 		av.colorPickerActive = true
-		if err := av.showColorPickerPopup(g); err != nil {
-			return err
+		
+		config := av.modeSwitcher.getColorPickerConfig()
+		config.OnEnter = func(g *gocui.Gui) error {
+			return av.showColorPickerPopup(g)
 		}
-		return av.setColorPickerKeybindings(g)
+		
+		return av.modeSwitcher.EnterMode(config)
 	}
 	return nil
 }
@@ -324,7 +399,7 @@ func (av *AppView) showColorPickerPopup(g *gocui.Gui) error {
 }
 
 func (av *AppView) IsColorPickerActive() bool {
-	return av.colorPickerActive
+	return av.modeSwitcher.IsInMode(ModeColorPicker)
 }
 
 func (av *AppView) SelectColor(g *gocui.Gui, colorName string) error {
@@ -342,29 +417,7 @@ func (av *AppView) SelectColor(g *gocui.Gui, colorName string) error {
 }
 
 func (av *AppView) CloseColorPicker(g *gocui.Gui) error {
-	// Remove color picker keybindings first
-	if err := av.removeColorPickerKeybindings(g); err != nil {
-		return err
-	}
-	
-	// Reset state
-	av.colorPickerActive = false
-	av.colorPickerEvent = nil
-	
-	// Delete view
-	if err := g.DeleteView("colorpicker"); err != nil && err != gocui.ErrUnknownView {
-		return err
-	}
-	
-	// Re-enable cursor
-	g.Cursor = true
-	
-	// Return to main view
-	viewName := WeekdayNames[av.Calendar.CurrentDay.Date.Weekday()]
-	if _, err := g.SetCurrentView(viewName); err != nil {
-		return err
-	}
-	return nil
+	return av.modeSwitcher.ExitCurrentMode()
 }
 
 func (av *AppView) CopyEvent(g *gocui.Gui) {
@@ -588,102 +641,3 @@ func (av *AppView) Redo(g *gocui.Gui) error {
 	return err
 }
 
-// setColorPickerKeybindings adds temporary keybindings for color picker mode
-func (av *AppView) setColorPickerKeybindings(g *gocui.Gui) error {
-	colorPickerKeybindings := map[rune]string{
-		'r': "Red",
-		'g': "Green", 
-		'y': "Yellow",
-		'b': "Blue",
-		'm': "Magenta",
-		'c': "Cyan",
-		'w': "White",
-	}
-	
-	// First, remove ALL keybindings from weekday views while color picker is active
-	for _, viewName := range WeekdayNames {
-		// Remove all main keybindings to prevent interference
-		keysToRemove := []interface{}{'a', 'e', 'c', 'h', 'l', 'j', 'k', 'T', 'H', 'L', 'd', 'D', 'y', 'p', 'u', 'r', gocui.KeyCtrlN, gocui.KeyCtrlS, '?', 'q', gocui.KeyArrowLeft, gocui.KeyArrowRight, gocui.KeyArrowDown, gocui.KeyArrowUp}
-		for _, key := range keysToRemove {
-			g.DeleteKeybinding(viewName, key, gocui.ModNone)
-		}
-	}
-	
-	// Set global keybindings for color picker (empty string means global)
-	for key, color := range colorPickerKeybindings {
-		color := color // capture for closure
-		if err := g.SetKeybinding("", key, gocui.ModNone, func(g *gocui.Gui, v *gocui.View) error {
-			if av.IsColorPickerActive() {
-				return av.SelectColor(g, color)
-			}
-			return nil
-		}); err != nil {
-			return err
-		}
-	}
-	
-	// Add global escape key to close color picker
-	if err := g.SetKeybinding("", gocui.KeyEsc, gocui.ModNone, func(g *gocui.Gui, v *gocui.View) error {
-		if av.IsColorPickerActive() {
-			return av.CloseColorPicker(g)
-		}
-		return nil
-	}); err != nil {
-		return err
-	}
-	
-	return nil
-}
-
-// removeColorPickerKeybindings removes temporary keybindings for color picker mode
-func (av *AppView) removeColorPickerKeybindings(g *gocui.Gui) error {
-	// Remove global color picker keybindings
-	keys := []interface{}{'r', 'g', 'y', 'b', 'm', 'c', 'w', gocui.KeyEsc}
-	for _, key := range keys {
-		if err := g.DeleteKeybinding("", key, gocui.ModNone); err != nil && err != gocui.ErrUnknownView {
-			// Ignore errors if keybinding doesn't exist
-		}
-	}
-	
-	// Restore all original keybindings to weekday views
-	for _, viewName := range WeekdayNames {
-		// Restore main keybindings
-		mainKeybindings := []struct {
-			key     interface{}
-			handler func(*gocui.Gui, *gocui.View) error
-		}{
-			{'a', func(g *gocui.Gui, v *gocui.View) error { return av.ShowNewEventPopup(g) }},
-			{'e', func(g *gocui.Gui, v *gocui.View) error { return av.ShowEditEventPopup(g) }},
-			{'c', func(g *gocui.Gui, v *gocui.View) error { return av.ShowColorPicker(g) }},
-			{'h', func(g *gocui.Gui, v *gocui.View) error { av.UpdateToPrevDay(g); return nil }},
-			{'l', func(g *gocui.Gui, v *gocui.View) error { av.UpdateToNextDay(g); return nil }},
-			{'j', func(g *gocui.Gui, v *gocui.View) error { av.UpdateToNextTime(g); return nil }},
-			{'k', func(g *gocui.Gui, v *gocui.View) error { av.UpdateToPrevTime(g); return nil }},
-			{'T', func(g *gocui.Gui, v *gocui.View) error { av.JumpToToday(); return nil }},
-			{'H', func(g *gocui.Gui, v *gocui.View) error { av.UpdateToPrevWeek(); return nil }},
-			{'L', func(g *gocui.Gui, v *gocui.View) error { av.UpdateToNextWeek(); return nil }},
-			{'d', func(g *gocui.Gui, v *gocui.View) error { av.DeleteEvent(g); return nil }},
-			{'D', func(g *gocui.Gui, v *gocui.View) error { av.DeleteEvents(g); return nil }},
-			{'y', func(g *gocui.Gui, v *gocui.View) error { av.CopyEvent(g); return nil }},
-			{'p', func(g *gocui.Gui, v *gocui.View) error { return av.PasteEvent(g) }},
-			{'u', func(g *gocui.Gui, v *gocui.View) error { return av.Undo(g) }},
-			{'r', func(g *gocui.Gui, v *gocui.View) error { return av.Redo(g) }},
-			{gocui.KeyCtrlN, func(g *gocui.Gui, v *gocui.View) error { return av.ChangeToNotepadView(g) }},
-			{gocui.KeyCtrlS, func(g *gocui.Gui, v *gocui.View) error { return av.ShowOrHideSideView(g) }},
-			{'?', func(g *gocui.Gui, v *gocui.View) error { return av.ShowKeybinds(g) }},
-			{'q', func(g *gocui.Gui, v *gocui.View) error { return gocui.ErrQuit }},
-			{gocui.KeyArrowLeft, func(g *gocui.Gui, v *gocui.View) error { av.UpdateToPrevDay(g); return nil }},
-			{gocui.KeyArrowRight, func(g *gocui.Gui, v *gocui.View) error { av.UpdateToNextDay(g); return nil }},
-			{gocui.KeyArrowDown, func(g *gocui.Gui, v *gocui.View) error { av.UpdateToNextTime(g); return nil }},
-			{gocui.KeyArrowUp, func(g *gocui.Gui, v *gocui.View) error { av.UpdateToPrevTime(g); return nil }},
-		}
-		
-		for _, kb := range mainKeybindings {
-			if err := g.SetKeybinding(viewName, kb.key, gocui.ModNone, kb.handler); err != nil {
-				return err
-			}
-		}
-	}
-	
-	return nil
-}

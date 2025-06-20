@@ -97,6 +97,18 @@ func (c *Calendar) UpdateToPrevTime() {
 	c.UpdateWeek()
 }
 
+func (c *Calendar) GotoTime(hour, minute int) {
+	currentDate := c.CurrentDay.Date
+	c.CurrentDay.Date = time.Date(currentDate.Year(), currentDate.Month(), currentDate.Day(), hour, minute, 0, 0, currentDate.Location())
+	c.UpdateWeek()
+}
+
+func (c *Calendar) GotoDate(year, month, day int) {
+	currentDate := c.CurrentDay.Date
+	c.CurrentDay.Date = time.Date(year, time.Month(month), day, currentDate.Hour(), currentDate.Minute(), 0, 0, currentDate.Location())
+	c.UpdateWeek()
+}
+
 func (c *Calendar) GetDayFromTime(time time.Time) *Day {
 	for _, v := range c.CurrentWeek.Days {
 		vYear, vMonth, vDay := v.Date.Date()

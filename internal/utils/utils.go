@@ -115,3 +115,50 @@ func ValidateDuration(value string) bool {
 
 	return true
 }
+
+func ValidateHourMinute(value string) bool {
+	regex := regexp.MustCompile(`^\d{2}$`)
+	if !regex.MatchString(value) {
+		return false
+	}
+
+	hour, err := strconv.Atoi(value)
+	if err != nil {
+		return false
+	}
+
+	if hour < 0 || hour > 23 {
+		return false
+	}
+
+	return true
+}
+
+func ValidateDate(value string) bool {
+	regex := regexp.MustCompile(`^\d{8}$`)
+	if !regex.MatchString(value) {
+		return false
+	}
+
+	if len(value) != 8 {
+		return false
+	}
+
+	year, err := strconv.Atoi(value[:4])
+	if err != nil || year < 1900 || year > 2100 {
+		return false
+	}
+
+	month, err := strconv.Atoi(value[4:6])
+	if err != nil || month < 1 || month > 12 {
+		return false
+	}
+
+	day, err := strconv.Atoi(value[6:8])
+	if err != nil || day < 1 || day > 31 {
+		return false
+	}
+
+	_, err = time.Parse("20060102", value)
+	return err == nil
+}

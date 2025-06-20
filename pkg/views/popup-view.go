@@ -1,6 +1,7 @@
 package views
 
 import (
+	"fmt"
 	"strconv"
 	"time"
 
@@ -200,6 +201,112 @@ func (epv *EventPopupView) positionCursorsAtEnd(g *gocui.Gui) {
 			}
 		}
 	}
+}
+
+func (epv *EventPopupView) GotoTimeForm(g *gocui.Gui, title string) *component.Form {
+	form := component.NewForm(g, title, epv.X, epv.Y, epv.W, epv.H)
+
+	currentTime := epv.Calendar.CurrentDay.Date
+	defaultHour := fmt.Sprintf("%02d", currentTime.Hour())
+	
+	form.AddInputField("Hour", LabelWidth, FieldWidth).SetText(defaultHour).AddValidate("Invalid hour (00-23)", utils.ValidateHourMinute)
+
+	return form
+}
+
+func (epv *EventPopupView) GotoDateForm(g *gocui.Gui, title string) *component.Form {
+	form := component.NewForm(g, title, epv.X, epv.Y, epv.W, epv.H)
+
+	currentDate := epv.Calendar.CurrentDay.Date
+	defaultDate := fmt.Sprintf("%04d%02d%02d", currentDate.Year(), currentDate.Month(), currentDate.Day())
+	
+	form.AddInputField("Date", LabelWidth, FieldWidth).SetText(defaultDate).AddValidate("Invalid date (YYYYMMDD)", utils.ValidateDate)
+
+	return form
+}
+
+func (epv *EventPopupView) ShowGotoTimePopup(g *gocui.Gui) error {
+	if epv.IsVisible {
+		return nil
+	}
+
+	epv.Form = epv.GotoTimeForm(g, "Goto Time")
+
+	epv.addKeybind(gocui.KeyEsc, epv.Close)
+	epv.addKeybind(gocui.KeyEnter, epv.GotoTime)
+
+	epv.Form.AddButton("Goto", epv.GotoTime)
+	epv.Form.AddButton("Cancel", epv.Close)
+
+	epv.Form.SetCurrentItem(0)
+	epv.IsVisible = true
+	epv.Form.Draw()
+
+	epv.positionCursorsAtEnd(g)
+
+	return nil
+}
+
+func (epv *EventPopupView) ShowGotoDatePopup(g *gocui.Gui) error {
+	if epv.IsVisible {
+		return nil
+	}
+
+	epv.Form = epv.GotoDateForm(g, "Goto Date")
+
+	epv.addKeybind(gocui.KeyEsc, epv.Close)
+	epv.addKeybind(gocui.KeyEnter, epv.GotoDate)
+
+	epv.Form.AddButton("Goto", epv.GotoDate)
+	epv.Form.AddButton("Cancel", epv.Close)
+
+	epv.Form.SetCurrentItem(0)
+	epv.IsVisible = true
+	epv.Form.Draw()
+
+	epv.positionCursorsAtEnd(g)
+
+	return nil
+}
+
+func (epv *EventPopupView) GotoTime(g *gocui.Gui, v *gocui.View) error {
+	if !epv.IsVisible {
+		return nil
+	}
+
+	for _, v := range epv.Form.GetInputs() {
+		if !v.IsValid() {
+			return nil
+		}
+	}
+
+	hourStr := epv.Form.GetFieldText("Hour")
+	hour, _ := strconv.Atoi(hourStr)
+
+	epv.Calendar.GotoTime(hour, 0)
+
+	return epv.Close(g, v)
+}
+
+func (epv *EventPopupView) GotoDate(g *gocui.Gui, v *gocui.View) error {
+	if !epv.IsVisible {
+		return nil
+	}
+
+	for _, v := range epv.Form.GetInputs() {
+		if !v.IsValid() {
+			return nil
+		}
+	}
+
+	dateStr := epv.Form.GetFieldText("Date")
+	year, _ := strconv.Atoi(dateStr[:4])
+	month, _ := strconv.Atoi(dateStr[4:6])
+	day, _ := strconv.Atoi(dateStr[6:8])
+
+	epv.Calendar.GotoDate(year, month, day)
+
+	return epv.Close(g, v)
 }
 
 func (epv *EventPopupView) addKeybind(key interface{}, handler func(g *gocui.Gui, v *gocui.View) error) {
