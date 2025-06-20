@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/HubertBel/lazyorg/internal/calendar"
+	"github.com/HubertBel/lazyorg/internal/config"
 	"github.com/HubertBel/lazyorg/internal/database"
 	"github.com/HubertBel/lazyorg/internal/eventmanager"
 	"github.com/HubertBel/lazyorg/internal/utils"
@@ -24,6 +25,7 @@ type AppView struct {
 	Database     *database.Database
 	EventManager *eventmanager.EventManager
 	Calendar     *calendar.Calendar
+	Config       *config.Config
 	
 	colorPickerEvent  *EventView
 	colorPickerActive bool
@@ -32,7 +34,7 @@ type AppView struct {
 	modeSwitcher      *ModeSwitcher
 }
 
-func NewAppView(g *gocui.Gui, db *database.Database) *AppView {
+func NewAppView(g *gocui.Gui, db *database.Database, cfg *config.Config) *AppView {
 	now := time.Now()
 	t := time.Date(now.Year(), now.Month(), now.Day(), 12, 0, 0, 0, now.Location())
 
@@ -44,6 +46,7 @@ func NewAppView(g *gocui.Gui, db *database.Database) *AppView {
 		Database:     db,
 		EventManager: em,
 		Calendar:     c,
+		Config:       cfg,
 	}
 	
 	av.modeSwitcher = NewModeSwitcher(g, av)
@@ -51,7 +54,7 @@ func NewAppView(g *gocui.Gui, db *database.Database) *AppView {
 	av.AddChild("title", NewTitleView(c))
 	av.AddChild("popup", NewEvenPopup(g, c, db))
 	av.AddChild("main", NewMainView(c))
-	av.AddChild("side", NewSideView(c, db))
+	av.AddChild("side", NewSideView(c, db, cfg))
 	av.AddChild("keybinds", NewKeybindsView())
 
 	return av
@@ -128,7 +131,7 @@ func (av *AppView) ShowOrHideSideView(g *gocui.Gui) error {
 	SideViewWidthRatio = 0.2
 	MainViewWidthRatio = 0.8
 
-	av.AddChild("side", NewSideView(av.Calendar, av.Database))
+	av.AddChild("side", NewSideView(av.Calendar, av.Database, av.Config))
 
 	return nil
 }
@@ -524,8 +527,13 @@ func (av *AppView) ShowKeybinds(g *gocui.Gui) error {
 }
 
 func (av *AppView) updateChildViewProperties() {
-	mainViewWidth := int(float64(av.W-1) * MainViewWidthRatio)
-	sideViewWidth := int(float64(av.W) * SideViewWidthRatio)
+	sideViewWidth := 0
+	if sideView, ok := av.GetChild("side"); ok {
+		if sideView.Children().Len() > 0 {
+			sideViewWidth = int(float64(av.W) * SideViewWidthRatio)
+		}
+	}
+	mainViewWidth := av.W - sideViewWidth - 1
 
 	if titleView, ok := av.GetChild("title"); ok {
 		titleView.SetProperties(

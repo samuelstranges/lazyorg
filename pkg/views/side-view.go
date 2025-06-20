@@ -2,6 +2,7 @@ package views
 
 import (
 	"github.com/HubertBel/lazyorg/internal/calendar"
+	"github.com/HubertBel/lazyorg/internal/config"
 	"github.com/HubertBel/lazyorg/internal/database"
 	"github.com/jroimartin/gocui"
 )
@@ -12,14 +13,18 @@ type SideView struct {
 	Calendar *calendar.Calendar
 }
 
-func NewSideView(c *calendar.Calendar, db *database.Database) *SideView {
+func NewSideView(c *calendar.Calendar, db *database.Database, cfg *config.Config) *SideView {
 	sv := &SideView{
 		BaseView: NewBaseView("side"),
 		Calendar: c,
 	}
 
-	sv.AddChild("hover", NewHoverView(c))
-	sv.AddChild("notepad", NewNotepadView(c, db))
+	if !cfg.HideDayOnStartup {
+		sv.AddChild("hover", NewHoverView(c))
+	}
+	if !cfg.HideNotesOnStartup {
+		sv.AddChild("notepad", NewNotepadView(c, db))
+	}
 
 	return sv
 }
