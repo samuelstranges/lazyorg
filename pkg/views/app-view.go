@@ -54,7 +54,12 @@ func NewAppView(g *gocui.Gui, db *database.Database, cfg *config.Config) *AppVie
 	av.AddChild("title", NewTitleView(c))
 	av.AddChild("popup", NewEvenPopup(g, c, db))
 	av.AddChild("main", NewMainView(c))
-	av.AddChild("side", NewSideView(c, db, cfg))
+	
+	// Only add side view if it will have children
+	if !cfg.HideDayOnStartup || !cfg.HideNotesOnStartup {
+		av.AddChild("side", NewSideView(c, db, cfg))
+	}
+	
 	av.AddChild("keybinds", NewKeybindsView())
 
 	return av
@@ -131,7 +136,10 @@ func (av *AppView) ShowOrHideSideView(g *gocui.Gui) error {
 	SideViewWidthRatio = 0.2
 	MainViewWidthRatio = 0.8
 
-	av.AddChild("side", NewSideView(av.Calendar, av.Database, av.Config))
+	// Only add side view if it will have children
+	if !av.Config.HideDayOnStartup || !av.Config.HideNotesOnStartup {
+		av.AddChild("side", NewSideView(av.Calendar, av.Database, av.Config))
+	}
 
 	return nil
 }
@@ -240,6 +248,23 @@ func (av *AppView) CloseGotoMode(g *gocui.Gui) error {
 }
 
 func (av *AppView) ChangeToNotepadView(g *gocui.Gui) error {
+	// Check if notepad exists, if not create the side view and notepad
+	if _, ok := av.FindChildView("notepad"); !ok {
+		// Ensure side view exists
+		if _, ok := av.GetChild("side"); !ok {
+			SideViewWidthRatio = 0.2
+			MainViewWidthRatio = 0.8
+			av.AddChild("side", NewSideView(av.Calendar, av.Database, av.Config))
+		}
+		
+		// Add notepad to side view if it doesn't exist
+		if sideView, ok := av.GetChild("side"); ok {
+			if _, ok := sideView.(*SideView).GetChild("notepad"); !ok {
+				sideView.(*SideView).AddChild("notepad", NewNotepadView(av.Calendar, av.Database))
+			}
+		}
+	}
+	
 	_, err := g.SetCurrentView("notepad")
 	if err != nil {
 		return err
