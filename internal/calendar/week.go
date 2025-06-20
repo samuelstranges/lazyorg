@@ -10,14 +10,14 @@ type Week struct {
 
 func NewWeek() *Week {
 	return &Week{
-        Days: []*Day {
-            NewDay(time.Time{}),
-            NewDay(time.Time{}),
-            NewDay(time.Time{}),
-            NewDay(time.Time{}),
-            NewDay(time.Time{}),
-            NewDay(time.Time{}),
-            NewDay(time.Time{}),
-        },
-    }
+		Days: []*Day{
+			NewDay(time.Time{}),
+			NewDay(time.Time{}),
+			NewDay(time.Time{}),
+			NewDay(time.Time{}),
+			NewDay(time.Time{}),
+			NewDay(time.Time{}),
+			NewDay(time.Time{}),
+		},
+	}
 }

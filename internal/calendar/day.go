@@ -30,9 +30,9 @@ func (d *Day) FormatTimeAndHour() string {
 func (d *Day) FormatBody() string {
 	var sb strings.Builder
 
-    sb.WriteString("\n")
-    sb.WriteString("\nEvents :\n")
-    sb.WriteString( "---------\n")
+	sb.WriteString("\n")
+	sb.WriteString("\nEvents :\n")
+	sb.WriteString("---------\n")
 	for _, v := range d.Events {
 		s := "-> " + v.FormatTimeAndName() + "\n"
 		sb.WriteString(s)
@@ -42,7 +42,7 @@ func (d *Day) FormatBody() string {
 }
 
 func (d *Day) SortEventsByTime() {
-    sort.Slice(d.Events, func(i, j int) bool {
-        return d.Events[i].Time.Before(d.Events[j].Time)
-    })
+	sort.Slice(d.Events, func(i, j int) bool {
+		return d.Events[i].Time.Before(d.Events[j].Time)
+	})
 }

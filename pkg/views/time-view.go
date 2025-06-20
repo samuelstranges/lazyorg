@@ -61,9 +61,9 @@ func (tv *TimeView) updateBody(v *gocui.View) {
 		}
 
 		if i == tv.Cursor {
-            runes := []rune(time)
-            runes[0] = '>'
-            time = string(runes)
+			runes := []rune(time)
+			runes[0] = '>'
+			time = string(runes)
 		}
 
 		tv.Body += time

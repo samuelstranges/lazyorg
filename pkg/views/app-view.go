@@ -209,7 +209,7 @@ func (av *AppView) DeleteEvent(g *gocui.Gui) {
 	if view, ok := av.FindChildView(WeekdayNames[av.Calendar.CurrentDay.Date.Weekday()]); ok {
 		if dayView, ok := view.(*DayView); ok {
 			if eventView, ok := dayView.IsOnEvent(y); ok {
-                av.Database.DeleteEventById(eventView.Event.Id)
+				av.Database.DeleteEventById(eventView.Event.Id)
 			}
 		}
 	}
@@ -221,7 +221,7 @@ func (av *AppView) DeleteEvents(g *gocui.Gui) {
 	if view, ok := av.FindChildView(WeekdayNames[av.Calendar.CurrentDay.Date.Weekday()]); ok {
 		if dayView, ok := view.(*DayView); ok {
 			if eventView, ok := dayView.IsOnEvent(y); ok {
-                av.Database.DeleteEventsByName(eventView.Event.Name)
+				av.Database.DeleteEventsByName(eventView.Event.Name)
 			}
 		}
 	}
@@ -251,12 +251,12 @@ func (av *AppView) ShowEditEventPopup(g *gocui.Gui) error {
 				PopupWidth,
 				PopupHeight,
 			)
-            hoveredView := av.GetHoveredOnView(g)
+			hoveredView := av.GetHoveredOnView(g)
 			if eventView, ok := hoveredView.(*EventView); ok {
-                err := popupView.ShowEditEventPopup(g, eventView)
-                if err != nil {
-                    return err
-                }
+				err := popupView.ShowEditEventPopup(g, eventView)
+				if err != nil {
+					return err
+				}
 			}
 		}
 	}
@@ -330,8 +330,8 @@ func (av *AppView) updateCurrentView(g *gocui.Gui) error {
 	if view, ok := av.GetChild("keybinds"); ok {
 		if keybindsView, ok := view.(*KeybindsView); ok {
 			if keybindsView.IsVisible {
-                g.Cursor = false
-                g.SetCurrentView("keybinds")
+				g.Cursor = false
+				g.SetCurrentView("keybinds")
 				return nil
 			}
 		}
@@ -340,7 +340,7 @@ func (av *AppView) updateCurrentView(g *gocui.Gui) error {
 		return nil
 	}
 
-    g.Cursor = true
+	g.Cursor = true
 	if view, ok := av.FindChildView("hover"); ok {
 		if hoverView, ok := view.(*HoverView); ok {
 			hoverView.CurrentView = av.GetHoveredOnView(g)
@@ -373,7 +373,7 @@ func (av *AppView) GetHoveredOnView(g *gocui.Gui) View {
 }
 
 func (av *AppView) GetCursorY() int {
-    y := 0
+	y := 0
 
 	if view, ok := av.FindChildView("time"); ok {
 		if timeView, ok := view.(*TimeView); ok {
@@ -381,5 +381,5 @@ func (av *AppView) GetCursorY() int {
 		}
 	}
 
-    return y
+	return y
 }

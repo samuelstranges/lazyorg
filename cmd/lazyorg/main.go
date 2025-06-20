@@ -12,17 +12,17 @@ import (
 )
 
 func main() {
-    homeDir, err := os.UserHomeDir()
-    if err != nil {
-        log.Fatal(err)
-    }
-    dbDirPath := filepath.Join(homeDir, ".local", "share", "lazyorg")
-    dbFilePath := filepath.Join(dbDirPath, "data.db")
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		log.Fatal(err)
+	}
+	dbDirPath := filepath.Join(homeDir, ".local", "share", "lazyorg")
+	dbFilePath := filepath.Join(dbDirPath, "data.db")
 
-    err = os.MkdirAll(dbDirPath, 0755)
-    if err != nil {
-        log.Fatal(err)
-    }
+	err = os.MkdirAll(dbDirPath, 0755)
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	database := &database.Database{}
 	err = database.InitDatabase(dbFilePath)

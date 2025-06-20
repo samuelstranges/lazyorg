@@ -55,11 +55,11 @@ func (hv *HoverView) updateTitle(v *gocui.View) {
 func (hv *HoverView) updateBody(v *gocui.View) {
 	v.Clear()
 	if view, ok := hv.CurrentView.(*DayView); ok {
-        v.Wrap = false
+		v.Wrap = false
 		v.FgColor = gocui.AttrBold | gocui.ColorYellow
 		fmt.Fprintln(v, view.Day.FormatBody())
 	} else if view, ok := hv.CurrentView.(*EventView); ok {
-        v.Wrap = true
+		v.Wrap = true
 		v.FgColor = gocui.AttrBold | gocui.ColorMagenta
 		fmt.Fprintln(v, view.Event.FormatBody())
 	}

@@ -2,10 +2,12 @@ package database
 
 import (
 	"database/sql"
+	"strings"
 	"time"
 
 	"github.com/HubertBel/lazyorg/internal/calendar"
 	"github.com/HubertBel/lazyorg/internal/utils"
+	"github.com/jroimartin/gocui"
 	_ "github.com/mattn/go-sqlite3"
 )
 
@@ -33,9 +35,18 @@ func (database *Database) createTables() error {
         time DATETIME NOT NULL,
         duration REAL NOT NULL,
         frequency INTEGER,
-        occurence INTEGER
+        occurence INTEGER,
+        color INTEGER DEFAULT 0
     )`)
 	if err != nil {
+		return err
+	}
+
+	// Add color column to existing tables if it doesn't exist
+	_, err = database.db.Exec(`
+        ALTER TABLE events ADD COLUMN color INTEGER DEFAULT 0
+    `)
+	if err != nil && !strings.Contains(err.Error(), "duplicate column name") {
 		return err
 	}
 
@@ -55,8 +66,8 @@ func (database *Database) createTables() error {
 func (database *Database) AddEvent(event calendar.Event) (int, error) {
 	result, err := database.db.Exec(`
         INSERT INTO events (
-            name, description, location, time, duration, frequency, occurence
-        ) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+            name, description, location, time, duration, frequency, occurence, color
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
 		event.Name,
 		event.Description,
 		event.Location,
@@ -64,6 +75,7 @@ func (database *Database) AddEvent(event calendar.Event) (int, error) {
 		event.DurationHour,
 		event.FrequencyDay,
 		event.Occurence,
+		int(event.Color),
 	)
 	if err != nil {
 		return -1, err
@@ -89,6 +101,7 @@ func (database *Database) GetEventById(id int) (*calendar.Event, error) {
 
 	if rows.Next() {
 		var event calendar.Event
+		var colorInt int
 		if err := rows.Scan(
 			&event.Id,
 			&event.Name,
@@ -98,8 +111,14 @@ func (database *Database) GetEventById(id int) (*calendar.Event, error) {
 			&event.DurationHour,
 			&event.FrequencyDay,
 			&event.Occurence,
+			&colorInt,
 		); err != nil {
 			return nil, err
+		}
+		if colorInt == 0 {
+			event.Color = calendar.GenerateColorFromName(event.Name)
+		} else {
+			event.Color = gocui.Attribute(colorInt)
 		}
 		return &event, nil
 	}
@@ -122,6 +141,7 @@ func (database *Database) GetEventsByDate(date time.Time) ([]*calendar.Event, er
 	var events []*calendar.Event
 	for rows.Next() {
 		var event calendar.Event
+		var colorInt int
 
 		if err := rows.Scan(
 			&event.Id,
@@ -132,10 +152,16 @@ func (database *Database) GetEventsByDate(date time.Time) ([]*calendar.Event, er
 			&event.DurationHour,
 			&event.FrequencyDay,
 			&event.Occurence,
+			&colorInt,
 		); err != nil {
 			return nil, err
 		}
 
+		if colorInt == 0 {
+			event.Color = calendar.GenerateColorFromName(event.Name)
+		} else {
+			event.Color = gocui.Attribute(colorInt)
+		}
 		events = append(events, &event)
 	}
 
@@ -161,17 +187,19 @@ func (database *Database) UpdateEventById(id int, event *calendar.Event) error {
             time = ?, 
             duration = ?, 
             frequency = ?, 
-            occurence = ? 
+            occurence = ?,
+            color = ?
         WHERE id = ?`,
-            event.Name,
-            event.Description,
-            event.Location,
-            event.Time,
-            event.DurationHour,
-            event.FrequencyDay,
-            event.Occurence,
-            id,
-        )
+		event.Name,
+		event.Description,
+		event.Location,
+		event.Time,
+		event.DurationHour,
+		event.FrequencyDay,
+		event.Occurence,
+		int(event.Color),
+		id,
+	)
 
 	return err
 }

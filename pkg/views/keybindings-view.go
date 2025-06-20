@@ -1,12 +1,15 @@
 package views
+
 import (
 	"fmt"
 	"github.com/jroimartin/gocui"
 )
+
 type KeybindsView struct {
 	*BaseView
 	IsVisible bool
 }
+
 func NewKeybindsView() *KeybindsView {
 	return &KeybindsView{
 		BaseView:  NewBaseView("keybinds"),

@@ -2,6 +2,7 @@ package views
 
 import (
 	"fmt"
+	"sort"
 	"time"
 
 	"github.com/HubertBel/lazyorg/internal/calendar"
@@ -72,11 +73,18 @@ func (dv *DayView) updateChildViewProperties(g *gocui.Gui) error {
 		}
 	}
 
-	for _, event := range dv.Day.Events {
-		x := dv.X + 1
-		y := dv.Y + utils.TimeToPosition(event.Time, dv.TimeView.Body) + 1
-		w := dv.W - 2
-		h := utils.DurationToHeight(event.DurationHour)
+	// Sort events by time to check for consecutive events
+	events := make([]*calendar.Event, len(dv.Day.Events))
+	copy(events, dv.Day.Events)
+	sort.Slice(events, func(i, j int) bool {
+		return events[i].Time.Before(events[j].Time)
+	})
+	
+	for i, event := range events {
+		x := dv.X
+		y := dv.Y + utils.TimeToPosition(event.Time, dv.TimeView.Body)
+		w := dv.W
+		h := utils.DurationToHeight(event.DurationHour) + 1
 
 		if (y + h) >= (dv.Y + dv.H) {
 			newHeight := (dv.Y + dv.H) - y
@@ -89,14 +97,28 @@ func (dv *DayView) updateChildViewProperties(g *gocui.Gui) error {
 			continue
 		}
 
+		// Check if this event should have a bottom border
+		showBottomBorder := false
+		if i < len(events)-1 {
+			nextEvent := events[i+1]
+			eventEndTime := event.Time.Add(time.Duration(event.DurationHour * float64(time.Hour)))
+			
+			// Check if next event starts immediately after this one and has same color
+			if nextEvent.Time.Equal(eventEndTime) && nextEvent.Color == event.Color {
+				showBottomBorder = true
+			}
+		}
+
 		viewName := fmt.Sprintf("%s-%d", event.Name, event.Id)
 		if existingView, exists := eventViews[viewName]; exists {
 			existingView.X, existingView.Y, existingView.W, existingView.H = x, y, w, h
-            existingView.Event = event
+			existingView.Event = event
+			existingView.ShowBottomBorder = showBottomBorder
 			delete(eventViews, viewName)
 		} else {
 			ev := NewEvenView(viewName, event)
 			ev.X, ev.Y, ev.W, ev.H = x, y, w, h
+			ev.ShowBottomBorder = showBottomBorder
 			dv.AddChild(viewName, ev)
 		}
 	}
@@ -104,6 +126,11 @@ func (dv *DayView) updateChildViewProperties(g *gocui.Gui) error {
 	for viewName := range eventViews {
 		if err := g.DeleteView(viewName); err != nil && err != gocui.ErrUnknownView {
 			return err
+		}
+		// Also delete any border views
+		borderViewName := viewName + "_border"
+		if err := g.DeleteView(borderViewName); err != nil && err != gocui.ErrUnknownView {
+			// Ignore error if border view doesn't exist
 		}
 		dv.children.Delete(viewName)
 	}

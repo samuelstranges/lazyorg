@@ -50,7 +50,7 @@ func (sv *SideView) Update(g *gocui.Gui) error {
 }
 
 func (sv *SideView) updateChildViewProperties() {
-	heightHover := int(float64(sv.H)*0.5)
+	heightHover := int(float64(sv.H) * 0.5)
 	heightNotepad := sv.H - heightHover - 2
 
 	if hoverView, ok := sv.GetChild("hover"); ok {
