@@ -81,6 +81,8 @@ func (epv *EventPopupView) ShowNewEventPopup(g *gocui.Gui) error {
 	epv.Form.SetCurrentItem(0)
 	epv.IsVisible = true
 	epv.Form.Draw()
+	
+	epv.positionCursorsAtEnd(g)
 
 	return nil
 }
@@ -114,6 +116,8 @@ func (epv *EventPopupView) ShowEditEventPopup(g *gocui.Gui, eventView *EventView
 	epv.Form.SetCurrentItem(0)
 	epv.IsVisible = true
 	epv.Form.Draw()
+	
+	epv.positionCursorsAtEnd(g)
 
 	return nil
 }
@@ -184,6 +188,18 @@ func (epv *EventPopupView) EditEvent(g *gocui.Gui, v *gocui.View, event *calenda
 func (epv *EventPopupView) Close(g *gocui.Gui, v *gocui.View) error {
 	epv.IsVisible = false
 	return epv.Form.Close(g, v)
+}
+
+func (epv *EventPopupView) positionCursorsAtEnd(g *gocui.Gui) {
+	for _, input := range epv.Form.GetInputs() {
+		fieldName := input.GetLabel()
+		fieldText := input.GetFieldText()
+		if fieldText != "" {
+			if v, err := g.View(fieldName); err == nil {
+				v.MoveCursor(len(fieldText), 0, true)
+			}
+		}
+	}
 }
 
 func (epv *EventPopupView) addKeybind(key interface{}, handler func(g *gocui.Gui, v *gocui.View) error) {
