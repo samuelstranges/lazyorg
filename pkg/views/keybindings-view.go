@@ -50,6 +50,8 @@ func (kbv *KeybindsView) Update(g *gocui.Gui) error {
 	fmt.Fprintln(v, " p            - Paste event")
 	fmt.Fprintln(v, " d            - Delete event")
 	fmt.Fprintln(v, " D            - Delete events with same name")
+	fmt.Fprintln(v, " u            - Undo last action")
+	fmt.Fprintln(v, " r            - Redo last undone action")
 	fmt.Fprintln(v, "")
 	fmt.Fprintln(v, " Color Picker (when active):")
 	fmt.Fprintln(v, " r/g/y/b/m/c/w - Red/Green/Yellow/Blue/Magenta/Cyan/White")

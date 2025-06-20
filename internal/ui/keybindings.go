@@ -22,9 +22,6 @@ func InitKeybindings(g *gocui.Gui, av *views.AppView) error {
 	if err := initHelpKeybindings(g, av); err != nil {
 		return err
 	}
-	if err := initColorPickerKeybindings(g, av); err != nil {
-		return err
-	}
 
 	return nil
 }
@@ -33,12 +30,7 @@ func initMainKeybindings(g *gocui.Gui, av *views.AppView) error {
 	mainKeybindings := []Keybind{
 		{'a', func(g *gocui.Gui, v *gocui.View) error { return av.ShowNewEventPopup(g) }},
 		{'e', func(g *gocui.Gui, v *gocui.View) error { return av.ShowEditEventPopup(g) }},
-		{'c', func(g *gocui.Gui, v *gocui.View) error { 
-			if av.IsColorPickerActive() {
-				return av.SelectColor(g, "Cyan")
-			}
-			return av.ShowColorPicker(g) 
-		}},
+		{'c', func(g *gocui.Gui, v *gocui.View) error { return av.ShowColorPicker(g) }},
 		{'h', func(g *gocui.Gui, v *gocui.View) error { av.UpdateToPrevDay(g); return nil }},
 		{'l', func(g *gocui.Gui, v *gocui.View) error { av.UpdateToNextDay(g); return nil }},
 		{'j', func(g *gocui.Gui, v *gocui.View) error { av.UpdateToNextTime(g); return nil }},
@@ -54,6 +46,8 @@ func initMainKeybindings(g *gocui.Gui, av *views.AppView) error {
 		{'D', func(g *gocui.Gui, v *gocui.View) error { av.DeleteEvents(g); return nil }},
 		{'y', func(g *gocui.Gui, v *gocui.View) error { av.CopyEvent(g); return nil }},
 		{'p', func(g *gocui.Gui, v *gocui.View) error { return av.PasteEvent(g) }},
+		{'u', func(g *gocui.Gui, v *gocui.View) error { return av.Undo(g) }},
+		{'r', func(g *gocui.Gui, v *gocui.View) error { return av.Redo(g) }},
 		{gocui.KeyCtrlN, func(g *gocui.Gui, v *gocui.View) error { return av.ChangeToNotepadView(g) }},
 		{gocui.KeyCtrlS, func(g *gocui.Gui, v *gocui.View) error { return av.ShowOrHideSideView(g) }},
 		{'?', func(g *gocui.Gui, v *gocui.View) error { return av.ShowKeybinds(g) }},
@@ -100,63 +94,6 @@ func initHelpKeybindings(g *gocui.Gui, av *views.AppView) error {
 	return nil
 }
 
-func initColorPickerKeybindings(g *gocui.Gui, av *views.AppView) error {
-	colorPickerKeybindings := []Keybind{
-		{'r', func(g *gocui.Gui, v *gocui.View) error { 
-			if av.IsColorPickerActive() {
-				return av.SelectColor(g, "Red")
-			}
-			return nil
-		}},
-		{'g', func(g *gocui.Gui, v *gocui.View) error { 
-			if av.IsColorPickerActive() {
-				return av.SelectColor(g, "Green")
-			}
-			return nil
-		}},
-		{'y', func(g *gocui.Gui, v *gocui.View) error { 
-			if av.IsColorPickerActive() {
-				return av.SelectColor(g, "Yellow")
-			}
-			return nil
-		}},
-		{'b', func(g *gocui.Gui, v *gocui.View) error { 
-			if av.IsColorPickerActive() {
-				return av.SelectColor(g, "Blue")
-			}
-			return nil
-		}},
-		{'m', func(g *gocui.Gui, v *gocui.View) error { 
-			if av.IsColorPickerActive() {
-				return av.SelectColor(g, "Magenta")
-			}
-			return nil
-		}},
-		{'w', func(g *gocui.Gui, v *gocui.View) error { 
-			if av.IsColorPickerActive() {
-				return av.SelectColor(g, "White")
-			}
-			return nil
-		}},
-		{gocui.KeyEsc, func(g *gocui.Gui, v *gocui.View) error { 
-			if av.IsColorPickerActive() {
-				return av.CloseColorPicker(g)
-			}
-			return nil
-		}},
-	}
-	
-	// Add keybindings only to the main day views, not globally
-	for _, viewName := range views.WeekdayNames {
-		for _, kb := range colorPickerKeybindings {
-			if err := g.SetKeybinding(viewName, kb.key, gocui.ModNone, kb.handler); err != nil {
-				return err
-			}
-		}
-	}
-
-	return nil
-}
 
 func quit(g *gocui.Gui, v *gocui.View) error {
 	return gocui.ErrQuit

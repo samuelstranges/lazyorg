@@ -232,6 +232,46 @@ func (database *Database) GetLatestNote() (string, error) {
 	return content, err
 }
 
+func (database *Database) GetEventsByName(name string) ([]*calendar.Event, error) {
+	rows, err := database.db.Query(`
+        SELECT * FROM events WHERE name = ?`,
+		name,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var events []*calendar.Event
+	for rows.Next() {
+		var event calendar.Event
+		var colorInt int
+
+		if err := rows.Scan(
+			&event.Id,
+			&event.Name,
+			&event.Description,
+			&event.Location,
+			&event.Time,
+			&event.DurationHour,
+			&event.FrequencyDay,
+			&event.Occurence,
+			&colorInt,
+		); err != nil {
+			return nil, err
+		}
+
+		if colorInt == 0 {
+			event.Color = calendar.GenerateColorFromName(event.Name)
+		} else {
+			event.Color = gocui.Attribute(colorInt)
+		}
+		events = append(events, &event)
+	}
+
+	return events, nil
+}
+
 func (database *Database) CloseDatabase() error {
 	if database.db == nil {
 		return nil
