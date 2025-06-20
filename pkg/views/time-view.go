@@ -45,17 +45,31 @@ func (tv *TimeView) Update(g *gocui.Gui) error {
 }
 
 func (tv *TimeView) updateBody(v *gocui.View) {
+	// Calculate starting time, but constrain to valid 24-hour range
 	initialTime := 12 - tv.H/4
+	if initialTime < 0 {
+		initialTime = 0
+	}
+	
 	tv.Body = ""
 
 	for i := range tv.H {
 		var time string
+		currentHour := initialTime
 
 		if i%2 == 0 {
-			hour := utils.FormatHour(initialTime, 0)
+			// Skip if hour is beyond 23:00
+			if currentHour > 23 {
+				break
+			}
+			hour := utils.FormatHour(currentHour, 0)
 			time = fmt.Sprintf(" %s - \n", hour)
 		} else {
-			hour := utils.FormatHour(initialTime, 30)
+			// Skip if hour is beyond 23:30
+			if currentHour > 23 {
+				break
+			}
+			hour := utils.FormatHour(currentHour, 30)
 			time = fmt.Sprintf(" %s \n", hour)
 			initialTime++
 		}
