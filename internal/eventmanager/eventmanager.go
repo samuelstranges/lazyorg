@@ -2,6 +2,7 @@ package eventmanager
 
 import (
 	"errors"
+	"strconv"
 	"time"
 
 	"github.com/HubertBel/lazyorg/internal/calendar"
@@ -19,9 +20,10 @@ const (
 
 type UndoAction struct {
 	Type        ActionType
-	EventBefore *calendar.Event // State before action (nil for add)
-	EventAfter  *calendar.Event // State after action (nil for delete)
-	EventIds    []int           // For bulk operations
+	EventBefore *calendar.Event   // State before action (nil for add)
+	EventAfter  *calendar.Event   // State after action (nil for delete)
+	EventIds    []int             // For bulk operations (legacy)
+	Events      []*calendar.Event // Full events for bulk operations
 }
 
 type EventManager struct {
@@ -115,9 +117,9 @@ func (em *EventManager) DeleteEventsByName(name string) error {
 		return err
 	}
 
-	var eventIds []int
-	for _, event := range events {
-		eventIds = append(eventIds, event.Id)
+	// If no events found, nothing to delete
+	if len(events) == 0 {
+		return nil
 	}
 
 	err = em.database.DeleteEventsByName(name)
@@ -125,10 +127,10 @@ func (em *EventManager) DeleteEventsByName(name string) error {
 		return err
 	}
 
-	// Record undo action for bulk delete
+	// Record undo action for bulk delete with full event data
 	em.pushUndoAction(UndoAction{
-		Type:     ActionBulkDelete,
-		EventIds: eventIds,
+		Type:   ActionBulkDelete,
+		Events: events,
 	})
 
 	return nil
@@ -168,9 +170,14 @@ func (em *EventManager) Undo() error {
 		return em.database.UpdateEventById(lastAction.EventBefore.Id, lastAction.EventBefore)
 
 	case ActionBulkDelete:
-		// This is more complex - we'd need to store the full events, not just IDs
-		// For now, return an error
-		return errors.New("bulk delete undo not fully implemented yet")
+		// Undo bulk delete by re-adding all the deleted events
+		for _, event := range lastAction.Events {
+			_, err := em.database.AddEvent(*event)
+			if err != nil {
+				return err
+			}
+		}
+		return nil
 
 	default:
 		return errors.New("unknown action type")
@@ -211,9 +218,12 @@ func (em *EventManager) Redo() error {
 		return em.database.UpdateEventById(lastAction.EventAfter.Id, lastAction.EventAfter)
 
 	case ActionBulkDelete:
-		// This is more complex - we'd need to store the full events, not just IDs
-		// For now, return an error
-		return errors.New("bulk delete redo not fully implemented yet")
+		// Redo bulk delete by deleting all events with the same name again
+		if len(lastAction.Events) > 0 {
+			eventName := lastAction.Events[0].Name
+			return em.database.DeleteEventsByName(eventName)
+		}
+		return nil
 
 	default:
 		return errors.New("unknown action type")
@@ -245,6 +255,9 @@ func (em *EventManager) GetUndoDescription() string {
 	case ActionEdit:
 		return "Undo edit: " + lastAction.EventBefore.Name
 	case ActionBulkDelete:
+		if len(lastAction.Events) > 0 {
+			return "Undo bulk delete: " + lastAction.Events[0].Name + " (" + strconv.Itoa(len(lastAction.Events)) + " events)"
+		}
 		return "Undo bulk delete"
 	default:
 		return "Undo last action"
@@ -266,6 +279,9 @@ func (em *EventManager) GetRedoDescription() string {
 	case ActionEdit:
 		return "Redo edit: " + lastAction.EventAfter.Name
 	case ActionBulkDelete:
+		if len(lastAction.Events) > 0 {
+			return "Redo bulk delete: " + lastAction.Events[0].Name + " (" + strconv.Itoa(len(lastAction.Events)) + " events)"
+		}
 		return "Redo bulk delete"
 	default:
 		return "Redo last action"
