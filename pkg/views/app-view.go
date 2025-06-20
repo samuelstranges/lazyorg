@@ -20,6 +20,9 @@ type AppView struct {
 
 	Database *database.Database
 	Calendar *calendar.Calendar
+	
+	colorPickerEvent  *EventView
+	colorPickerActive bool
 }
 
 func NewAppView(g *gocui.Gui, db *database.Database) *AppView {
@@ -259,6 +262,77 @@ func (av *AppView) ShowEditEventPopup(g *gocui.Gui) error {
 				}
 			}
 		}
+	}
+	return nil
+}
+
+func (av *AppView) ShowColorPicker(g *gocui.Gui) error {
+	hoveredView := av.GetHoveredOnView(g)
+	if eventView, ok := hoveredView.(*EventView); ok {
+		av.colorPickerEvent = eventView
+		av.colorPickerActive = true
+		return av.showColorPickerPopup(g)
+	}
+	return nil
+}
+
+func (av *AppView) showColorPickerPopup(g *gocui.Gui) error {
+	v, err := g.SetView("colorpicker", av.W/2-15, av.H/2-5, av.W/2+15, av.H/2+5)
+	if err != nil && err != gocui.ErrUnknownView {
+		return err
+	}
+	
+	v.Title = "Color Picker"
+	v.Clear()
+	v.Write([]byte("Select color:\n\n"))
+	v.Write([]byte("r - Red\n"))
+	v.Write([]byte("g - Green\n"))
+	v.Write([]byte("y - Yellow\n"))
+	v.Write([]byte("b - Blue\n"))
+	v.Write([]byte("m - Magenta\n"))
+	v.Write([]byte("c - Cyan\n"))
+	v.Write([]byte("w - White\n"))
+	v.Write([]byte("\nEsc - Cancel"))
+	
+	if _, err := g.SetCurrentView("colorpicker"); err != nil {
+		return err
+	}
+	
+	return nil
+}
+
+func (av *AppView) IsColorPickerActive() bool {
+	return av.colorPickerActive
+}
+
+func (av *AppView) SelectColor(g *gocui.Gui, colorName string) error {
+	if av.colorPickerEvent == nil {
+		return av.CloseColorPicker(g)
+	}
+	
+	color := calendar.ColorNameToAttribute(colorName)
+	av.colorPickerEvent.Event.Color = color
+	if err := av.Database.UpdateEventById(av.colorPickerEvent.Event.Id, av.colorPickerEvent.Event); err != nil {
+		return err
+	}
+	
+	return av.CloseColorPicker(g)
+}
+
+func (av *AppView) CloseColorPicker(g *gocui.Gui) error {
+	// Reset state first
+	av.colorPickerActive = false
+	av.colorPickerEvent = nil
+	
+	// Delete view
+	if err := g.DeleteView("colorpicker"); err != nil && err != gocui.ErrUnknownView {
+		return err
+	}
+	
+	// Return to main view
+	viewName := WeekdayNames[av.Calendar.CurrentDay.Date.Weekday()]
+	if _, err := g.SetCurrentView(viewName); err != nil {
+		return err
 	}
 	return nil
 }

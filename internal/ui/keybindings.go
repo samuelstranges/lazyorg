@@ -22,6 +22,9 @@ func InitKeybindings(g *gocui.Gui, av *views.AppView) error {
 	if err := initHelpKeybindings(g, av); err != nil {
 		return err
 	}
+	if err := initColorPickerKeybindings(g, av); err != nil {
+		return err
+	}
 
 	return nil
 }
@@ -30,6 +33,12 @@ func initMainKeybindings(g *gocui.Gui, av *views.AppView) error {
 	mainKeybindings := []Keybind{
 		{'a', func(g *gocui.Gui, v *gocui.View) error { return av.ShowNewEventPopup(g) }},
 		{'e', func(g *gocui.Gui, v *gocui.View) error { return av.ShowEditEventPopup(g) }},
+		{'c', func(g *gocui.Gui, v *gocui.View) error { 
+			if av.IsColorPickerActive() {
+				return av.SelectColor(g, "Cyan")
+			}
+			return av.ShowColorPicker(g) 
+		}},
 		{'h', func(g *gocui.Gui, v *gocui.View) error { av.UpdateToPrevDay(g); return nil }},
 		{'l', func(g *gocui.Gui, v *gocui.View) error { av.UpdateToNextDay(g); return nil }},
 		{'j', func(g *gocui.Gui, v *gocui.View) error { av.UpdateToNextTime(g); return nil }},
@@ -82,6 +91,60 @@ func initHelpKeybindings(g *gocui.Gui, av *views.AppView) error {
 	}
 	for _, kb := range notepadKeybindings {
 		if err := g.SetKeybinding("keybinds", kb.key, gocui.ModNone, kb.handler); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func initColorPickerKeybindings(g *gocui.Gui, av *views.AppView) error {
+	colorPickerKeybindings := []Keybind{
+		{'r', func(g *gocui.Gui, v *gocui.View) error { 
+			if av.IsColorPickerActive() {
+				return av.SelectColor(g, "Red")
+			}
+			return nil
+		}},
+		{'g', func(g *gocui.Gui, v *gocui.View) error { 
+			if av.IsColorPickerActive() {
+				return av.SelectColor(g, "Green")
+			}
+			return nil
+		}},
+		{'y', func(g *gocui.Gui, v *gocui.View) error { 
+			if av.IsColorPickerActive() {
+				return av.SelectColor(g, "Yellow")
+			}
+			return nil
+		}},
+		{'b', func(g *gocui.Gui, v *gocui.View) error { 
+			if av.IsColorPickerActive() {
+				return av.SelectColor(g, "Blue")
+			}
+			return nil
+		}},
+		{'m', func(g *gocui.Gui, v *gocui.View) error { 
+			if av.IsColorPickerActive() {
+				return av.SelectColor(g, "Magenta")
+			}
+			return nil
+		}},
+		{'w', func(g *gocui.Gui, v *gocui.View) error { 
+			if av.IsColorPickerActive() {
+				return av.SelectColor(g, "White")
+			}
+			return nil
+		}},
+		{gocui.KeyEsc, func(g *gocui.Gui, v *gocui.View) error { 
+			if av.IsColorPickerActive() {
+				return av.CloseColorPicker(g)
+			}
+			return nil
+		}},
+	}
+	for _, kb := range colorPickerKeybindings {
+		if err := g.SetKeybinding("", kb.key, gocui.ModNone, kb.handler); err != nil {
 			return err
 		}
 	}
