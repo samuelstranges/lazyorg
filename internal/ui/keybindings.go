@@ -52,6 +52,8 @@ func initMainKeybindings(g *gocui.Gui, av *views.AppView) error {
 		{'L', func(g *gocui.Gui, v *gocui.View) error { av.UpdateToNextWeek(); return nil }},
 		{'d', func(g *gocui.Gui, v *gocui.View) error { av.DeleteEvent(g); return nil }},
 		{'D', func(g *gocui.Gui, v *gocui.View) error { av.DeleteEvents(g); return nil }},
+		{'y', func(g *gocui.Gui, v *gocui.View) error { av.CopyEvent(g); return nil }},
+		{'p', func(g *gocui.Gui, v *gocui.View) error { return av.PasteEvent(g) }},
 		{gocui.KeyCtrlN, func(g *gocui.Gui, v *gocui.View) error { return av.ChangeToNotepadView(g) }},
 		{gocui.KeyCtrlS, func(g *gocui.Gui, v *gocui.View) error { return av.ShowOrHideSideView(g) }},
 		{'?', func(g *gocui.Gui, v *gocui.View) error { return av.ShowKeybinds(g) }},
@@ -143,9 +145,13 @@ func initColorPickerKeybindings(g *gocui.Gui, av *views.AppView) error {
 			return nil
 		}},
 	}
-	for _, kb := range colorPickerKeybindings {
-		if err := g.SetKeybinding("", kb.key, gocui.ModNone, kb.handler); err != nil {
-			return err
+	
+	// Add keybindings only to the main day views, not globally
+	for _, viewName := range views.WeekdayNames {
+		for _, kb := range colorPickerKeybindings {
+			if err := g.SetKeybinding(viewName, kb.key, gocui.ModNone, kb.handler); err != nil {
+				return err
+			}
 		}
 	}
 

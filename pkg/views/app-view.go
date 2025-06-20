@@ -1,6 +1,8 @@
 package views
 
 import (
+	"fmt"
+	"os"
 	"time"
 
 	"github.com/HubertBel/lazyorg/internal/calendar"
@@ -23,6 +25,7 @@ type AppView struct {
 	
 	colorPickerEvent  *EventView
 	colorPickerActive bool
+	copiedEvent       *calendar.Event
 }
 
 func NewAppView(g *gocui.Gui, db *database.Database) *AppView {
@@ -212,6 +215,11 @@ func (av *AppView) DeleteEvent(g *gocui.Gui) {
 	if view, ok := av.FindChildView(WeekdayNames[av.Calendar.CurrentDay.Date.Weekday()]); ok {
 		if dayView, ok := view.(*DayView); ok {
 			if eventView, ok := dayView.IsOnEvent(y); ok {
+				// Copy event to yank buffer before deleting (vim-like behavior)
+				copiedEvent := *eventView.Event
+				av.copiedEvent = &copiedEvent
+				
+				// Delete the event
 				av.Database.DeleteEventById(eventView.Event.Id)
 			}
 		}
@@ -334,6 +342,86 @@ func (av *AppView) CloseColorPicker(g *gocui.Gui) error {
 	if _, err := g.SetCurrentView(viewName); err != nil {
 		return err
 	}
+	return nil
+}
+
+func (av *AppView) CopyEvent(g *gocui.Gui) {
+	_, y := g.CurrentView().Cursor()
+
+	if view, ok := av.FindChildView(WeekdayNames[av.Calendar.CurrentDay.Date.Weekday()]); ok {
+		if dayView, ok := view.(*DayView); ok {
+			if eventView, ok := dayView.IsOnEvent(y); ok {
+				// Create a copy of the event
+				copiedEvent := *eventView.Event
+				av.copiedEvent = &copiedEvent
+			}
+		}
+	}
+}
+
+func (av *AppView) PasteEvent(g *gocui.Gui) error {
+	if av.copiedEvent == nil {
+		return nil // Nothing to paste
+	}
+
+	// DEBUGGING: Let's see what's happening
+	currentView := g.CurrentView()
+	currentViewName := ""
+	if currentView != nil {
+		currentViewName = currentView.Name()
+	}
+	
+	calendarWeekday := av.Calendar.CurrentDay.Date.Weekday()
+	calendarWeekdayName := WeekdayNames[calendarWeekday]
+	calendarDate := av.Calendar.CurrentDay.Date
+	
+	// Print debug info to a file
+	debugInfo := fmt.Sprintf("PASTE DEBUG:\n")
+	debugInfo += fmt.Sprintf("  Current View Name: %s\n", currentViewName)
+	debugInfo += fmt.Sprintf("  Calendar Weekday(): %d (%s)\n", calendarWeekday, calendarWeekdayName)
+	debugInfo += fmt.Sprintf("  Calendar Date: %s\n", calendarDate.Format("2006-01-02 15:04:05"))
+	debugInfo += fmt.Sprintf("  Calendar Date Weekday: %s\n", calendarDate.Weekday().String())
+	
+	// Print all week days for reference
+	debugInfo += fmt.Sprintf("  Week Days:\n")
+	for i, day := range av.Calendar.CurrentWeek.Days {
+		debugInfo += fmt.Sprintf("    [%d] %s: %s\n", i, WeekdayNames[i], day.Date.Format("2006-01-02"))
+	}
+	
+	// Write to debug file
+	os.WriteFile("/tmp/lazyorg_debug.txt", []byte(debugInfo), 0644)
+
+	// Use the exact same logic as DeleteEvent
+	if view, ok := av.FindChildView(WeekdayNames[av.Calendar.CurrentDay.Date.Weekday()]); ok {
+		if _, ok := view.(*DayView); ok {
+			// Create a new event based on the copied one
+			newEvent := *av.copiedEvent
+			newEvent.Id = 0 // Reset ID so database will assign a new one
+			
+			// Use the current calendar day and time directly
+			newEvent.Time = av.Calendar.CurrentDay.Date
+			
+			// Add final time to debug
+			finalDebug := fmt.Sprintf("\nFINAL EVENT TIME: %s\n", newEvent.Time.Format("2006-01-02 15:04:05"))
+			os.WriteFile("/tmp/lazyorg_debug.txt", []byte(debugInfo + finalDebug), 0644)
+
+			// Add to database
+			if _, err := av.Database.AddEvent(newEvent); err != nil {
+				return err
+			}
+
+			// Refresh events from database to ensure proper display
+			if err := av.updateEventsFromDatabase(); err != nil {
+				return err
+			}
+
+			// Force a view update to refresh the display
+			if err := av.UpdateChildren(g); err != nil {
+				return err
+			}
+		}
+	}
+
 	return nil
 }
 

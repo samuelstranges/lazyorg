@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/HubertBel/lazyorg/internal/calendar"
-	"github.com/HubertBel/lazyorg/internal/utils"
 	"github.com/jroimartin/gocui"
 	_ "github.com/mattn/go-sqlite3"
 )
@@ -127,11 +126,14 @@ func (database *Database) GetEventById(id int) (*calendar.Event, error) {
 }
 
 func (database *Database) GetEventsByDate(date time.Time) ([]*calendar.Event, error) {
-	formattedDate := utils.FormatDate(date)
+	// Create start and end of day in local timezone to avoid timezone issues
+	startOfDay := time.Date(date.Year(), date.Month(), date.Day(), 0, 0, 0, 0, date.Location())
+	endOfDay := startOfDay.AddDate(0, 0, 1)
 
 	rows, err := database.db.Query(`
-        SELECT * FROM events WHERE date(time) = ?`,
-		formattedDate,
+        SELECT * FROM events WHERE time >= ? AND time < ?`,
+		startOfDay.Format("2006-01-02 15:04:05"),
+		endOfDay.Format("2006-01-02 15:04:05"),
 	)
 	if err != nil {
 		return nil, err

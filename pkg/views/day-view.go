@@ -104,7 +104,9 @@ func (dv *DayView) updateChildViewProperties(g *gocui.Gui) error {
 			eventEndTime := event.Time.Add(time.Duration(event.DurationHour * float64(time.Hour)))
 			
 			// Check if next event starts immediately after this one and has same color
-			if nextEvent.Time.Equal(eventEndTime) && nextEvent.Color == event.Color {
+			// Use a small tolerance for time comparison to handle minor precision differences
+			timeDiff := nextEvent.Time.Sub(eventEndTime)
+			if timeDiff >= 0 && timeDiff < time.Minute && nextEvent.Color == event.Color {
 				showBottomBorder = true
 			}
 		}
@@ -139,10 +141,16 @@ func (dv *DayView) updateChildViewProperties(g *gocui.Gui) error {
 }
 
 func (dv *DayView) IsOnEvent(y int) (*EventView, bool) {
-	y += dv.Y + 1
+	// Convert cursor position to absolute screen coordinates
+	absoluteY := dv.Y + y
 	for pair := dv.children.Newest(); pair != nil; pair = pair.Prev() {
 		if eventView, ok := pair.Value.(*EventView); ok {
-			if y >= eventView.Y && y < (eventView.Y+eventView.H) {
+			// Subtract 1 from height to exclude the bottom padding/underline row from cursor detection
+			detectableHeight := eventView.H - 1
+			if detectableHeight < 1 {
+				detectableHeight = 1 // Ensure at least 1 row is detectable
+			}
+			if absoluteY >= eventView.Y && absoluteY < (eventView.Y+detectableHeight) {
 				return eventView, true
 			}
 		}

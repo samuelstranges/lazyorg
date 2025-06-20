@@ -46,6 +46,8 @@ func (kbv *KeybindsView) Update(g *gocui.Gui) error {
 	fmt.Fprintln(v, " a            - Add new event")
 	fmt.Fprintln(v, " e            - Edit event")
 	fmt.Fprintln(v, " c            - Color picker")
+	fmt.Fprintln(v, " y            - Copy event")
+	fmt.Fprintln(v, " p            - Paste event")
 	fmt.Fprintln(v, " d            - Delete event")
 	fmt.Fprintln(v, " D            - Delete events with same name")
 	fmt.Fprintln(v, "")
