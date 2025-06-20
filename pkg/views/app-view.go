@@ -381,6 +381,11 @@ func (av *AppView) ShowEditEventPopup(g *gocui.Gui) error {
 func (av *AppView) ShowColorPicker(g *gocui.Gui) error {
 	hoveredView := av.GetHoveredOnView(g)
 	if eventView, ok := hoveredView.(*EventView); ok {
+		// Ensure we have a valid event before showing color picker
+		if eventView.Event == nil {
+			return nil
+		}
+		
 		av.colorPickerEvent = eventView
 		av.colorPickerActive = true
 		
@@ -431,7 +436,7 @@ func (av *AppView) IsColorPickerActive() bool {
 }
 
 func (av *AppView) SelectColor(g *gocui.Gui, colorName string) error {
-	if av.colorPickerEvent == nil {
+	if av.colorPickerEvent == nil || av.colorPickerEvent.Event == nil {
 		return av.CloseColorPicker(g)
 	}
 	
@@ -647,7 +652,10 @@ func (av *AppView) GetCursorY() int {
 
 	if view, ok := av.FindChildView("time"); ok {
 		if timeView, ok := view.(*TimeView); ok {
-			y = utils.TimeToPosition(av.Calendar.CurrentDay.Date, timeView.Body)
+			pos := utils.TimeToPosition(av.Calendar.CurrentDay.Date, timeView.Body)
+			if pos >= 0 {
+				y = pos
+			}
 		}
 	}
 
