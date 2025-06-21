@@ -1,7 +1,6 @@
 package views
 
 import (
-	"fmt"
 	"strconv"
 	"strings"
 	"time"
@@ -136,7 +135,13 @@ func (epv *EventPopupView) CreateEventFromInputs() *calendar.Event {
 	time, _ := time.Parse(TimeFormat, epv.Form.GetFieldText("Time"))
 	location := epv.Form.GetFieldText("Location")
 
-	duration, _ := strconv.ParseFloat(epv.Form.GetFieldText("Duration (eg. 1.5)"), 64)
+	durationText := strings.TrimSpace(epv.Form.GetFieldText("Duration (eg. 1.5)"))
+	duration := 1.0 // Default to 1 hour
+	if durationText != "" {
+		if parsedDuration, err := strconv.ParseFloat(durationText, 64); err == nil && parsedDuration > 0 {
+			duration = parsedDuration
+		}
+	}
 	frequency, _ := strconv.Atoi(epv.Form.GetFieldText("Frequency"))
 	occurence, _ := strconv.Atoi(epv.Form.GetFieldText("Occurence"))
 	colorName := epv.Form.GetFieldText("Color")
@@ -207,22 +212,16 @@ func (epv *EventPopupView) positionCursorsAtEnd(g *gocui.Gui) {
 
 func (epv *EventPopupView) GotoTimeForm(g *gocui.Gui, title string) *component.Form {
 	form := component.NewForm(g, title, epv.X, epv.Y, epv.W, epv.H)
-
-	currentTime := epv.Calendar.CurrentDay.Date
-	defaultHour := fmt.Sprintf("%02d", currentTime.Hour())
 	
-	form.AddInputField("Hour", LabelWidth, FieldWidth).SetText(defaultHour).AddValidate("Invalid hour (00-23)", utils.ValidateHourMinute)
+	form.AddInputField("Hour (eg. 14)", LabelWidth, FieldWidth).SetText("").AddValidate("Invalid hour (00-23)", utils.ValidateHourMinute)
 
 	return form
 }
 
 func (epv *EventPopupView) GotoDateForm(g *gocui.Gui, title string) *component.Form {
 	form := component.NewForm(g, title, epv.X, epv.Y, epv.W, epv.H)
-
-	currentDate := epv.Calendar.CurrentDay.Date
-	defaultDate := fmt.Sprintf("%04d%02d%02d", currentDate.Year(), currentDate.Month(), currentDate.Day())
 	
-	form.AddInputField("Date", LabelWidth, FieldWidth).SetText(defaultDate).AddValidate("Invalid date (YYYYMMDD)", utils.ValidateDate)
+	form.AddInputField("Date (eg. 20250622)", LabelWidth, FieldWidth).SetText("").AddValidate("Invalid date (YYYYMMDD)", utils.ValidateDate)
 
 	return form
 }
@@ -282,7 +281,7 @@ func (epv *EventPopupView) GotoTime(g *gocui.Gui, v *gocui.View) error {
 		}
 	}
 
-	hourStr := epv.Form.GetFieldText("Hour")
+	hourStr := epv.Form.GetFieldText("Hour (eg. 14)")
 	hour, _ := strconv.Atoi(hourStr)
 
 	epv.Calendar.GotoTime(hour, 0)
@@ -301,7 +300,7 @@ func (epv *EventPopupView) GotoDate(g *gocui.Gui, v *gocui.View) error {
 		}
 	}
 
-	dateStr := epv.Form.GetFieldText("Date")
+	dateStr := epv.Form.GetFieldText("Date (eg. 20250622)")
 	year, _ := strconv.Atoi(dateStr[:4])
 	month, _ := strconv.Atoi(dateStr[4:6])
 	day, _ := strconv.Atoi(dateStr[6:8])
