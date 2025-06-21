@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"sort"
+	"strings"
 	"time"
 
 	"github.com/HubertBel/lazyorg/internal/calendar"
@@ -33,6 +34,12 @@ type AppView struct {
 	copiedEvent       *calendar.Event
 	gotoMode          bool
 	modeSwitcher      *ModeSwitcher
+	
+	// Search functionality
+	searchQuery       string
+	searchMatches     []*calendar.Event
+	currentMatchIndex int
+	isSearchActive    bool
 }
 
 func NewAppView(g *gocui.Gui, db *database.Database, cfg *config.Config) *AppView {
@@ -99,6 +106,10 @@ func (av *AppView) Update(g *gocui.Gui) error {
 	}
 
 	if err = av.UpdateCurrentView(g); err != nil {
+		return err
+	}
+	
+	if err = av.showSearchStatus(g); err != nil {
 		return err
 	}
 
@@ -243,6 +254,134 @@ func (av *AppView) getAllEventsFromWeek() []*calendar.Event {
 	})
 	
 	return allEvents
+}
+
+func (av *AppView) StartSearch(g *gocui.Gui) error {
+	if popup, ok := av.GetChild("popup"); ok {
+		if popupView, ok := popup.(*EventPopupView); ok {
+			// Set up the search callback
+			popupView.SearchCallback = func(query string) error {
+				return av.executeSearchQuery(query)
+			}
+			
+			popup.SetProperties(
+				av.X+(av.W-PopupWidth)/2,
+				av.Y+(av.H-PopupHeight)/2,
+				PopupWidth,
+				PopupHeight,
+			)
+			return popupView.ShowSearchPopup(g)
+		}
+	}
+	return nil
+}
+
+func (av *AppView) executeSearchQuery(query string) error {
+	av.searchQuery = query
+	av.searchMatches = av.findMatches(query)
+	av.currentMatchIndex = 0
+	av.isSearchActive = true
+	
+	if len(av.searchMatches) > 0 {
+		// Jump to first match
+		firstMatch := av.searchMatches[0]
+		av.Calendar.CurrentDay.Date = firstMatch.Time
+		av.Calendar.UpdateWeek()
+	}
+	
+	return nil
+}
+
+func (av *AppView) findMatches(query string) []*calendar.Event {
+	var matches []*calendar.Event
+	allEvents := av.getAllEventsFromWeek()
+	
+	query = strings.ToLower(query)
+	
+	for _, event := range allEvents {
+		if strings.Contains(strings.ToLower(event.Name), query) ||
+		   strings.Contains(strings.ToLower(event.Description), query) ||
+		   strings.Contains(strings.ToLower(event.Location), query) {
+			matches = append(matches, event)
+		}
+	}
+	
+	return matches
+}
+
+func (av *AppView) GoToNextMatch() error {
+	if !av.isSearchActive || len(av.searchMatches) == 0 {
+		return nil
+	}
+	
+	av.currentMatchIndex = (av.currentMatchIndex + 1) % len(av.searchMatches)
+	match := av.searchMatches[av.currentMatchIndex]
+	av.Calendar.CurrentDay.Date = match.Time
+	av.Calendar.UpdateWeek()
+	
+	return nil
+}
+
+func (av *AppView) GoToPrevMatch() error {
+	if !av.isSearchActive || len(av.searchMatches) == 0 {
+		return nil
+	}
+	
+	av.currentMatchIndex = (av.currentMatchIndex - 1 + len(av.searchMatches)) % len(av.searchMatches)
+	match := av.searchMatches[av.currentMatchIndex]
+	av.Calendar.CurrentDay.Date = match.Time
+	av.Calendar.UpdateWeek()
+	
+	return nil
+}
+
+func (av *AppView) ClearSearch() {
+	av.isSearchActive = false
+	av.searchQuery = ""
+	av.searchMatches = nil
+	av.currentMatchIndex = 0
+}
+
+func (av *AppView) GetSearchStatus() string {
+	if !av.isSearchActive || len(av.searchMatches) == 0 {
+		return ""
+	}
+	
+	return fmt.Sprintf("%d/%d matches for '%s'", av.currentMatchIndex+1, len(av.searchMatches), av.searchQuery)
+}
+
+func (av *AppView) showSearchStatus(g *gocui.Gui) error {
+	if !av.isSearchActive || len(av.searchMatches) == 0 {
+		// Hide search status if not active
+		if err := g.DeleteView("search-status"); err != nil && err != gocui.ErrUnknownView {
+			return err
+		}
+		return nil
+	}
+	
+	status := av.GetSearchStatus()
+	width := len(status) + 4
+	height := 3
+	maxX, maxY := g.Size()
+	
+	// Position in bottom-right corner
+	x := maxX - width - 2
+	y := maxY - height - 2
+	
+	v, err := g.SetView("search-status", x, y, x+width, y+height)
+	if err != nil && err != gocui.ErrUnknownView {
+		return err
+	}
+	
+	v.Title = ""
+	v.Frame = true
+	v.Clear()
+	v.Write([]byte(status))
+	
+	// Set on top so it's visible
+	g.SetViewOnTop("search-status")
+	
+	return nil
 }
 
 func (av *AppView) ShowGotoTimePopup(g *gocui.Gui, v *gocui.View) error {

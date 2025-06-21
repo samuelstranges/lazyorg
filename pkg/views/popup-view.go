@@ -3,6 +3,7 @@ package views
 import (
 	"fmt"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/HubertBel/lazyorg/internal/calendar"
@@ -19,6 +20,7 @@ type EventPopupView struct {
 	Database *database.Database
 
 	IsVisible bool
+	SearchCallback func(query string) error
 }
 
 func NewEvenPopup(g *gocui.Gui, c *calendar.Calendar, db *database.Database) *EventPopupView {
@@ -306,6 +308,54 @@ func (epv *EventPopupView) GotoDate(g *gocui.Gui, v *gocui.View) error {
 
 	epv.Calendar.GotoDate(year, month, day)
 
+	return epv.Close(g, v)
+}
+
+func (epv *EventPopupView) SearchForm(g *gocui.Gui, title string) *component.Form {
+	form := component.NewForm(g, title, epv.X, epv.Y, epv.W, epv.H)
+	
+	form.AddInputField("Search", LabelWidth, FieldWidth).SetText("")
+	
+	return form
+}
+
+func (epv *EventPopupView) ShowSearchPopup(g *gocui.Gui) error {
+	if epv.IsVisible {
+		return nil
+	}
+
+	epv.Form = epv.SearchForm(g, "Search Events")
+
+	epv.addKeybind(gocui.KeyEsc, epv.Close)
+	epv.addKeybind(gocui.KeyEnter, epv.ExecuteSearch)
+
+	epv.Form.AddButton("Search", epv.ExecuteSearch)
+	epv.Form.AddButton("Cancel", epv.Close)
+
+	epv.Form.SetCurrentItem(0)
+	epv.IsVisible = true
+	epv.Form.Draw()
+
+	return nil
+}
+
+func (epv *EventPopupView) ExecuteSearch(g *gocui.Gui, v *gocui.View) error {
+	if !epv.IsVisible {
+		return nil
+	}
+
+	query := strings.TrimSpace(epv.Form.GetFieldText("Search"))
+	if query == "" {
+		return epv.Close(g, v)
+	}
+
+	// Call the search callback if it exists
+	if epv.SearchCallback != nil {
+		if err := epv.SearchCallback(query); err != nil {
+			return err
+		}
+	}
+	
 	return epv.Close(g, v)
 }
 
