@@ -46,7 +46,7 @@ func (epv *EventPopupView) NewEventForm(g *gocui.Gui, title, name, time, locatio
 	form.AddInputField("Name", LabelWidth, FieldWidth).SetText(name).AddValidate("Invalid name", utils.ValidateName)
 	form.AddInputField("Time", LabelWidth, FieldWidth).SetText(time).AddValidate("Invalid time", utils.ValidateTime)
 	form.AddInputField("Location", LabelWidth, FieldWidth).SetText(location)
-	form.AddInputField("Duration", LabelWidth, FieldWidth).SetText(duration).AddValidate("Invalid duration", utils.ValidateDuration)
+	form.AddInputField("Duration (eg. 1.5)", LabelWidth, FieldWidth).SetText(duration).AddValidate("Invalid duration", utils.ValidateDuration)
 	form.AddInputField("Frequency", LabelWidth, FieldWidth).SetText(frequency).AddValidate("Invalid frequency", utils.ValidateNumber)
 	form.AddInputField("Occurence", LabelWidth, FieldWidth).SetText(occurence).AddValidate("Invalid occurence", utils.ValidateNumber)
 	form.AddInputField("Color", LabelWidth, FieldWidth).SetText(color)
@@ -73,7 +73,7 @@ func (epv *EventPopupView) ShowNewEventPopup(g *gocui.Gui) error {
 		return nil
 	}
 
-	epv.Form = epv.NewEventForm(g, "New Event", "", epv.Calendar.CurrentDay.Date.Format(TimeFormat), "", "1.0", "7", "1", "", "Red")
+	epv.Form = epv.NewEventForm(g, "New Event", "", epv.Calendar.CurrentDay.Date.Format(TimeFormat), "", "", "7", "1", "", "Red")
 
 	epv.addKeybind(gocui.KeyEsc, epv.Close)
 	epv.addKeybind(gocui.KeyEnter, epv.AddEvent)
@@ -136,7 +136,7 @@ func (epv *EventPopupView) CreateEventFromInputs() *calendar.Event {
 	time, _ := time.Parse(TimeFormat, epv.Form.GetFieldText("Time"))
 	location := epv.Form.GetFieldText("Location")
 
-	duration, _ := strconv.ParseFloat(epv.Form.GetFieldText("Duration"), 64)
+	duration, _ := strconv.ParseFloat(epv.Form.GetFieldText("Duration (eg. 1.5)"), 64)
 	frequency, _ := strconv.Atoi(epv.Form.GetFieldText("Frequency"))
 	occurence, _ := strconv.Atoi(epv.Form.GetFieldText("Occurence"))
 	colorName := epv.Form.GetFieldText("Color")
