@@ -63,7 +63,7 @@ func (kbv *KeybindsView) Update(g *gocui.Gui) error {
 	fmt.Fprintln(v, " r            - Redo last undone action")
 	fmt.Fprintln(v, "")
 	fmt.Fprintln(v, " Color Picker:")
-	fmt.Fprintln(v, " c            - Opens color picker form (enter color name)")
+	fmt.Fprintln(v, " c            - Opens color picker form (enter r/g/y/b/m/c/w or full name)")
 	fmt.Fprintln(v, "")
 	fmt.Fprintln(v, " View Controls:")
 	fmt.Fprintln(v, " Ctrl+s       - Show/Hide side view")

@@ -240,10 +240,8 @@ func (epv *EventPopupView) GotoForm(g *gocui.Gui, title string) *component.Form 
 func (epv *EventPopupView) ColorPickerForm(g *gocui.Gui, title string) *component.Form {
 	form := component.NewForm(g, title, epv.X, epv.Y, epv.W, epv.H)
 
-	colorNames := calendar.GetColorNames()
-	defaultColor := colorNames[0] // Default to first color
-	
-	form.AddInputField("Color", LabelWidth, FieldWidth).SetText(defaultColor)
+	// Start with empty field so user can type single letters directly
+	form.AddInputField("Color", LabelWidth, FieldWidth).SetText("")
 
 	return form
 }
@@ -275,7 +273,7 @@ func (epv *EventPopupView) ShowColorPickerPopup(g *gocui.Gui) error {
 		return nil
 	}
 
-	epv.Form = epv.ColorPickerForm(g, "Select Color")
+	epv.Form = epv.ColorPickerForm(g, "Select Color (r/g/y/b/m/c/w or full name)")
 
 	epv.addKeybind(gocui.KeyEsc, epv.Close)
 	epv.addKeybind(gocui.KeyEnter, epv.SelectColor)
@@ -320,12 +318,38 @@ func (epv *EventPopupView) Goto(g *gocui.Gui, v *gocui.View) error {
 	return epv.Close(g, v)
 }
 
+// expandColorShorthand expands single letter shortcuts to full color names
+func (epv *EventPopupView) expandColorShorthand(input string) string {
+	input = strings.ToLower(strings.TrimSpace(input))
+	
+	switch input {
+	case "r":
+		return "Red"
+	case "g":
+		return "Green"
+	case "y":
+		return "Yellow"
+	case "b":
+		return "Blue"
+	case "m":
+		return "Magenta"
+	case "c":
+		return "Cyan"
+	case "w":
+		return "White"
+	default:
+		// Return the input as-is if it's not a single letter shortcut
+		return input
+	}
+}
+
 func (epv *EventPopupView) SelectColor(g *gocui.Gui, v *gocui.View) error {
 	if !epv.IsVisible {
 		return nil
 	}
 
-	colorName := epv.Form.GetFieldText("Color")
+	colorInput := epv.Form.GetFieldText("Color")
+	colorName := epv.expandColorShorthand(colorInput)
 	
 	// Use callback to handle color selection
 	if epv.ColorPickerCallback != nil {
