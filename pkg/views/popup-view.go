@@ -126,7 +126,7 @@ func (epv *EventPopupView) ShowEditEventPopup(g *gocui.Gui, eventView *EventView
 	return nil
 }
 
-func (epv *EventPopupView) CreateEventFromInputs() *calendar.Event {
+func (epv *EventPopupView) CreateEventFromInputs(existingEvent *calendar.Event) *calendar.Event {
 	for _, v := range epv.Form.GetInputs() {
 		if !v.IsValid() {
 			return nil
@@ -137,12 +137,24 @@ func (epv *EventPopupView) CreateEventFromInputs() *calendar.Event {
 	time, _ := time.Parse(TimeFormat, epv.Form.GetFieldText("Time"))
 	location := epv.Form.GetFieldText("Location")
 
+	// Try both field names since NewEventForm and EditEventForm use different labels
 	durationText := strings.TrimSpace(epv.Form.GetFieldText("Duration (eg. 1.5)"))
-	duration := 1.0 // Default to 1 hour
+	if durationText == "" {
+		durationText = strings.TrimSpace(epv.Form.GetFieldText("Duration"))
+	}
+	duration := 1.0 // Default to 1 hour for new events
+	
+	// First check if there's a value in the form field
 	if durationText != "" {
 		if parsedDuration, err := strconv.ParseFloat(durationText, 64); err == nil && parsedDuration > 0 {
 			duration = parsedDuration
+		} else if existingEvent != nil {
+			// If parsing failed but we're editing, use existing duration
+			duration = existingEvent.DurationHour
 		}
+	} else if existingEvent != nil {
+		// If field is empty and we're editing, preserve original duration
+		duration = existingEvent.DurationHour
 	}
 	frequency, _ := strconv.Atoi(epv.Form.GetFieldText("Frequency"))
 	occurence, _ := strconv.Atoi(epv.Form.GetFieldText("Occurence"))
@@ -163,7 +175,7 @@ func (epv *EventPopupView) AddEvent(g *gocui.Gui, v *gocui.View) error {
 	}
 
 	var newEvent *calendar.Event
-	if newEvent = epv.CreateEventFromInputs(); newEvent == nil {
+	if newEvent = epv.CreateEventFromInputs(nil); newEvent == nil {
 		return nil
 	}
 	events := newEvent.GetReccuringEvents()
@@ -183,7 +195,7 @@ func (epv *EventPopupView) EditEvent(g *gocui.Gui, v *gocui.View, event *calenda
 	}
 
 	var newEvent *calendar.Event
-	if newEvent = epv.CreateEventFromInputs(); newEvent == nil {
+	if newEvent = epv.CreateEventFromInputs(event); newEvent == nil {
 		return nil
 	}
 	newEvent.Id = event.Id
