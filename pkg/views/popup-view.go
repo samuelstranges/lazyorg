@@ -1,6 +1,7 @@
 package views
 
 import (
+	"fmt"
 	"strconv"
 	"strings"
 	"time"
@@ -20,6 +21,7 @@ type EventPopupView struct {
 
 	IsVisible bool
 	SearchCallback func(query string) error
+	ColorPickerCallback func(colorName string) error
 }
 
 func NewEvenPopup(g *gocui.Gui, c *calendar.Calendar, db *database.Database) *EventPopupView {
@@ -210,33 +212,41 @@ func (epv *EventPopupView) positionCursorsAtEnd(g *gocui.Gui) {
 	}
 }
 
-func (epv *EventPopupView) GotoTimeForm(g *gocui.Gui, title string) *component.Form {
+func (epv *EventPopupView) GotoForm(g *gocui.Gui, title string) *component.Form {
 	form := component.NewForm(g, title, epv.X, epv.Y, epv.W, epv.H)
+
+	currentTime := epv.Calendar.CurrentDay.Date
+	defaultDate := fmt.Sprintf("%04d%02d%02d", currentTime.Year(), currentTime.Month(), currentTime.Day())
+	defaultHour := fmt.Sprintf("%02d", currentTime.Hour())
 	
-	form.AddInputField("Hour (eg. 14)", LabelWidth, FieldWidth).SetText("").AddValidate("Invalid hour (00-23)", utils.ValidateHourMinute)
+	form.AddInputField("Date", LabelWidth, FieldWidth).SetText(defaultDate).AddValidate("Invalid date (YYYYMMDD)", utils.ValidateDate)
+	form.AddInputField("Hour", LabelWidth, FieldWidth).SetText(defaultHour).AddValidate("Invalid hour (00-23)", utils.ValidateHourMinute)
 
 	return form
 }
 
-func (epv *EventPopupView) GotoDateForm(g *gocui.Gui, title string) *component.Form {
+func (epv *EventPopupView) ColorPickerForm(g *gocui.Gui, title string) *component.Form {
 	form := component.NewForm(g, title, epv.X, epv.Y, epv.W, epv.H)
+
+	colorNames := calendar.GetColorNames()
+	defaultColor := colorNames[0] // Default to first color
 	
-	form.AddInputField("Date (eg. 20250622)", LabelWidth, FieldWidth).SetText("").AddValidate("Invalid date (YYYYMMDD)", utils.ValidateDate)
+	form.AddInputField("Color", LabelWidth, FieldWidth).SetText(defaultColor)
 
 	return form
 }
 
-func (epv *EventPopupView) ShowGotoTimePopup(g *gocui.Gui) error {
+func (epv *EventPopupView) ShowGotoPopup(g *gocui.Gui) error {
 	if epv.IsVisible {
 		return nil
 	}
 
-	epv.Form = epv.GotoTimeForm(g, "Goto Time")
+	epv.Form = epv.GotoForm(g, "Goto Date/Time")
 
 	epv.addKeybind(gocui.KeyEsc, epv.Close)
-	epv.addKeybind(gocui.KeyEnter, epv.GotoTime)
+	epv.addKeybind(gocui.KeyEnter, epv.Goto)
 
-	epv.Form.AddButton("Goto", epv.GotoTime)
+	epv.Form.AddButton("Goto", epv.Goto)
 	epv.Form.AddButton("Cancel", epv.Close)
 
 	epv.Form.SetCurrentItem(0)
@@ -248,17 +258,17 @@ func (epv *EventPopupView) ShowGotoTimePopup(g *gocui.Gui) error {
 	return nil
 }
 
-func (epv *EventPopupView) ShowGotoDatePopup(g *gocui.Gui) error {
+func (epv *EventPopupView) ShowColorPickerPopup(g *gocui.Gui) error {
 	if epv.IsVisible {
 		return nil
 	}
 
-	epv.Form = epv.GotoDateForm(g, "Goto Date")
+	epv.Form = epv.ColorPickerForm(g, "Select Color")
 
 	epv.addKeybind(gocui.KeyEsc, epv.Close)
-	epv.addKeybind(gocui.KeyEnter, epv.GotoDate)
+	epv.addKeybind(gocui.KeyEnter, epv.SelectColor)
 
-	epv.Form.AddButton("Goto", epv.GotoDate)
+	epv.Form.AddButton("Select", epv.SelectColor)
 	epv.Form.AddButton("Cancel", epv.Close)
 
 	epv.Form.SetCurrentItem(0)
@@ -270,7 +280,7 @@ func (epv *EventPopupView) ShowGotoDatePopup(g *gocui.Gui) error {
 	return nil
 }
 
-func (epv *EventPopupView) GotoTime(g *gocui.Gui, v *gocui.View) error {
+func (epv *EventPopupView) Goto(g *gocui.Gui, v *gocui.View) error {
 	if !epv.IsVisible {
 		return nil
 	}
@@ -281,31 +291,36 @@ func (epv *EventPopupView) GotoTime(g *gocui.Gui, v *gocui.View) error {
 		}
 	}
 
-	hourStr := epv.Form.GetFieldText("Hour (eg. 14)")
+	dateStr := epv.Form.GetFieldText("Date")
+	hourStr := epv.Form.GetFieldText("Hour")
+	
+	year, _ := strconv.Atoi(dateStr[:4])
+	month, _ := strconv.Atoi(dateStr[4:6])
+	day, _ := strconv.Atoi(dateStr[6:8])
 	hour, _ := strconv.Atoi(hourStr)
 
-	epv.Calendar.GotoTime(hour, 0)
+	// Set both date and time together
+	currentDate := epv.Calendar.CurrentDay.Date
+	newDate := time.Date(year, time.Month(month), day, hour, 0, 0, 0, currentDate.Location())
+	epv.Calendar.CurrentDay.Date = newDate
+	epv.Calendar.UpdateWeek()
 
 	return epv.Close(g, v)
 }
 
-func (epv *EventPopupView) GotoDate(g *gocui.Gui, v *gocui.View) error {
+func (epv *EventPopupView) SelectColor(g *gocui.Gui, v *gocui.View) error {
 	if !epv.IsVisible {
 		return nil
 	}
 
-	for _, v := range epv.Form.GetInputs() {
-		if !v.IsValid() {
-			return nil
+	colorName := epv.Form.GetFieldText("Color")
+	
+	// Use callback to handle color selection
+	if epv.ColorPickerCallback != nil {
+		if err := epv.ColorPickerCallback(colorName); err != nil {
+			return err
 		}
 	}
-
-	dateStr := epv.Form.GetFieldText("Date (eg. 20250622)")
-	year, _ := strconv.Atoi(dateStr[:4])
-	month, _ := strconv.Atoi(dateStr[4:6])
-	day, _ := strconv.Atoi(dateStr[6:8])
-
-	epv.Calendar.GotoDate(year, month, day)
 
 	return epv.Close(g, v)
 }

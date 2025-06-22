@@ -32,8 +32,6 @@ type AppView struct {
 	colorPickerEvent  *EventView
 	colorPickerActive bool
 	copiedEvent       *calendar.Event
-	gotoMode          bool
-	modeSwitcher      *ModeSwitcher
 	
 	// Search functionality
 	searchQuery       string
@@ -57,7 +55,6 @@ func NewAppView(g *gocui.Gui, db *database.Database, cfg *config.Config) *AppVie
 		Config:       cfg,
 	}
 	
-	av.modeSwitcher = NewModeSwitcher(g, av)
 
 	av.AddChild("title", NewTitleView(c))
 	av.AddChild("popup", NewEvenPopup(g, c, db))
@@ -384,72 +381,19 @@ func (av *AppView) showSearchStatus(g *gocui.Gui) error {
 	return nil
 }
 
-func (av *AppView) ShowGotoTimePopup(g *gocui.Gui, v *gocui.View) error {
+func (av *AppView) ShowGotoPopup(g *gocui.Gui) error {
 	if popup, ok := av.FindChildView("popup"); ok {
 		if popupView, ok := popup.(*EventPopupView); ok {
-			return popupView.ShowGotoTimePopup(g)
+			popup.SetProperties(
+				av.X+(av.W-PopupWidth)/2,
+				av.Y+(av.H-PopupHeight)/2,
+				PopupWidth,
+				PopupHeight,
+			)
+			return popupView.ShowGotoPopup(g)
 		}
 	}
 	return nil
-}
-
-func (av *AppView) ShowGotoDatePopup(g *gocui.Gui, v *gocui.View) error {
-	if popup, ok := av.FindChildView("popup"); ok {
-		if popupView, ok := popup.(*EventPopupView); ok {
-			return popupView.ShowGotoDatePopup(g)
-		}
-	}
-	return nil
-}
-
-func (av *AppView) ShowGotoMode(g *gocui.Gui) error {
-	av.gotoMode = true
-	
-	config := av.modeSwitcher.getGotoConfig()
-	config.OnEnter = func(g *gocui.Gui) error {
-		return av.showGotoModePopup(g)
-	}
-	
-	return av.modeSwitcher.EnterMode(config)
-}
-
-func (av *AppView) IsGotoModeActive() bool {
-	return av.modeSwitcher.IsInMode(ModeGoto)
-}
-
-func (av *AppView) HandleGotoTime(g *gocui.Gui, v *gocui.View) error {
-	if !av.IsGotoModeActive() {
-		return nil
-	}
-	av.CloseGotoMode(g)
-	return av.ShowGotoTimePopup(g, v)
-}
-
-func (av *AppView) HandleGotoDate(g *gocui.Gui, v *gocui.View) error {
-	if !av.IsGotoModeActive() {
-		return nil
-	}
-	av.CloseGotoMode(g)
-	return av.ShowGotoDatePopup(g, v)
-}
-
-func (av *AppView) showGotoModePopup(g *gocui.Gui) error {
-	v, err := g.SetView("gotomode", av.W/2-15, av.H/2-3, av.W/2+15, av.H/2+3)
-	if err != nil && err != gocui.ErrUnknownView {
-		return err
-	}
-	
-	v.Clear()
-	v.Write([]byte("Goto Mode:\n"))
-	v.Write([]byte("t - goto time (HH)\n"))
-	v.Write([]byte("d - goto date (YYYYMMDD)\n"))
-	v.Write([]byte("ESC - cancel"))
-	
-	return nil
-}
-
-func (av *AppView) CloseGotoMode(g *gocui.Gui) error {
-	return av.modeSwitcher.ExitCurrentMode()
 }
 
 func (av *AppView) ChangeToNotepadView(g *gocui.Gui) error {
@@ -594,68 +538,42 @@ func (av *AppView) ShowColorPicker(g *gocui.Gui) error {
 		av.colorPickerEvent = eventView
 		av.colorPickerActive = true
 		
-		config := av.modeSwitcher.getColorPickerConfig()
-		config.OnEnter = func(g *gocui.Gui) error {
-			return av.showColorPickerPopup(g)
+		if popup, ok := av.FindChildView("popup"); ok {
+			if popupView, ok := popup.(*EventPopupView); ok {
+				// Set up callback for color selection
+				popupView.ColorPickerCallback = func(colorName string) error {
+					color := calendar.ColorNameToAttribute(colorName)
+					av.colorPickerEvent.Event.Color = color
+					if err := av.EventManager.UpdateEvent(av.colorPickerEvent.Event.Id, av.colorPickerEvent.Event); err != nil {
+						return err
+					}
+					av.CloseColorPicker(g)
+					return nil
+				}
+				
+				popup.SetProperties(
+					av.X+(av.W-PopupWidth)/2,
+					av.Y+(av.H-PopupHeight)/2,
+					PopupWidth,
+					PopupHeight,
+				)
+				return popupView.ShowColorPickerPopup(g)
+			}
 		}
-		
-		return av.modeSwitcher.EnterMode(config)
 	}
 	return nil
 }
 
-func (av *AppView) showColorPickerPopup(g *gocui.Gui) error {
-	v, err := g.SetView("colorpicker", av.W/2-15, av.H/2-5, av.W/2+15, av.H/2+5)
-	if err != nil && err != gocui.ErrUnknownView {
-		return err
-	}
-	
-	v.Title = "Color Picker"
-	v.Clear()
-	v.Write([]byte("Select color:\n\n"))
-	v.Write([]byte("r - Red\n"))
-	v.Write([]byte("g - Green\n"))
-	v.Write([]byte("y - Yellow\n"))
-	v.Write([]byte("b - Blue\n"))
-	v.Write([]byte("m - Magenta\n"))
-	v.Write([]byte("c - Cyan\n"))
-	v.Write([]byte("w - White\n"))
-	v.Write([]byte("\nEsc - Cancel"))
-	
-	// Set the view on top so it receives input
-	g.SetViewOnTop("colorpicker")
-	
-	// Disable cursor for this view
-	g.Cursor = false
-	
-	// Make colorpicker the current view
-	if _, err := g.SetCurrentView("colorpicker"); err != nil {
-		return err
-	}
-	
-	return nil
-}
 
 func (av *AppView) IsColorPickerActive() bool {
-	return av.modeSwitcher.IsInMode(ModeColorPicker)
+	return av.colorPickerActive
 }
 
-func (av *AppView) SelectColor(g *gocui.Gui, colorName string) error {
-	if av.colorPickerEvent == nil || av.colorPickerEvent.Event == nil {
-		return av.CloseColorPicker(g)
-	}
-	
-	color := calendar.ColorNameToAttribute(colorName)
-	av.colorPickerEvent.Event.Color = color
-	if err := av.EventManager.UpdateEvent(av.colorPickerEvent.Event.Id, av.colorPickerEvent.Event); err != nil {
-		return err
-	}
-	
-	return av.CloseColorPicker(g)
-}
 
 func (av *AppView) CloseColorPicker(g *gocui.Gui) error {
-	return av.modeSwitcher.ExitCurrentMode()
+	av.colorPickerActive = false
+	av.colorPickerEvent = nil
+	return nil
 }
 
 func (av *AppView) CopyEvent(g *gocui.Gui) {

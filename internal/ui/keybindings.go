@@ -48,7 +48,7 @@ func initMainKeybindings(g *gocui.Gui, av *views.AppView) error {
 		{'p', func(g *gocui.Gui, v *gocui.View) error { return av.PasteEvent(g) }},
 		{'u', func(g *gocui.Gui, v *gocui.View) error { return av.Undo(g) }},
 		{'r', func(g *gocui.Gui, v *gocui.View) error { return av.Redo(g) }},
-		{'g', func(g *gocui.Gui, v *gocui.View) error { return av.ShowGotoMode(g) }},
+		{'g', func(g *gocui.Gui, v *gocui.View) error { return av.ShowGotoPopup(g) }},
 		{'w', func(g *gocui.Gui, v *gocui.View) error { av.JumpToNextEvent(); av.UpdateCurrentView(g); return nil }},
 		{'b', func(g *gocui.Gui, v *gocui.View) error { av.JumpToPrevEvent(); av.UpdateCurrentView(g); return nil }},
 		{'/', func(g *gocui.Gui, v *gocui.View) error { return av.StartSearch(g) }},
