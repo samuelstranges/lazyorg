@@ -226,6 +226,7 @@ LazyOrg includes comprehensive debug logging for troubleshooting time bounds and
 - **Paste Operations** (`pkg/views/app-view.go:608-680`): Calendar vs view date synchronization
 - **Overlap Detection** (`internal/database/database.go:275-341`): Detailed time range comparisons
 - **Database Queries** (`internal/database/database.go:130-185`): Event retrieval and date filtering
+- **Navigation Functions** (`pkg/views/app-view.go:JumpToNextEvent/JumpToPrevEvent`): Event sorting and chronological navigation
 
 **Debug Contents:**
 - Current view name vs Calendar.CurrentDay.Date synchronization
@@ -233,11 +234,13 @@ LazyOrg includes comprehensive debug logging for troubleshooting time bounds and
 - Step-by-step overlap detection logic with before/after comparisons
 - Database query parameters and retrieved event timestamps
 - Duration calculations and floating-point precision details
+- Event sorting algorithms with before/after chronological ordering
+- Navigation logic with wrap-around behavior and event selection
 
 **Activation:**
 - Enable with `./lazyorg -debug` command line flag
 - When disabled, no debug files are created (normal operation)
-- When enabled, creates debug files automatically during paste operations
+- When enabled, creates debug files automatically during paste operations and navigation
 
 **Common Use Cases:**
 - Debugging event overlap detection failures
@@ -245,6 +248,8 @@ LazyOrg includes comprehensive debug logging for troubleshooting time bounds and
 - Troubleshooting timezone-related time comparisons
 - Verifying database query date ranges
 - Analyzing floating-point duration calculation precision
+- Debugging navigation issues with `w` and `b` keys jumping to wrong events
+- Investigating event chronological sorting problems due to mixed timezone storage
 
 ## Recent Changes
 
