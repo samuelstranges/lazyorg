@@ -28,6 +28,7 @@ type AppView struct {
 	EventManager *eventmanager.EventManager
 	Calendar     *calendar.Calendar
 	Config       *config.Config
+	DebugMode    bool
 	
 	colorPickerEvent  *EventView
 	colorPickerActive bool
@@ -53,6 +54,7 @@ func NewAppView(g *gocui.Gui, db *database.Database, cfg *config.Config) *AppVie
 		EventManager: em,
 		Calendar:     c,
 		Config:       cfg,
+		DebugMode:    db.DebugMode,
 	}
 	
 
@@ -610,32 +612,32 @@ func (av *AppView) PasteEvent(g *gocui.Gui) error {
 		return nil // Nothing to paste
 	}
 
-	// DEBUGGING: Let's see what's happening
-	currentView := g.CurrentView()
-	currentViewName := ""
-	if currentView != nil {
-		currentViewName = currentView.Name()
+	var debugInfo string
+	if av.DebugMode {
+		// DEBUGGING: Let's see what's happening
+		currentView := g.CurrentView()
+		currentViewName := ""
+		if currentView != nil {
+			currentViewName = currentView.Name()
+		}
+		
+		calendarWeekday := av.Calendar.CurrentDay.Date.Weekday()
+		calendarWeekdayName := WeekdayNames[calendarWeekday]
+		calendarDate := av.Calendar.CurrentDay.Date
+		
+		// Print debug info to a file
+		debugInfo = fmt.Sprintf("PASTE DEBUG:\n")
+		debugInfo += fmt.Sprintf("  Current View Name: %s\n", currentViewName)
+		debugInfo += fmt.Sprintf("  Calendar Weekday(): %d (%s)\n", calendarWeekday, calendarWeekdayName)
+		debugInfo += fmt.Sprintf("  Calendar Date: %s\n", calendarDate.Format("2006-01-02 15:04:05"))
+		debugInfo += fmt.Sprintf("  Calendar Date Weekday: %s\n", calendarDate.Weekday().String())
+		
+		// Print all week days for reference
+		debugInfo += fmt.Sprintf("  Week Days:\n")
+		for i, day := range av.Calendar.CurrentWeek.Days {
+			debugInfo += fmt.Sprintf("    [%d] %s: %s\n", i, WeekdayNames[i], day.Date.Format("2006-01-02"))
+		}
 	}
-	
-	calendarWeekday := av.Calendar.CurrentDay.Date.Weekday()
-	calendarWeekdayName := WeekdayNames[calendarWeekday]
-	calendarDate := av.Calendar.CurrentDay.Date
-	
-	// Print debug info to a file
-	debugInfo := fmt.Sprintf("PASTE DEBUG:\n")
-	debugInfo += fmt.Sprintf("  Current View Name: %s\n", currentViewName)
-	debugInfo += fmt.Sprintf("  Calendar Weekday(): %d (%s)\n", calendarWeekday, calendarWeekdayName)
-	debugInfo += fmt.Sprintf("  Calendar Date: %s\n", calendarDate.Format("2006-01-02 15:04:05"))
-	debugInfo += fmt.Sprintf("  Calendar Date Weekday: %s\n", calendarDate.Weekday().String())
-	
-	// Print all week days for reference
-	debugInfo += fmt.Sprintf("  Week Days:\n")
-	for i, day := range av.Calendar.CurrentWeek.Days {
-		debugInfo += fmt.Sprintf("    [%d] %s: %s\n", i, WeekdayNames[i], day.Date.Format("2006-01-02"))
-	}
-	
-	// Write to debug file
-	os.WriteFile("/tmp/lazyorg_debug.txt", []byte(debugInfo), 0644)
 
 	// Use the exact same logic as DeleteEvent
 	if view, ok := av.FindChildView(WeekdayNames[av.Calendar.CurrentDay.Date.Weekday()]); ok {
@@ -671,13 +673,15 @@ func (av *AppView) PasteEvent(g *gocui.Gui) error {
 			// Use the target date with current time
 			newEvent.Time = targetDate
 			
-			// Add final time to debug
-			finalDebug := fmt.Sprintf("\nDEBUG CALENDAR vs VIEW:\n")
-			finalDebug += fmt.Sprintf("  Current View: %s\n", currentViewName)
-			finalDebug += fmt.Sprintf("  Calendar.CurrentDay.Date: %s\n", av.Calendar.CurrentDay.Date.Format("2006-01-02 15:04:05"))
-			finalDebug += fmt.Sprintf("  Target Date from View: %s\n", targetDate.Format("2006-01-02 15:04:05"))
-			finalDebug += fmt.Sprintf("  FINAL EVENT TIME: %s\n", newEvent.Time.Format("2006-01-02 15:04:05"))
-			os.WriteFile("/tmp/lazyorg_debug.txt", []byte(debugInfo + finalDebug), 0644)
+			if av.DebugMode {
+				// Add final time to debug
+				finalDebug := fmt.Sprintf("\nDEBUG CALENDAR vs VIEW:\n")
+				finalDebug += fmt.Sprintf("  Current View: %s\n", currentViewName)
+				finalDebug += fmt.Sprintf("  Calendar.CurrentDay.Date: %s\n", av.Calendar.CurrentDay.Date.Format("2006-01-02 15:04:05"))
+				finalDebug += fmt.Sprintf("  Target Date from View: %s\n", targetDate.Format("2006-01-02 15:04:05"))
+				finalDebug += fmt.Sprintf("  FINAL EVENT TIME: %s\n", newEvent.Time.Format("2006-01-02 15:04:05"))
+				os.WriteFile("/tmp/lazyorg_debug.txt", []byte(debugInfo + finalDebug), 0644)
+			}
 
 			// Add to database
 			if _, success := av.EventManager.AddEvent(newEvent); !success {

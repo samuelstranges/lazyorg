@@ -13,7 +13,8 @@ import (
 )
 
 type Database struct {
-	db *sql.DB
+	db        *sql.DB
+	DebugMode bool
 }
 
 func (database *Database) InitDatabase(path string) error {
@@ -132,11 +133,14 @@ func (database *Database) GetEventsByDate(date time.Time) ([]*calendar.Event, er
 	startOfDay := time.Date(date.Year(), date.Month(), date.Day(), 0, 0, 0, 0, date.Location())
 	endOfDay := startOfDay.AddDate(0, 0, 1)
 
-	// DEBUG: Log the query parameters
-	debugInfo := fmt.Sprintf("GET_EVENTS_BY_DATE DEBUG:\n")
-	debugInfo += fmt.Sprintf("  Query Date: %s\n", date.Format("2006-01-02 15:04:05"))
-	debugInfo += fmt.Sprintf("  Start of Day: %s (Unix: %d)\n", startOfDay.Format("2006-01-02 15:04:05"), startOfDay.Unix())
-	debugInfo += fmt.Sprintf("  End of Day: %s (Unix: %d)\n", endOfDay.Format("2006-01-02 15:04:05"), endOfDay.Unix())
+	var debugInfo string
+	if database.DebugMode {
+		// DEBUG: Log the query parameters
+		debugInfo = fmt.Sprintf("GET_EVENTS_BY_DATE DEBUG:\n")
+		debugInfo += fmt.Sprintf("  Query Date: %s\n", date.Format("2006-01-02 15:04:05"))
+		debugInfo += fmt.Sprintf("  Start of Day: %s (Unix: %d)\n", startOfDay.Format("2006-01-02 15:04:05"), startOfDay.Unix())
+		debugInfo += fmt.Sprintf("  End of Day: %s (Unix: %d)\n", endOfDay.Format("2006-01-02 15:04:05"), endOfDay.Unix())
+	}
 	
 	rows, err := database.db.Query(`
         SELECT * FROM events WHERE time >= ? AND time < ?`,
@@ -167,8 +171,10 @@ func (database *Database) GetEventsByDate(date time.Time) ([]*calendar.Event, er
 			return nil, err
 		}
 
-		// DEBUG: Log each event found
-		debugInfo += fmt.Sprintf("  Found Event: %s at %s (Unix: %d)\n", event.Name, event.Time.Format("2006-01-02 15:04:05"), event.Time.Unix())
+		if database.DebugMode {
+			// DEBUG: Log each event found
+			debugInfo += fmt.Sprintf("  Found Event: %s at %s (Unix: %d)\n", event.Name, event.Time.Format("2006-01-02 15:04:05"), event.Time.Unix())
+		}
 
 		if colorInt == 0 {
 			event.Color = calendar.GenerateColorFromName(event.Name)
@@ -178,8 +184,10 @@ func (database *Database) GetEventsByDate(date time.Time) ([]*calendar.Event, er
 		events = append(events, &event)
 	}
 
-	// Write debug info
-	os.WriteFile("/tmp/lazyorg_getevents_debug.txt", []byte(debugInfo), 0644)
+	// Write debug info only if in debug mode
+	if database.DebugMode {
+		os.WriteFile("/tmp/lazyorg_getevents_debug.txt", []byte(debugInfo), 0644)
+	}
 
 	return events, nil
 }
@@ -298,6 +306,36 @@ func (database *Database) CheckEventOverlap(newEvent calendar.Event, excludeEven
 	newStartTime := normalizedTime
 	newEndTime := newStartTime.Add(time.Duration(newEvent.DurationHour * float64(time.Hour)))
 	
+	// Only log debug info if debug mode is enabled
+	if !database.DebugMode {
+		// Get all events for the same date
+		existingEvents, err := database.GetEventsByDate(newEvent.Time)
+		if err != nil {
+			return false, err
+		}
+		
+		// Check each existing event for overlap
+		for _, existingEvent := range existingEvents {
+			// Skip if this is the same event (for edits)
+			if len(excludeEventId) > 0 && existingEvent.Id == excludeEventId[0] {
+				continue
+			}
+			
+			existingStartTime := existingEvent.Time
+			existingEndTime := existingStartTime.Add(time.Duration(existingEvent.DurationHour * float64(time.Hour)))
+			
+			// Check for overlap: events overlap if one starts before the other ends
+			// Adjacent events (one ends exactly when another starts) are allowed
+			overlap := (newStartTime.Before(existingEndTime) && newEndTime.After(existingStartTime))
+			
+			if overlap {
+				return true, nil // Found an overlap
+			}
+		}
+		
+		return false, nil // No overlap found
+	}
+
 	// DEBUG: Log overlap check details
 	debugInfo := fmt.Sprintf("OVERLAP CHECK DEBUG:\n")
 	debugInfo += fmt.Sprintf("  New Event: %s\n", newEvent.Name)

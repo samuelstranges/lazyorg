@@ -19,6 +19,7 @@ go build -o lazyorg cmd/lazyorg/   # Build with specific output name
 ./lazyorg                          # Run the built binary
 go run cmd/lazyorg/main.go         # Run directly from source
 ./lazyorg -backup /path/to/backup  # Backup database to specified location
+./lazyorg -debug                   # Run with debug logging enabled
 ```
 
 ### Testing
@@ -173,6 +174,11 @@ LazyOrg includes comprehensive debug logging for troubleshooting time bounds and
 - Step-by-step overlap detection logic with before/after comparisons
 - Database query parameters and retrieved event timestamps
 - Duration calculations and floating-point precision details
+
+**Activation:**
+- Enable with `./lazyorg -debug` command line flag
+- When disabled, no debug files are created (normal operation)
+- When enabled, creates debug files automatically during paste operations
 
 **Common Use Cases:**
 - Debugging event overlap detection failures

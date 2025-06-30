@@ -17,7 +17,9 @@ import (
 
 func main() {
 	var backupPath string
+	var debugMode bool
 	flag.StringVar(&backupPath, "backup", "", "Backup database to specified location")
+	flag.BoolVar(&debugMode, "debug", false, "Enable debug logging to /tmp/lazyorg_debug.txt and /tmp/lazyorg_getevents_debug.txt")
 	flag.Parse()
 
 	homeDir, err := os.UserHomeDir()
@@ -47,7 +49,7 @@ func main() {
 		cfg = config.GetDefaultConfig()
 	}
 
-	database := &database.Database{}
+	database := &database.Database{DebugMode: debugMode}
 	err = database.InitDatabase(dbFilePath)
 	if err != nil {
 		log.Fatal(err)
