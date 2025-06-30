@@ -901,11 +901,13 @@ func (av *AppView) PasteEvent(g *gocui.Gui) error {
 
 // refreshCurrentTimeHighlighting updates the current time highlighting for today's column
 func (av *AppView) refreshCurrentTimeHighlighting(g *gocui.Gui) {
-	// Find today's day view and refresh its current time highlighting
-	if view, ok := av.FindChildView(WeekdayNames[time.Now().Weekday()]); ok {
-		if dayView, ok := view.(*DayView); ok {
-			// Force refresh of current time highlighting
-			dayView.addCurrentTimeHighlight(g)
+	// Iterate through all day views and update their current time highlighting
+	for _, day := range av.Calendar.CurrentWeek.Days {
+		if view, ok := av.FindChildView(WeekdayNames[day.Date.Weekday()]); ok {
+			if dayView, ok := view.(*DayView); ok {
+				// Call the new update method on each day view
+				dayView.updateCurrentTimeHighlight(g)
+			}
 		}
 	}
 }

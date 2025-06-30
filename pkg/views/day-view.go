@@ -2,6 +2,7 @@ package views
 
 import (
 	"fmt"
+	"os"
 	"sort"
 	"time"
 
@@ -46,8 +47,8 @@ func (dv *DayView) Update(g *gocui.Gui) error {
 
 	v.Title = dv.Day.FormatTitle()
 
-	// Add current time highlighting if this is today
-	if err = dv.addCurrentTimeHighlight(g); err != nil {
+	// Update current time highlighting (add or remove)
+	if err = dv.updateCurrentTimeHighlight(g); err != nil {
 		return err
 	}
 
@@ -63,38 +64,62 @@ func (dv *DayView) Update(g *gocui.Gui) error {
 }
 
 func (dv *DayView) updateBgColor(v *gocui.View) {
-	if dv.Day.Date.YearDay() == time.Now().YearDay() {
+	now := time.Now()
+	if dv.Day.Date.Year() == now.Year() && dv.Day.Date.Month() == now.Month() && dv.Day.Date.Day() == now.Day() {
 		v.BgColor = gocui.Attribute(termbox.ColorDarkGray)
 	} else {
 		v.BgColor = gocui.ColorDefault
 	}
 }
 
-func (dv *DayView) addCurrentTimeHighlight(g *gocui.Gui) error {
-	// Only highlight if this is today
-	if dv.Day.Date.YearDay() != time.Now().YearDay() {
+// updateCurrentTimeHighlight adds or removes the current time highlight based on whether it's today
+func (dv *DayView) updateCurrentTimeHighlight(g *gocui.Gui) error {
+	var (
+		highlightViewName = dv.Name + "_current_time_highlight"
+		now               = time.Now()
+		v                 *gocui.View
+		err               error
+		f                 *os.File
+	)
+
+	// Debug logging
+	if f, err = os.OpenFile("/tmp/lazyorg_currenttime_debug.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644); err == nil {
+		fmt.Fprintf(f, "updateCurrentTimeHighlight: ViewDate=%s, Now=%s, SameYear=%t, SameMonth=%t, SameDay=%t\n",
+			dv.Day.Date.Format("2006-01-02"),
+			now.Format("2006-01-02"),
+			dv.Day.Date.Year() == now.Year(),
+			dv.Day.Date.Month() == now.Month(),
+			dv.Day.Date.Day() == now.Day())
+		f.Close()
+	}
+
+	// If this is not today's date, ensure the highlight view is removed
+	if dv.Day.Date.Year() != now.Year() || dv.Day.Date.Month() != now.Month() || dv.Day.Date.Day() != now.Day() {
+		if err = g.DeleteView(highlightViewName); err != nil && err != gocui.ErrUnknownView {
+			return err
+		}
 		return nil
 	}
 
-	now := time.Now()
+	// If it is today, proceed to add/update the highlight
 	currentHour := now.Hour()
 	currentMinute := now.Minute()
-	
+
 	// Round to nearest half hour (0 or 30)
 	currentHalfHour := 0
 	if currentMinute >= 30 {
 		currentHalfHour = 30
 	}
-	
+
 	// Create a time for the current half-hour slot
 	currentTime := time.Date(now.Year(), now.Month(), now.Day(), currentHour, currentHalfHour, 0, 0, now.Location())
-	
+
 	// Get the position of this time slot
 	timePosition := utils.TimeToPosition(currentTime, dv.TimeView.Body)
 	if timePosition < 0 {
 		return nil // Time not in visible range
 	}
-	
+
 	// Find event that starts exactly at current half-hour (for text coloring)
 	var eventStartingNow *calendar.Event
 	for _, event := range dv.Day.Events {
@@ -105,20 +130,20 @@ func (dv *DayView) addCurrentTimeHighlight(g *gocui.Gui) error {
 		if eventMinute >= 30 {
 			eventHalfHour = 30
 		}
-		
+
 		// Check if event starts exactly at current half-hour
 		if eventHour == currentHour && eventHalfHour == currentHalfHour {
 			eventStartingNow = event
 			break
 		}
 	}
-	
+
 	// Find event that is currently running at this time (for background color)
 	var runningEvent *calendar.Event
 	for _, event := range dv.Day.Events {
 		eventStartTime := event.Time
 		eventEndTime := eventStartTime.Add(time.Duration(event.DurationHour * float64(time.Hour)))
-		
+
 		// Check if the current time falls within this event's duration
 		if currentTime.After(eventStartTime) || currentTime.Equal(eventStartTime) {
 			if currentTime.Before(eventEndTime) {
@@ -127,80 +152,84 @@ func (dv *DayView) addCurrentTimeHighlight(g *gocui.Gui) error {
 			}
 		}
 	}
-	
+
 	// Remove existing highlight view if it exists
-	highlightViewName := dv.Name + "_current_time_highlight"
-	if err := g.DeleteView(highlightViewName); err != nil && err != gocui.ErrUnknownView {
+	if err = g.DeleteView(highlightViewName); err != nil && err != gocui.ErrUnknownView {
 		return err
 	}
-	
-	// Only create hash highlighting if no event starts at current time
-	if eventStartingNow == nil {
-		x := dv.X
-		y := dv.Y + timePosition
-		w := dv.W
-		h := 2 // Cover the half-hour slot (2 lines)
-		
-		// Create new highlight view with purple hashes
-		v, err := g.SetView(highlightViewName, x, y, x+w, y+h)
-		if err != nil {
-			if err != gocui.ErrUnknownView {
-				return err
-			}
-			
-			// Determine background color based on whether there's a running event
-			if runningEvent != nil {
-				// Use the running event's background color
-				v.BgColor = runningEvent.Color
-			} else {
-				// Use day view background that matches the current state
-				isCurrentView := g.CurrentView() != nil && g.CurrentView().Name() == dv.Name
-				if dv.Day.Date.YearDay() == time.Now().YearDay() {
-					if isCurrentView {
-						// Today with cursor active - use black (matches cursor override)
-						v.BgColor = gocui.ColorBlack
-					} else {
-						// Today without cursor - use grey
-						v.BgColor = gocui.Attribute(termbox.ColorDarkGray)
-					}
-				} else {
-					// Other days - always black
-					v.BgColor = gocui.ColorBlack
-				}
-			}
-			
-			v.FgColor = calendar.ColorCustomPurple
-			v.Frame = false
-			
-			// Fill with purple hash characters
-			hashLine := ""
-			for i := 0; i < w-1; i++ {
-				hashLine += "#"
-			}
-			fmt.Fprintf(v, "%s\n", hashLine)
-			fmt.Fprintf(v, "%s\n", hashLine)
+
+	x := dv.X
+	y := dv.Y + timePosition
+	w := dv.W
+	h := 2 // Cover the half-hour slot (2 lines)
+
+	// Create new highlight view
+	v, err = g.SetView(highlightViewName, x, y, x+w, y+h)
+	if err != nil {
+		if err != gocui.ErrUnknownView {
+			return err
 		}
 	}
-	
+
+	v.Frame = false
+
+	// Determine colors and content based on events
+	if eventStartingNow != nil {
+		// Event starts exactly at current time - use event's color for background, purple for text
+		v.BgColor = eventStartingNow.Color
+		v.FgColor = calendar.ColorCustomPurple
+		// Display event name with purple foreground
+		fmt.Fprintf(v, "%s\n", eventStartingNow.Name)
+		fmt.Fprintf(v, "%s\n", eventStartingNow.Name)
+	} else if runningEvent != nil {
+		// Event is running at current time - use event's color for background, purple hashes
+		v.BgColor = runningEvent.Color
+		v.FgColor = calendar.ColorCustomPurple
+		// Fill with purple hash characters
+		hashLine := ""
+		for i := 0; i < w-1; i++ {
+			hashLine += "#"
+		}
+		fmt.Fprintf(v, "%s\n", hashLine)
+		fmt.Fprintf(v, "%s\n", hashLine)
+	} else {
+		// No event at current time - use day view background, purple hashes
+		isCurrentView := g.CurrentView() != nil && g.CurrentView().Name() == dv.Name
+		if isCurrentView {
+			// Today with cursor active - use black (matches cursor override)
+			v.BgColor = gocui.ColorBlack
+		} else {
+			// Today without cursor - use grey
+			v.BgColor = gocui.Attribute(termbox.ColorDarkGray)
+		}
+		v.FgColor = calendar.ColorCustomPurple
+		// Fill with purple hash characters
+		hashLine := ""
+		for i := 0; i < w-1; i++ {
+			hashLine += "#"
+		}
+		fmt.Fprintf(v, "%s\n", hashLine)
+		fmt.Fprintf(v, "%s\n", hashLine)
+	}
+
 	return nil
 }
 
 func (dv *DayView) isEventAtCurrentTime(event *calendar.Event) bool {
-	// Only check if this is today
-	if dv.Day.Date.YearDay() != time.Now().YearDay() {
+	// Only check if this is today (same year, month, and day)
+	now := time.Now()
+	if dv.Day.Date.Year() != now.Year() || dv.Day.Date.Month() != now.Month() || dv.Day.Date.Day() != now.Day() {
 		return false
 	}
-	
-	now := time.Now()
 	currentHour := now.Hour()
 	currentMinute := now.Minute()
-	
+
 	// Round to nearest half hour (0 or 30)
 	currentHalfHour := 0
 	if currentMinute >= 30 {
 		currentHalfHour = 30
 	}
-	
+
 	eventTime := event.Time
 	eventHour := eventTime.Hour()
 	eventMinute := eventTime.Minute()
@@ -208,7 +237,7 @@ func (dv *DayView) isEventAtCurrentTime(event *calendar.Event) bool {
 	if eventMinute >= 30 {
 		eventHalfHour = 30
 	}
-	
+
 	return eventHour == currentHour && eventHalfHour == currentHalfHour
 }
 
