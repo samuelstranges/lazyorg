@@ -95,8 +95,8 @@ func (dv *DayView) addCurrentTimeHighlight(g *gocui.Gui) error {
 		return nil // Time not in visible range
 	}
 	
-	// Find event at current time (if any)
-	var currentTimeEvent *calendar.Event
+	// Find event that starts exactly at current half-hour (for text coloring)
+	var eventStartingNow *calendar.Event
 	for _, event := range dv.Day.Events {
 		eventTime := event.Time
 		eventHour := eventTime.Hour()
@@ -108,8 +108,23 @@ func (dv *DayView) addCurrentTimeHighlight(g *gocui.Gui) error {
 		
 		// Check if event starts exactly at current half-hour
 		if eventHour == currentHour && eventHalfHour == currentHalfHour {
-			currentTimeEvent = event
+			eventStartingNow = event
 			break
+		}
+	}
+	
+	// Find event that is currently running at this time (for background color)
+	var runningEvent *calendar.Event
+	for _, event := range dv.Day.Events {
+		eventStartTime := event.Time
+		eventEndTime := eventStartTime.Add(time.Duration(event.DurationHour * float64(time.Hour)))
+		
+		// Check if the current time falls within this event's duration
+		if currentTime.After(eventStartTime) || currentTime.Equal(eventStartTime) {
+			if currentTime.Before(eventEndTime) {
+				runningEvent = event
+				break
+			}
 		}
 	}
 	
@@ -119,75 +134,51 @@ func (dv *DayView) addCurrentTimeHighlight(g *gocui.Gui) error {
 		return err
 	}
 	
-	// Case 1: No event at current time - show cyan hashes
-	if currentTimeEvent == nil {
+	// Only create hash highlighting if no event starts at current time
+	if eventStartingNow == nil {
 		x := dv.X
 		y := dv.Y + timePosition
 		w := dv.W
 		h := 2 // Cover the half-hour slot (2 lines)
 		
-		// Create new highlight view with cyan hashes
+		// Create new highlight view with purple hashes
 		v, err := g.SetView(highlightViewName, x, y, x+w, y+h)
 		if err != nil {
 			if err != gocui.ErrUnknownView {
 				return err
 			}
-			// Set background to match the day view background (transparent)
-			if dv.Day.Date.YearDay() == time.Now().YearDay() {
-				v.BgColor = gocui.Attribute(termbox.ColorDarkGray)
+			
+			// Determine background color based on whether there's a running event
+			if runningEvent != nil {
+				// Use the running event's background color
+				v.BgColor = runningEvent.Color
 			} else {
-				v.BgColor = gocui.ColorDefault
+				// Use day view background that matches the current state
+				isCurrentView := g.CurrentView() != nil && g.CurrentView().Name() == dv.Name
+				if dv.Day.Date.YearDay() == time.Now().YearDay() {
+					if isCurrentView {
+						// Today with cursor active - use black (matches cursor override)
+						v.BgColor = gocui.ColorBlack
+					} else {
+						// Today without cursor - use grey
+						v.BgColor = gocui.Attribute(termbox.ColorDarkGray)
+					}
+				} else {
+					// Other days - always black
+					v.BgColor = gocui.ColorBlack
+				}
 			}
+			
 			v.FgColor = calendar.ColorCustomPurple
 			v.Frame = false
 			
-			// Fill with cyan hash characters
+			// Fill with purple hash characters
 			hashLine := ""
 			for i := 0; i < w-1; i++ {
 				hashLine += "#"
 			}
 			fmt.Fprintf(v, "%s\n", hashLine)
 			fmt.Fprintf(v, "%s\n", hashLine)
-		}
-	} else {
-		// Case 2: Event exists at current time
-		// Check if event is in the "title" position (first line of its time slot)
-		eventPosition := utils.TimeToPosition(currentTimeEvent.Time, dv.TimeView.Body)
-		isInTitlePosition := (eventPosition == timePosition)
-		
-		if isInTitlePosition {
-			// Event is in title position - we'll handle this by modifying event color in updateChildViewProperties
-			// For now, just mark that we need to color the event text cyan
-			// This will be handled when the event view is created
-		} else {
-			// Event exists elsewhere - show cyan hashes
-			x := dv.X
-			y := dv.Y + timePosition
-			w := dv.W
-			h := 2
-			
-			v, err := g.SetView(highlightViewName, x, y, x+w, y+h)
-			if err != nil {
-				if err != gocui.ErrUnknownView {
-					return err
-				}
-				// Set background to match the day view background (transparent)
-				if dv.Day.Date.YearDay() == time.Now().YearDay() {
-					v.BgColor = gocui.Attribute(termbox.ColorDarkGray)
-				} else {
-					v.BgColor = gocui.ColorDefault
-				}
-				v.FgColor = calendar.ColorCustomPurple
-				v.Frame = false
-				
-				// Fill with cyan hash characters
-				hashLine := ""
-				for i := 0; i < w-1; i++ {
-					hashLine += "#"
-				}
-				fmt.Fprintf(v, "%s\n", hashLine)
-				fmt.Fprintf(v, "%s\n", hashLine)
-			}
 		}
 	}
 	

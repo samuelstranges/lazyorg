@@ -40,8 +40,8 @@ func GenerateColorFromName(name string) gocui.Attribute {
 }
 
 // Custom purple color - using 256-color palette index for a nice purple
-// Color 135 is a medium purple in the 256-color palette, close to #b785ff
-var ColorCustomPurple = gocui.Attribute(135)
+// Color 93 is a bright/vibrant purple that stands out from event colors
+var ColorCustomPurple = gocui.Attribute(93)
 
 func GetAvailableColors() []gocui.Attribute {
 	return []gocui.Attribute{
