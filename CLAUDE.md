@@ -155,6 +155,32 @@ Sub-keybindings (keybindings that exist outside of the globally active keybindin
 - UI operations gracefully handle and display errors to users
 - Test setup includes proper cleanup with `defer` statements
 
+### Debug Logging
+LazyOrg includes comprehensive debug logging for troubleshooting time bounds and event overlap issues:
+
+**Primary Debug Files:**
+- **`/tmp/lazyorg_debug.txt`** - Main debug output from paste operations and overlap checking
+- **`/tmp/lazyorg_getevents_debug.txt`** - Database query debugging from GetEventsByDate function
+
+**Debug Sources:**
+- **Paste Operations** (`pkg/views/app-view.go:608-680`): Calendar vs view date synchronization
+- **Overlap Detection** (`internal/database/database.go:275-341`): Detailed time range comparisons
+- **Database Queries** (`internal/database/database.go:130-185`): Event retrieval and date filtering
+
+**Debug Contents:**
+- Current view name vs Calendar.CurrentDay.Date synchronization
+- Unix timestamps and timezone information for all time comparisons
+- Step-by-step overlap detection logic with before/after comparisons
+- Database query parameters and retrieved event timestamps
+- Duration calculations and floating-point precision details
+
+**Common Use Cases:**
+- Debugging event overlap detection failures
+- Investigating calendar date synchronization issues
+- Troubleshooting timezone-related time comparisons
+- Verifying database query date ranges
+- Analyzing floating-point duration calculation precision
+
 ## Recent Changes
 
 The project recently added:

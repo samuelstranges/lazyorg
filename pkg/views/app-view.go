@@ -644,11 +644,39 @@ func (av *AppView) PasteEvent(g *gocui.Gui) error {
 			newEvent := *av.copiedEvent
 			newEvent.Id = 0 // Reset ID so database will assign a new one
 			
-			// Use the current calendar day and time directly
-			newEvent.Time = av.Calendar.CurrentDay.Date
+			// DEBUG: Check current view vs calendar date
+			currentView := g.CurrentView()
+			currentViewName := ""
+			if currentView != nil {
+				currentViewName = currentView.Name()
+			}
+			
+			// Get the actual date from the current view name
+			var targetDate time.Time
+			for i, dayName := range WeekdayNames {
+				if dayName == currentViewName {
+					// Found the matching day, get the date from the week
+					if i < len(av.Calendar.CurrentWeek.Days) {
+						targetDate = av.Calendar.CurrentWeek.Days[i].Date
+						break
+					}
+				}
+			}
+			
+			// If we couldn't determine target date, fall back to calendar current day
+			if targetDate.IsZero() {
+				targetDate = av.Calendar.CurrentDay.Date
+			}
+			
+			// Use the target date with current time
+			newEvent.Time = targetDate
 			
 			// Add final time to debug
-			finalDebug := fmt.Sprintf("\nFINAL EVENT TIME: %s\n", newEvent.Time.Format("2006-01-02 15:04:05"))
+			finalDebug := fmt.Sprintf("\nDEBUG CALENDAR vs VIEW:\n")
+			finalDebug += fmt.Sprintf("  Current View: %s\n", currentViewName)
+			finalDebug += fmt.Sprintf("  Calendar.CurrentDay.Date: %s\n", av.Calendar.CurrentDay.Date.Format("2006-01-02 15:04:05"))
+			finalDebug += fmt.Sprintf("  Target Date from View: %s\n", targetDate.Format("2006-01-02 15:04:05"))
+			finalDebug += fmt.Sprintf("  FINAL EVENT TIME: %s\n", newEvent.Time.Format("2006-01-02 15:04:05"))
 			os.WriteFile("/tmp/lazyorg_debug.txt", []byte(debugInfo + finalDebug), 0644)
 
 			// Add to database
