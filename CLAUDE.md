@@ -178,12 +178,49 @@ Sub-keybindings (keybindings that exist outside of the globally active keybindin
 
 **Future Work**: Consider implementing a one-time migration script to normalize all historical events to local timezone
 
+#### Navigation Bug Due to Mixed Timezone Storage
+**Problem**: The `w` and `b` navigation keys (JumpToNextEvent/JumpToPrevEvent) were navigating to incorrect events due to mixed timezone storage causing incorrect chronological sorting:
+- UTC-stored events were being converted to Local time (+10 hours in Australia) during sorting
+- This caused events like "Morning at 6:00 AM" (stored as UTC) to appear as "4:00 PM" in sorting comparisons
+- Navigation would jump to events seemingly out of chronological order
+
+**Root Cause**: 
+- Historical events stored inconsistently (UTC vs Local timezone) as described in "Mixed Timezone Storage" above
+- `getAllEventsFromWeek()` function was converting UTC events to Local time during sorting
+- This caused chronologically incorrect event ordering for navigation algorithms
+
+**Technical Debt Impact**:
+- **Event Navigation**: `w`/`b` keys jumped to wrong events, breaking user workflow
+- **Sorting Logic**: Event chronological ordering was corrupted across the entire week view
+- **Data Integrity**: Mixed timezone storage affects multiple system components beyond just navigation
+
+**Fix Implementation** (`pkg/views/app-view.go`):
+```go
+// TEMPORARY FIX: ALL events stored in UTC are wrong - use original time instead of converting
+if event.Time.Location().String() == "UTC" {
+    eventTime = time.Date(event.Time.Year(), event.Time.Month(), event.Time.Day(), 
+                         event.Time.Hour(), event.Time.Minute(), event.Time.Second(), 
+                         event.Time.Nanosecond(), time.Local)
+} else {
+    eventTime = event.Time.In(time.Local)
+}
+```
+
+**Current Status**:
+- **Navigation Fixed**: `w` and `b` keys now navigate correctly in chronological order
+- **Temporary Solution**: UTC events treated as Local time rather than converted
+- **Debug Logging Added**: Comprehensive navigation debugging in `/tmp/lazyorg_nav_debug.txt`
+- **Database Still Corrupt**: Historical UTC events remain incorrectly stored
+
+**Future Work**: This is the SAME underlying issue as overlap detection - requires database migration to properly fix
+
 ### Debug Logging
 LazyOrg includes comprehensive debug logging for troubleshooting time bounds and event overlap issues:
 
 **Primary Debug Files:**
 - **`/tmp/lazyorg_debug.txt`** - Main debug output from paste operations and overlap checking
 - **`/tmp/lazyorg_getevents_debug.txt`** - Database query debugging from GetEventsByDate function
+- **`/tmp/lazyorg_nav_debug.txt`** - Navigation debugging from JumpToNextEvent/JumpToPrevEvent functions
 
 **Debug Sources:**
 - **Paste Operations** (`pkg/views/app-view.go:608-680`): Calendar vs view date synchronization
