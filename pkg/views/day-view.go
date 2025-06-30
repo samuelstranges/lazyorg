@@ -138,7 +138,7 @@ func (dv *DayView) addCurrentTimeHighlight(g *gocui.Gui) error {
 			} else {
 				v.BgColor = gocui.ColorDefault
 			}
-			v.FgColor = gocui.ColorCyan
+			v.FgColor = calendar.ColorCustomPurple
 			v.Frame = false
 			
 			// Fill with cyan hash characters
@@ -177,7 +177,7 @@ func (dv *DayView) addCurrentTimeHighlight(g *gocui.Gui) error {
 				} else {
 					v.BgColor = gocui.ColorDefault
 				}
-				v.FgColor = gocui.ColorCyan
+				v.FgColor = calendar.ColorCustomPurple
 				v.Frame = false
 				
 				// Fill with cyan hash characters

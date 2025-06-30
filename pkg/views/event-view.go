@@ -47,7 +47,7 @@ func (ev *EventView) Update(g *gocui.Gui) error {
 	
 	// Set text color based on whether this is current time event
 	if ev.IsCurrentTimeEvent {
-		v.FgColor = gocui.ColorCyan
+		v.FgColor = calendar.ColorCustomPurple
 	} else {
 		v.FgColor = gocui.ColorBlack
 	}
