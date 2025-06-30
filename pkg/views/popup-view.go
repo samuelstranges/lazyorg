@@ -242,7 +242,7 @@ func (epv *EventPopupView) ShowErrorMessage(g *gocui.Gui, title, message string)
 			"",
 			"  " + message,
 			"",
-			"  Press ENTER or ESC to close",
+			"  Auto-dismissing in 3 seconds...",
 		}
 		
 		for _, line := range lines {
@@ -250,16 +250,17 @@ func (epv *EventPopupView) ShowErrorMessage(g *gocui.Gui, title, message string)
 		}
 	}
 	
-	// Set focus to error popup
-	g.SetCurrentView("error-popup")
-	
-	// Set up keybindings for closing the error popup
-	g.SetKeybinding("error-popup", gocui.KeyEnter, gocui.ModNone, func(g *gocui.Gui, v *gocui.View) error {
-		return epv.closeErrorPopup(g)
-	})
-	g.SetKeybinding("error-popup", gocui.KeyEsc, gocui.ModNone, func(g *gocui.Gui, v *gocui.View) error {
-		return epv.closeErrorPopup(g)
-	})
+	// Auto-dismiss after 3 seconds
+	go func() {
+		time.Sleep(3 * time.Second)
+		g.Update(func(g *gocui.Gui) error {
+			// Check if the error popup still exists before trying to close it
+			if _, err := g.View("error-popup"); err == nil {
+				return epv.closeErrorPopup(g)
+			}
+			return nil
+		})
+	}()
 	
 	return nil
 }
@@ -271,19 +272,26 @@ func (epv *EventPopupView) closeErrorPopup(g *gocui.Gui) error {
 		return err
 	}
 	
-	// Remove keybindings
-	g.DeleteKeybinding("error-popup", gocui.KeyEnter, gocui.ModNone)
-	g.DeleteKeybinding("error-popup", gocui.KeyEsc, gocui.ModNone)
-	
-	// Return focus to the main popup
+	// Return focus to the main popup if it's visible
 	if epv.IsVisible {
-		_, err := g.SetCurrentView("popup")
-		return err
+		if _, err := g.View("popup"); err == nil {
+			g.SetCurrentView("popup")
+		}
+		return nil
 	}
 	
-	// Return focus to the main calendar view
-	_, err := g.SetCurrentView("Monday-30") // This should be dynamic based on current day
-	return err
+	// Try to find any valid view to focus on
+	views := g.Views()
+	if len(views) > 0 {
+		for _, view := range views {
+			if view.Name() != "error-popup" {
+				g.SetCurrentView(view.Name())
+				break
+			}
+		}
+	}
+	
+	return nil
 }
 
 func (epv *EventPopupView) positionCursorsAtEnd(g *gocui.Gui) {

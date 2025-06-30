@@ -135,6 +135,21 @@ All event modifications MUST go through the EventManager to ensure:
 - Views are managed by AppView which handles state coordination
 - Keybindings are defined per view but coordinated globally
 
+**CRITICAL: Avoid Sub-Keybindings at ALL COSTS**
+
+Sub-keybindings (keybindings that exist outside of the globally active keybindings) should be avoided at ALL COSTS as they almost always break something in the gocui framework. This includes:
+- Custom keybindings set directly on views using `g.SetKeybinding()`
+- Modal or popup-specific keybindings that override global ones
+- Context-sensitive keybinding changes
+
+**Recommended Approach:**
+- Use the Form component type (as used by add events, color picker, etc.) for all submenus and modal interactions
+- Forms handle their own internal keybinding logic safely within the gocui-component framework
+- This ensures consistent behavior and prevents keybinding conflicts
+
+**Exception:**
+- Only the error popup uses direct keybindings due to its simple nature, but even this should be minimized
+
 ### Error Handling
 - Database operations return errors that should be properly handled
 - UI operations gracefully handle and display errors to users
