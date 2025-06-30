@@ -156,6 +156,28 @@ Sub-keybindings (keybindings that exist outside of the globally active keybindin
 - UI operations gracefully handle and display errors to users
 - Test setup includes proper cleanup with `defer` statements
 
+### Known Issues and Technical Debt
+
+#### Mixed Timezone Storage in Database
+**Problem**: Historical events in the database have inconsistent timezone information:
+- Events created via **Add Event popup** (before fix): Stored in UTC timezone due to `time.Parse()`
+- Events created via **paste operations**: Stored in local timezone due to `time.Date()` with location
+- This causes overlap detection failures when comparing events from different creation methods
+
+**Current Status**: 
+- **Fixed for new events**: All creation methods now use `time.ParseInLocation()` with local timezone
+- **Comparison logic**: `CheckEventOverlap()` normalizes all times to same timezone before comparison
+- **Database**: Still contains mixed UTC/Local timezone events (not migrated)
+
+**Potential Future Issues**:
+- Time-based queries may return unexpected results across different weeks/months
+- Backup/restore operations might introduce timezone inconsistencies
+- Third-party integrations could be confused by mixed timezone data
+
+**Mitigation**: Always normalize timezones during time comparisons, never assume consistent timezone storage
+
+**Future Work**: Consider implementing a one-time migration script to normalize all historical events to local timezone
+
 ### Debug Logging
 LazyOrg includes comprehensive debug logging for troubleshooting time bounds and event overlap issues:
 
