@@ -321,7 +321,10 @@ func (database *Database) CheckEventOverlap(newEvent calendar.Event, excludeEven
 				continue
 			}
 			
-			existingStartTime := existingEvent.Time
+			// Normalize existing event times to same timezone as new event
+			existingStartTime := time.Date(existingEvent.Time.Year(), existingEvent.Time.Month(), existingEvent.Time.Day(), 
+				existingEvent.Time.Hour(), existingEvent.Time.Minute(), existingEvent.Time.Second(), 
+				existingEvent.Time.Nanosecond(), newEvent.Time.Location())
 			existingEndTime := existingStartTime.Add(time.Duration(existingEvent.DurationHour * float64(time.Hour)))
 			
 			// Check for overlap: events overlap if one starts before the other ends
@@ -345,6 +348,7 @@ func (database *Database) CheckEventOverlap(newEvent calendar.Event, excludeEven
 	debugInfo += fmt.Sprintf("  Duration calculation: %f * %d = %d nanoseconds\n", newEvent.DurationHour, int64(time.Hour), int64(newEvent.DurationHour * float64(time.Hour)))
 	
 	// Get all events for the same date
+	debugInfo += fmt.Sprintf("  Calling GetEventsByDate with: %s\n", newEvent.Time.Format("2006-01-02 15:04:05"))
 	existingEvents, err := database.GetEventsByDate(newEvent.Time)
 	if err != nil {
 		return false, err
@@ -359,7 +363,10 @@ func (database *Database) CheckEventOverlap(newEvent calendar.Event, excludeEven
 			continue
 		}
 		
-		existingStartTime := existingEvent.Time
+		// Normalize existing event times to same timezone as new event
+		existingStartTime := time.Date(existingEvent.Time.Year(), existingEvent.Time.Month(), existingEvent.Time.Day(), 
+			existingEvent.Time.Hour(), existingEvent.Time.Minute(), existingEvent.Time.Second(), 
+			existingEvent.Time.Nanosecond(), newEvent.Time.Location())
 		existingEndTime := existingStartTime.Add(time.Duration(existingEvent.DurationHour * float64(time.Hour)))
 		
 		debugInfo += fmt.Sprintf("    Existing Event: %s\n", existingEvent.Name)

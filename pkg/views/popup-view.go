@@ -137,7 +137,7 @@ func (epv *EventPopupView) CreateEventFromInputs(existingEvent *calendar.Event) 
 	}
 
 	name := epv.Form.GetFieldText("Name")
-	time, _ := time.Parse(TimeFormat, epv.Form.GetFieldText("Time"))
+	time, _ := time.ParseInLocation(TimeFormat, epv.Form.GetFieldText("Time"), epv.Calendar.CurrentDay.Date.Location())
 	location := epv.Form.GetFieldText("Location")
 
 	// Try both field names since NewEventForm and EditEventForm use different labels
