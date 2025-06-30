@@ -41,6 +41,19 @@ type AppView struct {
 	isSearchActive    bool
 }
 
+// Helper function for debug logging with append
+func (av *AppView) appendDebugLog(filename, content string) {
+	if !av.DebugMode {
+		return
+	}
+	file, err := os.OpenFile(filename, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
+	if err != nil {
+		return
+	}
+	defer file.Close()
+	file.WriteString(content)
+}
+
 func NewAppView(g *gocui.Gui, db *database.Database, cfg *config.Config) *AppView {
 	now := time.Now()
 	t := time.Date(now.Year(), now.Month(), now.Day(), 12, 0, 0, 0, now.Location())
@@ -205,66 +218,248 @@ func (av *AppView) UpdateToPrevTime(g *gocui.Gui) {
 }
 
 func (av *AppView) JumpToNextEvent() {
+	// Always write this to verify the function is called
+	os.WriteFile("/tmp/lazyorg_nav_debug.txt", []byte("JumpToNextEvent() called\n"), 0644)
+	
+	if av.DebugMode {
+		// Clear and start fresh debug log
+		os.WriteFile("/tmp/lazyorg_nav_debug.txt", []byte("DEBUG MODE ENABLED - JumpToNextEvent() called\n"), 0644)
+	} else {
+		av.appendDebugLog("/tmp/lazyorg_nav_debug.txt", "DEBUG MODE DISABLED\n")
+	}
+	
 	allEvents := av.getAllEventsFromWeek()
 	if len(allEvents) == 0 {
+		if av.DebugMode {
+			av.appendDebugLog("/tmp/lazyorg_nav_debug.txt", "JumpToNextEvent: No events found in current week\n")
+		}
 		return
 	}
 
 	currentTime := av.Calendar.CurrentDay.Date
 	
+	if av.DebugMode {
+		debugInfo := fmt.Sprintf("\n=== JumpToNextEvent Called ===\n")
+		debugInfo += fmt.Sprintf("Current time: %s (TZ: %s, Unix: %d)\n", currentTime.Format("2006-01-02 15:04:05"), currentTime.Location().String(), currentTime.Unix())
+		debugInfo += fmt.Sprintf("Current time (Local): %s\n", currentTime.In(time.Local).Format("2006-01-02 15:04:05"))
+		debugInfo += fmt.Sprintf("Current view: %s\n", av.Name)
+		debugInfo += fmt.Sprintf("Total events in week: %d\n", len(allEvents))
+		
+		for i, event := range allEvents {
+			debugInfo += fmt.Sprintf("Event %d: %s at %s (Unix: %d)\n", i, event.Name, event.Time.Format("2006-01-02 15:04:05"), event.Time.Unix())
+		}
+		
+		// FORCE call to getAllEventsFromWeek to see if sorting happens
+		debugInfo += fmt.Sprintf("\n=== FORCE CALLING getAllEventsFromWeek() ===\n")
+		testEvents := av.getAllEventsFromWeek()
+		debugInfo += fmt.Sprintf("getAllEventsFromWeek returned %d events\n", len(testEvents))
+		
+		av.appendDebugLog("/tmp/lazyorg_nav_debug.txt", debugInfo)
+	}
+	
 	// Find the next event after current time
-	for _, event := range allEvents {
-		if event.Time.After(currentTime) {
-			av.Calendar.CurrentDay.Date = event.Time
+	for i, event := range allEvents {
+		// Normalize both times to local timezone for consistent comparison
+		var eventTime time.Time
+		// TEMPORARY FIX: ALL events stored in UTC are wrong - use original time instead of converting
+		if event.Time.Location().String() == "UTC" {
+			eventTime = time.Date(event.Time.Year(), event.Time.Month(), event.Time.Day(), event.Time.Hour(), event.Time.Minute(), event.Time.Second(), event.Time.Nanosecond(), time.Local)
+		} else {
+			eventTime = event.Time.In(time.Local)
+		}
+		currentTimeLocal := currentTime.In(time.Local)
+		isAfter := eventTime.After(currentTimeLocal)
+		
+		if av.DebugMode {
+			debugInfo := fmt.Sprintf("Checking event %d: %s - After current? %t\n", i, event.Name, isAfter)
+			debugInfo += fmt.Sprintf("  Event time (local): %s\n", eventTime.Format("2006-01-02 15:04:05"))
+			debugInfo += fmt.Sprintf("  Current time (local): %s\n", currentTimeLocal.Format("2006-01-02 15:04:05"))
+			av.appendDebugLog("/tmp/lazyorg_nav_debug.txt", debugInfo)
+		}
+		if isAfter {
+			if av.DebugMode {
+				debugInfo := fmt.Sprintf("Found next event: %s at %s\n", event.Name, event.Time.Format("2006-01-02 15:04:05"))
+				debugInfo += fmt.Sprintf("Using normalized time: %s\n", eventTime.Format("2006-01-02 15:04:05"))
+				av.appendDebugLog("/tmp/lazyorg_nav_debug.txt", debugInfo)
+			}
+			// Use the normalized time for consistent navigation
+			av.Calendar.CurrentDay.Date = eventTime
 			av.Calendar.UpdateWeek()
+			if av.DebugMode {
+				debugInfo := fmt.Sprintf("Calendar updated. New current day: %s\n", av.Calendar.CurrentDay.Date.Format("2006-01-02 15:04:05"))
+				av.appendDebugLog("/tmp/lazyorg_nav_debug.txt", debugInfo)
+			}
 			return
 		}
 	}
 	
 	// If no event found after current time, wrap to first event
 	if len(allEvents) > 0 {
-		av.Calendar.CurrentDay.Date = allEvents[0].Time
+		var firstEventTime time.Time
+		// TEMPORARY FIX: ALL events stored in UTC are wrong - use original time instead of converting
+		if allEvents[0].Time.Location().String() == "UTC" {
+			firstEventTime = time.Date(allEvents[0].Time.Year(), allEvents[0].Time.Month(), allEvents[0].Time.Day(), allEvents[0].Time.Hour(), allEvents[0].Time.Minute(), allEvents[0].Time.Second(), allEvents[0].Time.Nanosecond(), time.Local)
+		} else {
+			firstEventTime = allEvents[0].Time.In(time.Local)
+		}
+		if av.DebugMode {
+			debugInfo := fmt.Sprintf("No future events found, wrapping to first event: %s at %s\n", allEvents[0].Name, allEvents[0].Time.Format("2006-01-02 15:04:05"))
+			debugInfo += fmt.Sprintf("Using normalized time: %s\n", firstEventTime.Format("2006-01-02 15:04:05"))
+			av.appendDebugLog("/tmp/lazyorg_nav_debug.txt", debugInfo)
+		}
+		av.Calendar.CurrentDay.Date = firstEventTime
 		av.Calendar.UpdateWeek()
+		if av.DebugMode {
+			debugInfo := fmt.Sprintf("Calendar updated. New current day: %s\n", av.Calendar.CurrentDay.Date.Format("2006-01-02 15:04:05"))
+			av.appendDebugLog("/tmp/lazyorg_nav_debug.txt", debugInfo)
+		}
 	}
 }
 
 func (av *AppView) JumpToPrevEvent() {
 	allEvents := av.getAllEventsFromWeek()
 	if len(allEvents) == 0 {
+		if av.DebugMode {
+			av.appendDebugLog("/tmp/lazyorg_nav_debug.txt", "JumpToPrevEvent: No events found in current week\n")
+		}
 		return
 	}
 
 	currentTime := av.Calendar.CurrentDay.Date
 	
+	if av.DebugMode {
+		debugInfo := fmt.Sprintf("\n=== JumpToPrevEvent Called ===\n")
+		debugInfo += fmt.Sprintf("Current time: %s (Unix: %d)\n", currentTime.Format("2006-01-02 15:04:05"), currentTime.Unix())
+		debugInfo += fmt.Sprintf("Current view: %s\n", av.Name)
+		debugInfo += fmt.Sprintf("Total events in week: %d\n", len(allEvents))
+		
+		for i, event := range allEvents {
+			debugInfo += fmt.Sprintf("Event %d: %s at %s (Unix: %d)\n", i, event.Name, event.Time.Format("2006-01-02 15:04:05"), event.Time.Unix())
+		}
+		av.appendDebugLog("/tmp/lazyorg_nav_debug.txt", debugInfo)
+	}
+	
 	// Find the previous event before current time (iterate backwards)
 	for i := len(allEvents) - 1; i >= 0; i-- {
 		event := allEvents[i]
-		if event.Time.Before(currentTime) {
-			av.Calendar.CurrentDay.Date = event.Time
+		// Normalize both times to local timezone for consistent comparison
+		var eventTime time.Time
+		// TEMPORARY FIX: ALL events stored in UTC are wrong - use original time instead of converting
+		if event.Time.Location().String() == "UTC" {
+			eventTime = time.Date(event.Time.Year(), event.Time.Month(), event.Time.Day(), event.Time.Hour(), event.Time.Minute(), event.Time.Second(), event.Time.Nanosecond(), time.Local)
+		} else {
+			eventTime = event.Time.In(time.Local)
+		}
+		currentTimeLocal := currentTime.In(time.Local)
+		isBefore := eventTime.Before(currentTimeLocal)
+		
+		if av.DebugMode {
+			debugInfo := fmt.Sprintf("Checking event %d (backwards): %s - Before current? %t\n", i, event.Name, isBefore)
+			debugInfo += fmt.Sprintf("  Event time (local): %s\n", eventTime.Format("2006-01-02 15:04:05"))
+			debugInfo += fmt.Sprintf("  Current time (local): %s\n", currentTimeLocal.Format("2006-01-02 15:04:05"))
+			av.appendDebugLog("/tmp/lazyorg_nav_debug.txt", debugInfo)
+		}
+		if isBefore {
+			if av.DebugMode {
+				debugInfo := fmt.Sprintf("Found previous event: %s at %s\n", event.Name, event.Time.Format("2006-01-02 15:04:05"))
+				debugInfo += fmt.Sprintf("Using normalized time: %s\n", eventTime.Format("2006-01-02 15:04:05"))
+				av.appendDebugLog("/tmp/lazyorg_nav_debug.txt", debugInfo)
+			}
+			// Use the normalized time for consistent navigation
+			av.Calendar.CurrentDay.Date = eventTime
 			av.Calendar.UpdateWeek()
+			if av.DebugMode {
+				debugInfo := fmt.Sprintf("Calendar updated. New current day: %s\n", av.Calendar.CurrentDay.Date.Format("2006-01-02 15:04:05"))
+				av.appendDebugLog("/tmp/lazyorg_nav_debug.txt", debugInfo)
+			}
 			return
 		}
 	}
 	
 	// If no event found before current time, wrap to last event
 	if len(allEvents) > 0 {
-		av.Calendar.CurrentDay.Date = allEvents[len(allEvents)-1].Time
+		lastEvent := allEvents[len(allEvents)-1]
+		var lastEventTime time.Time
+		// TEMPORARY FIX: ALL events stored in UTC are wrong - use original time instead of converting
+		if lastEvent.Time.Location().String() == "UTC" {
+			lastEventTime = time.Date(lastEvent.Time.Year(), lastEvent.Time.Month(), lastEvent.Time.Day(), lastEvent.Time.Hour(), lastEvent.Time.Minute(), lastEvent.Time.Second(), lastEvent.Time.Nanosecond(), time.Local)
+		} else {
+			lastEventTime = lastEvent.Time.In(time.Local)
+		}
+		if av.DebugMode {
+			debugInfo := fmt.Sprintf("No previous events found, wrapping to last event: %s at %s\n", lastEvent.Name, lastEvent.Time.Format("2006-01-02 15:04:05"))
+			debugInfo += fmt.Sprintf("Using normalized time: %s\n", lastEventTime.Format("2006-01-02 15:04:05"))
+			av.appendDebugLog("/tmp/lazyorg_nav_debug.txt", debugInfo)
+		}
+		av.Calendar.CurrentDay.Date = lastEventTime
 		av.Calendar.UpdateWeek()
+		if av.DebugMode {
+			debugInfo := fmt.Sprintf("Calendar updated. New current day: %s\n", av.Calendar.CurrentDay.Date.Format("2006-01-02 15:04:05"))
+			av.appendDebugLog("/tmp/lazyorg_nav_debug.txt", debugInfo)
+		}
 	}
 }
 
 func (av *AppView) getAllEventsFromWeek() []*calendar.Event {
 	var allEvents []*calendar.Event
 	
+	// Always show debug info for now
+	debugInfo := fmt.Sprintf("\n*** ENTERING getAllEventsFromWeek() ***\n")
+	debugInfo += fmt.Sprintf("DebugMode = %t\n", av.DebugMode)
+	debugInfo += fmt.Sprintf("Current week start: %s\n", av.Calendar.CurrentWeek.Days[0].Date.Format("2006-01-02"))
+	debugInfo += fmt.Sprintf("Current week end: %s\n", av.Calendar.CurrentWeek.Days[6].Date.Format("2006-01-02"))
+	av.appendDebugLog("/tmp/lazyorg_nav_debug.txt", debugInfo)
+	
 	// Collect all events from all days in the week
-	for _, day := range av.Calendar.CurrentWeek.Days {
+	for dayIndex, day := range av.Calendar.CurrentWeek.Days {
+		debugInfo := fmt.Sprintf("Day %d (%s): %d events\n", dayIndex, day.Date.Format("Mon 2006-01-02"), len(day.Events))
+		for eventIndex, event := range day.Events {
+			debugInfo += fmt.Sprintf("  Event %d: %s at %s\n", eventIndex, event.Name, event.Time.Format("2006-01-02 15:04:05"))
+		}
+		av.appendDebugLog("/tmp/lazyorg_nav_debug.txt", debugInfo)
 		allEvents = append(allEvents, day.Events...)
 	}
 	
-	// Sort by time
+	debugInfo = fmt.Sprintf("\n\n--- getAllEventsFromWeek() SORTING DEBUG ---\n")
+	debugInfo += fmt.Sprintf("Total events before sorting: %d\n", len(allEvents))
+	debugInfo += fmt.Sprintf("Events BEFORE sorting:\n")
+	for i, event := range allEvents {
+		localTime := event.Time.In(time.Local)
+		debugInfo += fmt.Sprintf("  %d: %s at %s (Local: %s, TZ: %s, Unix: %d)\n", i, event.Name, event.Time.Format("2006-01-02 15:04:05"), localTime.Format("2006-01-02 15:04:05"), event.Time.Location().String(), event.Time.Unix())
+	}
+	av.appendDebugLog("/tmp/lazyorg_nav_debug.txt", debugInfo)
+	
+	// Sort by time - normalize timezones to avoid mixed UTC/Local storage issues
 	sort.Slice(allEvents, func(i, j int) bool {
-		return allEvents[i].Time.Before(allEvents[j].Time)
+		// Fix obviously wrong timezone conversions for Morning events
+		timeI := allEvents[i].Time
+		timeJ := allEvents[j].Time
+		
+		// TEMPORARY FIX: ALL events stored in UTC are wrong - use original time instead of converting
+		if allEvents[i].Time.Location().String() == "UTC" {
+			// Events stored in UTC should actually be Local time, not converted to Local+10hours
+			timeI = time.Date(timeI.Year(), timeI.Month(), timeI.Day(), timeI.Hour(), timeI.Minute(), timeI.Second(), timeI.Nanosecond(), time.Local)
+		} else {
+			timeI = timeI.In(time.Local)
+		}
+		
+		if allEvents[j].Time.Location().String() == "UTC" {
+			// Events stored in UTC should actually be Local time, not converted to Local+10hours
+			timeJ = time.Date(timeJ.Year(), timeJ.Month(), timeJ.Day(), timeJ.Hour(), timeJ.Minute(), timeJ.Second(), timeJ.Nanosecond(), time.Local)
+		} else {
+			timeJ = timeJ.In(time.Local)
+		}
+		
+		return timeI.Before(timeJ)
 	})
+	
+	debugInfo = fmt.Sprintf("Events after sorting by time:\n")
+	for i, event := range allEvents {
+		localTime := event.Time.In(time.Local)
+		debugInfo += fmt.Sprintf("  %d: %s at %s (Local: %s, Unix: %d)\n", i, event.Name, event.Time.Format("2006-01-02 15:04:05"), localTime.Format("2006-01-02 15:04:05"), event.Time.Unix())
+	}
+	debugInfo += fmt.Sprintf("--- End getAllEventsFromWeek() ---\n")
+	av.appendDebugLog("/tmp/lazyorg_nav_debug.txt", debugInfo)
 	
 	return allEvents
 }
