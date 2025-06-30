@@ -233,8 +233,8 @@ func (epv *EventPopupView) ShowErrorMessage(g *gocui.Gui, title, message string)
 			return err
 		}
 		v.Title = " " + title + " "
-		v.BgColor = gocui.ColorRed
-		v.FgColor = gocui.ColorWhite
+		v.BgColor = gocui.ColorDefault
+		v.FgColor = gocui.ColorRed
 		v.Frame = true
 		
 		// Center the message
