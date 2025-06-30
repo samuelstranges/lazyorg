@@ -656,6 +656,31 @@ func (av *AppView) PasteEvent(g *gocui.Gui) error {
 	return nil
 }
 
+// refreshCurrentTimeHighlighting updates the current time highlighting for today's column
+func (av *AppView) refreshCurrentTimeHighlighting(g *gocui.Gui) {
+	// Find today's day view and refresh its current time highlighting
+	if view, ok := av.FindChildView(WeekdayNames[time.Now().Weekday()]); ok {
+		if dayView, ok := view.(*DayView); ok {
+			// Force refresh of current time highlighting
+			dayView.addCurrentTimeHighlight(g)
+		}
+	}
+}
+
+// Override UpdateChildren to automatically refresh current time highlighting
+func (av *AppView) UpdateChildren(g *gocui.Gui) error {
+	// Call the base UpdateChildren implementation
+	err := av.BaseView.UpdateChildren(g)
+	if err != nil {
+		return err
+	}
+	
+	// Automatically refresh current time highlighting after any child update
+	av.refreshCurrentTimeHighlighting(g)
+	
+	return nil
+}
+
 func (av *AppView) ShowKeybinds(g *gocui.Gui) error {
 	if view, ok := av.GetChild("keybinds"); ok {
 		if keybindsView, ok := view.(*KeybindsView); ok {
@@ -792,6 +817,7 @@ func (av *AppView) Undo(g *gocui.Gui) error {
 		// Silently ignore when there's nothing to undo
 		return nil
 	}
+	
 	return err
 }
 
@@ -802,6 +828,7 @@ func (av *AppView) Redo(g *gocui.Gui) error {
 		// Silently ignore when there's nothing to redo
 		return nil
 	}
+	
 	return err
 }
 

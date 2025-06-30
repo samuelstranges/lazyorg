@@ -54,33 +54,34 @@ func (tv *TimeView) updateBody(v *gocui.View) {
 	tv.Body = ""
 
 	for i := range tv.H {
-		var time string
-		currentHour := initialTime
+		var timeStr string
+		loopHour := initialTime
 
 		if i%2 == 0 {
 			// Skip if hour is beyond 23:00
-			if currentHour > 23 {
+			if loopHour > 23 {
 				break
 			}
-			hour := utils.FormatHour(currentHour, 0)
-			time = fmt.Sprintf(" %s - \n", hour)
+			hour := utils.FormatHour(loopHour, 0)
+			timeStr = fmt.Sprintf(" %s - \n", hour)
 		} else {
 			// Skip if hour is beyond 23:30
-			if currentHour > 23 {
+			if loopHour > 23 {
 				break
 			}
-			hour := utils.FormatHour(currentHour, 30)
-			time = fmt.Sprintf(" %s \n", hour)
+			hour := utils.FormatHour(loopHour, 30)
+			timeStr = fmt.Sprintf(" %s \n", hour)
 			initialTime++
 		}
 
+
 		if i == tv.Cursor {
-			runes := []rune(time)
+			runes := []rune(timeStr)
 			runes[0] = '>'
-			time = string(runes)
+			timeStr = string(runes)
 		}
 
-		tv.Body += time
+		tv.Body += timeStr
 	}
 
 	v.Clear()

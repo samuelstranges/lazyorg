@@ -10,8 +10,9 @@ import (
 type EventView struct {
 	*BaseView
 
-	Event            *calendar.Event
-	ShowBottomBorder bool
+	Event               *calendar.Event
+	ShowBottomBorder    bool
+	IsCurrentTimeEvent  bool
 }
 
 func NewEvenView(name string, e *calendar.Event) *EventView {
@@ -36,8 +37,21 @@ func (ev *EventView) Update(g *gocui.Gui) error {
 		}
 	}
 
-	v.BgColor = ev.Event.Color
-	v.FgColor = gocui.ColorBlack
+	// Always set the event's background color (ensure it's not default/black)
+	eventColor := ev.Event.Color
+	if eventColor == gocui.ColorDefault || eventColor == gocui.ColorBlack {
+		// Fallback to a visible color if somehow the event has no color
+		eventColor = gocui.ColorBlue
+	}
+	v.BgColor = eventColor
+	
+	// Set text color based on whether this is current time event
+	if ev.IsCurrentTimeEvent {
+		v.FgColor = gocui.ColorCyan
+	} else {
+		v.FgColor = gocui.ColorBlack
+	}
+	
 	v.Frame = false
 	v.Clear()
 	

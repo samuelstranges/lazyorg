@@ -46,6 +46,11 @@ func (dv *DayView) Update(g *gocui.Gui) error {
 
 	v.Title = dv.Day.FormatTitle()
 
+	// Add current time highlighting if this is today
+	if err = dv.addCurrentTimeHighlight(g); err != nil {
+		return err
+	}
+
 	if err = dv.updateChildViewProperties(g); err != nil {
 		return err
 	}
@@ -63,6 +68,157 @@ func (dv *DayView) updateBgColor(v *gocui.View) {
 	} else {
 		v.BgColor = gocui.ColorDefault
 	}
+}
+
+func (dv *DayView) addCurrentTimeHighlight(g *gocui.Gui) error {
+	// Only highlight if this is today
+	if dv.Day.Date.YearDay() != time.Now().YearDay() {
+		return nil
+	}
+
+	now := time.Now()
+	currentHour := now.Hour()
+	currentMinute := now.Minute()
+	
+	// Round to nearest half hour (0 or 30)
+	currentHalfHour := 0
+	if currentMinute >= 30 {
+		currentHalfHour = 30
+	}
+	
+	// Create a time for the current half-hour slot
+	currentTime := time.Date(now.Year(), now.Month(), now.Day(), currentHour, currentHalfHour, 0, 0, now.Location())
+	
+	// Get the position of this time slot
+	timePosition := utils.TimeToPosition(currentTime, dv.TimeView.Body)
+	if timePosition < 0 {
+		return nil // Time not in visible range
+	}
+	
+	// Find event at current time (if any)
+	var currentTimeEvent *calendar.Event
+	for _, event := range dv.Day.Events {
+		eventTime := event.Time
+		eventHour := eventTime.Hour()
+		eventMinute := eventTime.Minute()
+		eventHalfHour := 0
+		if eventMinute >= 30 {
+			eventHalfHour = 30
+		}
+		
+		// Check if event starts exactly at current half-hour
+		if eventHour == currentHour && eventHalfHour == currentHalfHour {
+			currentTimeEvent = event
+			break
+		}
+	}
+	
+	// Remove existing highlight view if it exists
+	highlightViewName := dv.Name + "_current_time_highlight"
+	if err := g.DeleteView(highlightViewName); err != nil && err != gocui.ErrUnknownView {
+		return err
+	}
+	
+	// Case 1: No event at current time - show cyan hashes
+	if currentTimeEvent == nil {
+		x := dv.X
+		y := dv.Y + timePosition
+		w := dv.W
+		h := 2 // Cover the half-hour slot (2 lines)
+		
+		// Create new highlight view with cyan hashes
+		v, err := g.SetView(highlightViewName, x, y, x+w, y+h)
+		if err != nil {
+			if err != gocui.ErrUnknownView {
+				return err
+			}
+			// Set background to match the day view background (transparent)
+			if dv.Day.Date.YearDay() == time.Now().YearDay() {
+				v.BgColor = gocui.Attribute(termbox.ColorDarkGray)
+			} else {
+				v.BgColor = gocui.ColorDefault
+			}
+			v.FgColor = gocui.ColorCyan
+			v.Frame = false
+			
+			// Fill with cyan hash characters
+			hashLine := ""
+			for i := 0; i < w-1; i++ {
+				hashLine += "#"
+			}
+			fmt.Fprintf(v, "%s\n", hashLine)
+			fmt.Fprintf(v, "%s\n", hashLine)
+		}
+	} else {
+		// Case 2: Event exists at current time
+		// Check if event is in the "title" position (first line of its time slot)
+		eventPosition := utils.TimeToPosition(currentTimeEvent.Time, dv.TimeView.Body)
+		isInTitlePosition := (eventPosition == timePosition)
+		
+		if isInTitlePosition {
+			// Event is in title position - we'll handle this by modifying event color in updateChildViewProperties
+			// For now, just mark that we need to color the event text cyan
+			// This will be handled when the event view is created
+		} else {
+			// Event exists elsewhere - show cyan hashes
+			x := dv.X
+			y := dv.Y + timePosition
+			w := dv.W
+			h := 2
+			
+			v, err := g.SetView(highlightViewName, x, y, x+w, y+h)
+			if err != nil {
+				if err != gocui.ErrUnknownView {
+					return err
+				}
+				// Set background to match the day view background (transparent)
+				if dv.Day.Date.YearDay() == time.Now().YearDay() {
+					v.BgColor = gocui.Attribute(termbox.ColorDarkGray)
+				} else {
+					v.BgColor = gocui.ColorDefault
+				}
+				v.FgColor = gocui.ColorCyan
+				v.Frame = false
+				
+				// Fill with cyan hash characters
+				hashLine := ""
+				for i := 0; i < w-1; i++ {
+					hashLine += "#"
+				}
+				fmt.Fprintf(v, "%s\n", hashLine)
+				fmt.Fprintf(v, "%s\n", hashLine)
+			}
+		}
+	}
+	
+	return nil
+}
+
+func (dv *DayView) isEventAtCurrentTime(event *calendar.Event) bool {
+	// Only check if this is today
+	if dv.Day.Date.YearDay() != time.Now().YearDay() {
+		return false
+	}
+	
+	now := time.Now()
+	currentHour := now.Hour()
+	currentMinute := now.Minute()
+	
+	// Round to nearest half hour (0 or 30)
+	currentHalfHour := 0
+	if currentMinute >= 30 {
+		currentHalfHour = 30
+	}
+	
+	eventTime := event.Time
+	eventHour := eventTime.Hour()
+	eventMinute := eventTime.Minute()
+	eventHalfHour := 0
+	if eventMinute >= 30 {
+		eventHalfHour = 30
+	}
+	
+	return eventHour == currentHour && eventHalfHour == currentHalfHour
 }
 
 func (dv *DayView) updateChildViewProperties(g *gocui.Gui) error {
@@ -112,15 +268,19 @@ func (dv *DayView) updateChildViewProperties(g *gocui.Gui) error {
 		}
 
 		viewName := fmt.Sprintf("%s-%d", event.Name, event.Id)
+		isCurrentTimeEvent := dv.isEventAtCurrentTime(event)
+		
 		if existingView, exists := eventViews[viewName]; exists {
 			existingView.X, existingView.Y, existingView.W, existingView.H = x, y, w, h
 			existingView.Event = event
 			existingView.ShowBottomBorder = showBottomBorder
+			existingView.IsCurrentTimeEvent = isCurrentTimeEvent
 			delete(eventViews, viewName)
 		} else {
 			ev := NewEvenView(viewName, event)
 			ev.X, ev.Y, ev.W, ev.H = x, y, w, h
 			ev.ShowBottomBorder = showBottomBorder
+			ev.IsCurrentTimeEvent = isCurrentTimeEvent
 			dv.AddChild(viewName, ev)
 		}
 	}
