@@ -31,6 +31,7 @@ type EventManager struct {
 	undoStack  []UndoAction
 	redoStack  []UndoAction
 	maxUndos   int
+	errorHandler func(title, message string) // Callback for displaying errors
 }
 
 func NewEventManager(db *database.Database) *EventManager {
@@ -42,17 +43,42 @@ func NewEventManager(db *database.Database) *EventManager {
 	}
 }
 
+// SetErrorHandler sets the error display callback
+func (em *EventManager) SetErrorHandler(handler func(title, message string)) {
+	em.errorHandler = handler
+}
+
+// showError displays an error using the registered error handler
+func (em *EventManager) showError(title, message string) {
+	if em.errorHandler != nil {
+		em.errorHandler(title, message)
+	}
+}
+
 // AddEvent adds a new event and records it for undo
-func (em *EventManager) AddEvent(event calendar.Event) (*calendar.Event, error) {
+func (em *EventManager) AddEvent(event calendar.Event) (*calendar.Event, bool) {
+	// Check for overlaps before adding
+	hasOverlap, err := em.database.CheckEventOverlap(event)
+	if err != nil {
+		em.showError("Database Error", "Failed to check for overlapping events: "+err.Error())
+		return nil, false
+	}
+	if hasOverlap {
+		em.showError("Cannot Add Event", "This event overlaps with an existing event")
+		return nil, false
+	}
+
 	newEventId, err := em.database.AddEvent(event)
 	if err != nil {
-		return nil, err
+		em.showError("Cannot Add Event", "Failed to save event: "+err.Error())
+		return nil, false
 	}
 
 	// Get the full event from database
 	newEvent, err := em.database.GetEventById(newEventId)
 	if err != nil {
-		return nil, err
+		em.showError("Database Error", "Failed to retrieve saved event: "+err.Error())
+		return nil, false
 	}
 
 	// Record undo action
@@ -61,7 +87,7 @@ func (em *EventManager) AddEvent(event calendar.Event) (*calendar.Event, error) 
 		EventAfter: newEvent,
 	})
 
-	return newEvent, nil
+	return newEvent, true
 }
 
 // DeleteEvent deletes an event and records it for undo
@@ -87,16 +113,29 @@ func (em *EventManager) DeleteEvent(eventId int) error {
 }
 
 // UpdateEvent updates an event and records it for undo
-func (em *EventManager) UpdateEvent(eventId int, newEvent *calendar.Event) error {
+func (em *EventManager) UpdateEvent(eventId int, newEvent *calendar.Event) bool {
 	// Get the event before updating for undo
 	eventBefore, err := em.database.GetEventById(eventId)
 	if err != nil {
-		return err
+		em.showError("Database Error", "Failed to retrieve original event: "+err.Error())
+		return false
+	}
+
+	// Check for overlaps before updating (exclude current event)
+	hasOverlap, err := em.database.CheckEventOverlap(*newEvent, eventId)
+	if err != nil {
+		em.showError("Database Error", "Failed to check for overlapping events: "+err.Error())
+		return false
+	}
+	if hasOverlap {
+		em.showError("Cannot Edit Event", "Updated event would overlap with an existing event")
+		return false
 	}
 
 	err = em.database.UpdateEventById(eventId, newEvent)
 	if err != nil {
-		return err
+		em.showError("Cannot Edit Event", "Failed to save changes: "+err.Error())
+		return false
 	}
 
 	// Record undo action
@@ -106,7 +145,7 @@ func (em *EventManager) UpdateEvent(eventId int, newEvent *calendar.Event) error
 		EventAfter:  newEvent,
 	})
 
-	return nil
+	return true
 }
 
 // DeleteEventsByName deletes all events with the same name and records it for undo

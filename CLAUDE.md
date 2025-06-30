@@ -77,10 +77,58 @@ go mod download                    # Download dependencies
 
 ## Key Patterns
 
-### Event Management
-- All event operations go through EventManager to ensure undo/redo tracking
-- Direct database operations should be avoided in favor of EventManager methods
-- Event colors are generated from name hash or manually set
+### Event Management Architecture
+
+**CRITICAL: Always Use EventManager for Event Operations**
+
+All event modifications MUST go through the EventManager to ensure:
+- Undo/redo functionality works correctly
+- Event overlap prevention is applied
+- Consistent error handling and validation
+- Proper state management
+
+**EventManager Methods:**
+- `AddEvent(event)` - Add new event with overlap checking
+- `UpdateEvent(eventId, newEvent)` - Update existing event with overlap checking
+- `DeleteEvent(eventId)` - Delete single event
+- `DeleteEventsByName(name)` - Bulk delete events by name
+- `Undo()` - Undo last operation
+- `Redo()` - Redo last undone operation
+
+**Database Direct Access:**
+- Only use `database.Database` for READ operations (GetEventsByDate, GetEventById, etc.)
+- NEVER use database directly for CREATE, UPDATE, DELETE operations
+- EventManager handles all write operations internally
+
+**Event Overlap Prevention:**
+- EventManager automatically prevents overlapping events
+- `CheckEventOverlap(event, excludeEventId...)` validates time conflicts
+- Returns errors when operations would create overlaps
+- Applies to add, edit, and paste operations
+
+### Color System Architecture
+
+**Available User Colors:**
+- Red, Green, Yellow, Blue, Magenta, Cyan, White
+- Accessible via color picker (`c` key) with shortcuts: r/g/y/b/m/c/w
+- Events auto-generate colors from name hash if not manually set
+
+**Special System Colors:**
+- `calendar.ColorCustomPurple` - Reserved for current time highlighting
+- Uses 256-color palette (color 93) for bright, distinct purple
+- NOT available to users - system-only for time indication
+
+**Color Implementation:**
+- Colors stored as `gocui.Attribute` in database as integers
+- `GetAvailableColors()` returns user-selectable colors only
+- `GenerateColorFromName()` creates consistent auto-colors
+- Color picker supports both single-letter shortcuts and full names
+
+**Current Time Highlighting:**
+- Purple hash characters (`###########`) when no event at current time
+- Purple text color when event exists at current time
+- Background color matches underlying content (event color or day background)
+- Dynamically adapts to cursor state (black when cursor active, grey when inactive)
 
 ### UI Architecture
 - View components extend BaseView for common functionality
@@ -95,8 +143,15 @@ go mod download                    # Download dependencies
 ## Recent Changes
 
 The project recently added:
-- Colored events with color picker
-- Undo/redo functionality (`u` and `r` keys)
+- **Event Overlap Prevention**: All event operations now prevent scheduling conflicts
+- **Current Time Highlighting**: Purple indicators show current half-hour in today's column
+- **Centralized Event Management**: All modifications route through EventManager
+- **Enhanced Color System**: Custom purple for time highlighting, improved color management
+- **Automatic View Refresh**: Current time highlighting updates automatically after all operations
+
+Previous features:
+- Colored events with color picker (`c` key)
+- Undo/redo functionality (`u` and `r` keys) 
 - Yank/paste system for events (`y`, `p`, `d` keys)
 - Jump navigation (`g` key)
 - Search within current week (`/` key)

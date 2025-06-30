@@ -272,6 +272,40 @@ func (database *Database) GetEventsByName(name string) ([]*calendar.Event, error
 	return events, nil
 }
 
+// CheckEventOverlap checks if a new event would overlap with any existing events
+// Returns true if there's an overlap, false if no overlap
+func (database *Database) CheckEventOverlap(newEvent calendar.Event, excludeEventId ...int) (bool, error) {
+	// Calculate new event's time range
+	newStartTime := newEvent.Time
+	newEndTime := newStartTime.Add(time.Duration(newEvent.DurationHour * float64(time.Hour)))
+	
+	// Get all events for the same date
+	existingEvents, err := database.GetEventsByDate(newEvent.Time)
+	if err != nil {
+		return false, err
+	}
+	
+	// Check each existing event for overlap
+	for _, existingEvent := range existingEvents {
+		// Skip if this is the same event (for edits)
+		if len(excludeEventId) > 0 && existingEvent.Id == excludeEventId[0] {
+			continue
+		}
+		
+		existingStartTime := existingEvent.Time
+		existingEndTime := existingStartTime.Add(time.Duration(existingEvent.DurationHour * float64(time.Hour)))
+		
+		// Check for overlap: two events overlap if one starts before the other ends
+		overlap := (newStartTime.Before(existingEndTime) && newEndTime.After(existingStartTime))
+		
+		if overlap {
+			return true, nil // Found an overlap
+		}
+	}
+	
+	return false, nil // No overlap found
+}
+
 func (database *Database) CloseDatabase() error {
 	if database.db == nil {
 		return nil

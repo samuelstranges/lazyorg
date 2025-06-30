@@ -57,8 +57,11 @@ func NewAppView(g *gocui.Gui, db *database.Database, cfg *config.Config) *AppVie
 	
 
 	av.AddChild("title", NewTitleView(c))
-	av.AddChild("popup", NewEvenPopup(g, c, db))
+	av.AddChild("popup", NewEvenPopup(g, c, db, av.EventManager))
 	av.AddChild("main", NewMainView(c))
+	
+	// Set up error handler for EventManager after popup is created
+	av.setupErrorHandler(g)
 	
 	// Only add side view if it will have children
 	if !cfg.HideDayOnStartup || !cfg.HideNotesOnStartup {
@@ -68,6 +71,17 @@ func NewAppView(g *gocui.Gui, db *database.Database, cfg *config.Config) *AppVie
 	av.AddChild("keybinds", NewKeybindsView())
 
 	return av
+}
+
+// setupErrorHandler configures the EventManager to show error messages via popup
+func (av *AppView) setupErrorHandler(g *gocui.Gui) {
+	av.EventManager.SetErrorHandler(func(title, message string) {
+		if popup, ok := av.GetChild("popup"); ok {
+			if popupView, ok := popup.(*EventPopupView); ok {
+				popupView.ShowErrorMessage(g, title, message)
+			}
+		}
+	})
 }
 
 func (av *AppView) Layout(g *gocui.Gui) error {
@@ -544,8 +558,9 @@ func (av *AppView) ShowColorPicker(g *gocui.Gui) error {
 				popupView.ColorPickerCallback = func(colorName string) error {
 					color := calendar.ColorNameToAttribute(colorName)
 					av.colorPickerEvent.Event.Color = color
-					if err := av.EventManager.UpdateEvent(av.colorPickerEvent.Event.Id, av.colorPickerEvent.Event); err != nil {
-						return err
+					if !av.EventManager.UpdateEvent(av.colorPickerEvent.Event.Id, av.colorPickerEvent.Event) {
+						// Error is handled by EventManager internally
+						return nil
 					}
 					av.CloseColorPicker(g)
 					return nil
@@ -637,8 +652,9 @@ func (av *AppView) PasteEvent(g *gocui.Gui) error {
 			os.WriteFile("/tmp/lazyorg_debug.txt", []byte(debugInfo + finalDebug), 0644)
 
 			// Add to database
-			if _, err := av.EventManager.AddEvent(newEvent); err != nil {
-				return err
+			if _, success := av.EventManager.AddEvent(newEvent); !success {
+				// Error is handled by EventManager internally
+				return nil
 			}
 
 			// Refresh events from database to ensure proper display

@@ -8,6 +8,7 @@ import (
 
 	"github.com/HubertBel/lazyorg/internal/calendar"
 	"github.com/HubertBel/lazyorg/internal/database"
+	"github.com/HubertBel/lazyorg/internal/eventmanager"
 	"github.com/HubertBel/lazyorg/internal/utils"
 	component "github.com/j-04/gocui-component"
 	"github.com/jroimartin/gocui"
@@ -15,23 +16,25 @@ import (
 
 type EventPopupView struct {
 	*BaseView
-	Form     *component.Form
-	Calendar *calendar.Calendar
-	Database *database.Database
+	Form         *component.Form
+	Calendar     *calendar.Calendar
+	Database     *database.Database
+	EventManager *eventmanager.EventManager
 
 	IsVisible bool
 	SearchCallback func(query string) error
 	ColorPickerCallback func(colorName string) error
 }
 
-func NewEvenPopup(g *gocui.Gui, c *calendar.Calendar, db *database.Database) *EventPopupView {
+func NewEvenPopup(g *gocui.Gui, c *calendar.Calendar, db *database.Database, em *eventmanager.EventManager) *EventPopupView {
 
 	epv := &EventPopupView{
-		BaseView:  NewBaseView("popup"),
-		Form:      nil,
-		Calendar:  c,
-		Database:  db,
-		IsVisible: false,
+		BaseView:     NewBaseView("popup"),
+		Form:         nil,
+		Calendar:     c,
+		Database:     db,
+		EventManager: em,
+		IsVisible:    false,
 	}
 
 	return epv
@@ -180,9 +183,10 @@ func (epv *EventPopupView) AddEvent(g *gocui.Gui, v *gocui.View) error {
 	}
 	events := newEvent.GetReccuringEvents()
 
-	for _, v := range events {
-		if _, err := epv.Database.AddEvent(v); err != nil {
-			return err
+	for _, event := range events {
+		if _, success := epv.EventManager.AddEvent(event); !success {
+			// Error is handled by EventManager internally
+			return nil
 		}
 	}
 
@@ -200,8 +204,9 @@ func (epv *EventPopupView) EditEvent(g *gocui.Gui, v *gocui.View, event *calenda
 	}
 	newEvent.Id = event.Id
 
-	if err := epv.Database.UpdateEventById(event.Id, newEvent); err != nil {
-		return err
+	if !epv.EventManager.UpdateEvent(event.Id, newEvent) {
+		// Error is handled by EventManager internally
+		return nil
 	}
 
 	return epv.Close(g, v)
@@ -210,6 +215,75 @@ func (epv *EventPopupView) EditEvent(g *gocui.Gui, v *gocui.View, event *calenda
 func (epv *EventPopupView) Close(g *gocui.Gui, v *gocui.View) error {
 	epv.IsVisible = false
 	return epv.Form.Close(g, v)
+}
+
+// ShowErrorMessage displays an error popup to the user
+func (epv *EventPopupView) ShowErrorMessage(g *gocui.Gui, title, message string) error {
+	// Calculate popup size and position
+	maxX, maxY := g.Size()
+	width := 60
+	height := 8
+	x := (maxX - width) / 2
+	y := (maxY - height) / 2
+	
+	// Create error popup view
+	v, err := g.SetView("error-popup", x, y, x+width, y+height)
+	if err != nil {
+		if err != gocui.ErrUnknownView {
+			return err
+		}
+		v.Title = " " + title + " "
+		v.BgColor = gocui.ColorRed
+		v.FgColor = gocui.ColorWhite
+		v.Frame = true
+		
+		// Center the message
+		lines := []string{
+			"",
+			"  " + message,
+			"",
+			"  Press ENTER or ESC to close",
+		}
+		
+		for _, line := range lines {
+			fmt.Fprintln(v, line)
+		}
+	}
+	
+	// Set focus to error popup
+	g.SetCurrentView("error-popup")
+	
+	// Set up keybindings for closing the error popup
+	g.SetKeybinding("error-popup", gocui.KeyEnter, gocui.ModNone, func(g *gocui.Gui, v *gocui.View) error {
+		return epv.closeErrorPopup(g)
+	})
+	g.SetKeybinding("error-popup", gocui.KeyEsc, gocui.ModNone, func(g *gocui.Gui, v *gocui.View) error {
+		return epv.closeErrorPopup(g)
+	})
+	
+	return nil
+}
+
+// closeErrorPopup removes the error popup and restores focus
+func (epv *EventPopupView) closeErrorPopup(g *gocui.Gui) error {
+	// Delete the error popup view
+	if err := g.DeleteView("error-popup"); err != nil {
+		return err
+	}
+	
+	// Remove keybindings
+	g.DeleteKeybinding("error-popup", gocui.KeyEnter, gocui.ModNone)
+	g.DeleteKeybinding("error-popup", gocui.KeyEsc, gocui.ModNone)
+	
+	// Return focus to the main popup
+	if epv.IsVisible {
+		_, err := g.SetCurrentView("popup")
+		return err
+	}
+	
+	// Return focus to the main calendar view
+	_, err := g.SetCurrentView("Monday-30") // This should be dynamic based on current day
+	return err
 }
 
 func (epv *EventPopupView) positionCursorsAtEnd(g *gocui.Gui) {
