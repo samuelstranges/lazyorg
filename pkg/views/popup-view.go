@@ -212,6 +212,7 @@ func (epv *EventPopupView) EditEvent(g *gocui.Gui, v *gocui.View, event *calenda
 	return epv.Close(g, v)
 }
 
+
 func (epv *EventPopupView) Close(g *gocui.Gui, v *gocui.View) error {
 	epv.IsVisible = false
 	return epv.Form.Close(g, v)

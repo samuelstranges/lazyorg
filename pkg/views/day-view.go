@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"sort"
+	"strings"
 	"time"
 
 	"github.com/HubertBel/lazyorg/internal/calendar"
@@ -81,6 +82,21 @@ func (dv *DayView) updateCurrentTimeHighlight(g *gocui.Gui) error {
 		err               error
 		f                 *os.File
 	)
+	
+	// Check if any popup/form views exist - if so, don't create time highlighting
+	// This prevents time highlighting from appearing over popups
+	if views := g.Views(); views != nil {
+		for _, view := range views {
+			if strings.Contains(view.Name(), "Edit Event") || 
+			   strings.Contains(view.Name(), "Add Event") ||
+			   strings.Contains(view.Name(), "Goto") ||
+			   strings.Contains(view.Name(), "Color") {
+				// Remove any existing highlight and return early
+				g.DeleteView(highlightViewName)
+				return nil
+			}
+		}
+	}
 
 	// Debug logging
 	if f, err = os.OpenFile("/tmp/lazyorg_currenttime_debug.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644); err == nil {
