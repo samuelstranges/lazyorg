@@ -6,7 +6,9 @@ import (
 	"io"
 	"log"
 	"os"
+	"os/signal"
 	"path/filepath"
+	"syscall"
 
 	"github.com/HubertBel/lazyorg/internal/config"
 	"github.com/HubertBel/lazyorg/internal/database"
@@ -21,6 +23,9 @@ func main() {
 	flag.StringVar(&backupPath, "backup", "", "Backup database to specified location")
 	flag.BoolVar(&debugMode, "debug", false, "Enable debug logging to /tmp/lazyorg_debug.txt and /tmp/lazyorg_getevents_debug.txt")
 	flag.Parse()
+
+	// Set up cursor restoration on exit
+	setupCursorHandling()
 
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
@@ -60,7 +65,13 @@ func main() {
 	if err != nil {
 		log.Panicln(err)
 	}
-	defer g.Close()
+	defer func() {
+		restoreCursor()
+		g.Close()
+	}()
+
+	// Set cursor to block shape for better visibility in tmux
+	setCursorBlock()
 
 	av := views.NewAppView(g, database, cfg)
 	g.SetManager(av)
@@ -93,4 +104,26 @@ func backupDatabase(srcPath, destPath string) error {
 	}
 
 	return nil
+}
+
+func setupCursorHandling() {
+	// Set up signal handling for graceful cursor restoration
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, os.Interrupt, syscall.SIGTERM, syscall.SIGQUIT)
+	
+	go func() {
+		<-c
+		restoreCursor()
+		os.Exit(0)
+	}()
+}
+
+func setCursorBlock() {
+	// ESC[2 q = Set cursor to steady block
+	fmt.Print("\033[2 q")
+}
+
+func restoreCursor() {
+	// ESC[0 q = Reset cursor to default shape
+	fmt.Print("\033[0 q")
 }
