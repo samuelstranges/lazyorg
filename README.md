@@ -3,7 +3,7 @@
 A sophisticated terminal-based calendar and event management system with
 advanced scheduling features. Forked from
 [HubertBel/lazyorg](https://github.com/HubertBel/lazyorg), and from there just
-basically gave Claude Code the reigns...
+basically gave Claude Code the reins...
 
 ## Features
 
@@ -77,7 +77,6 @@ reference below:
 
 ### View Controls
 
-- `Ctrl+s` - Show/Hide side view
 - `?` - Show/Hide help menu
 - `q` - Quit application
 
@@ -96,19 +95,21 @@ When creating a new event (`a`), you'll be prompted to fill in:
 ## Configuration
 
 ### Database Location
-By default, the database is created at `~/.local/share/chronos/data.db`. You can specify a custom location:
+
+By default, the database is created at `~/.local/share/chronos/data.db`. You can
+specify a custom location:
 
 **Command Line:**
+
 ```bash
 ./chronos -db /path/to/custom/database.db
 ```
 
-**Config File:**
-Edit `~/.config/chronos/config.json`:
+**Config File:** Edit `~/.config/chronos/config.json`:
+
 ```json
 {
-  "hide_day_on_startup": true,
-  "database_path": "/path/to/custom/database.db"
+    "database_path": "/path/to/custom/database.db"
 }
 ```
 

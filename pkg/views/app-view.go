@@ -16,8 +16,7 @@ import (
 )
 
 var (
-	MainViewWidthRatio = 0.8
-	SideViewWidthRatio = 0.2
+	MainViewWidthRatio = 1.0
 )
 
 type AppView struct {
@@ -77,10 +76,6 @@ func NewAppView(g *gocui.Gui, db *database.Database, cfg *config.Config) *AppVie
 	// Set up error handler for EventManager after popup is created
 	av.setupErrorHandler(g)
 	
-	// Only add side view if it will have children
-	if !cfg.HideDayOnStartup {
-		av.AddChild("side", NewSideView(c, db, cfg))
-	}
 	
 	av.AddChild("keybinds", NewKeybindsView())
 
@@ -158,28 +153,6 @@ func (av *AppView) updateEventsFromDatabase() error {
 	return nil
 }
 
-func (av *AppView) ShowOrHideSideView(g *gocui.Gui) error {
-	if sideView, ok := av.GetChild("side"); ok {
-		if err := sideView.ClearChildren(g); err != nil {
-			return err
-		}
-		SideViewWidthRatio = 0.0
-		MainViewWidthRatio = 1.0
-
-		av.children.Delete("side")
-		return g.DeleteView("side")
-	}
-
-	SideViewWidthRatio = 0.2
-	MainViewWidthRatio = 0.8
-
-	// Only add side view if it will have children
-	if !av.Config.HideDayOnStartup {
-		av.AddChild("side", NewSideView(av.Calendar, av.Database, av.Config))
-	}
-
-	return nil
-}
 
 func (av *AppView) JumpToToday() {
 	av.Calendar.JumpToToday()
@@ -816,11 +789,6 @@ func (av *AppView) ShowKeybinds(g *gocui.Gui) error {
 
 func (av *AppView) updateChildViewProperties() {
 	sideViewWidth := 0
-	if sideView, ok := av.GetChild("side"); ok {
-		if sideView.Children().Len() > 0 {
-			sideViewWidth = int(float64(av.W) * SideViewWidthRatio)
-		}
-	}
 	mainViewWidth := av.W - sideViewWidth - 1
 
 	if titleView, ok := av.GetChild("title"); ok {
@@ -842,14 +810,6 @@ func (av *AppView) updateChildViewProperties() {
 		)
 	}
 
-	if sideView, ok := av.GetChild("side"); ok {
-		sideView.SetProperties(
-			av.X,
-			av.Y,
-			sideViewWidth,
-			av.H,
-		)
-	}
 }
 
 func (av *AppView) UpdateCurrentView(g *gocui.Gui) error {
@@ -871,12 +831,6 @@ func (av *AppView) UpdateCurrentView(g *gocui.Gui) error {
 	}
 
 	g.Cursor = true
-	if view, ok := av.FindChildView("hover"); ok {
-		if hoverView, ok := view.(*HoverView); ok {
-			hoverView.CurrentView = av.GetHoveredOnView(g)
-			hoverView.Update(g)
-		}
-	}
 
 	g.SetCurrentView(WeekdayNames[av.Calendar.CurrentDay.Date.Weekday()])
 	g.CurrentView().BgColor = gocui.Attribute(termbox.ColorBlack)

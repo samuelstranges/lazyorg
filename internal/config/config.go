@@ -7,13 +7,11 @@ import (
 )
 
 type Config struct {
-	HideDayOnStartup   bool   `json:"hide_day_on_startup"`
 	DatabasePath       string `json:"database_path,omitempty"`
 }
 
 func GetDefaultConfig() *Config {
 	return &Config{
-		HideDayOnStartup:   true,
 		DatabasePath:       "", // Empty means use default path
 	}
 }
