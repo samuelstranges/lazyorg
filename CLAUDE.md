@@ -15,19 +15,29 @@ keybindings.
 ### Building
 
 ```bash
-go build                           # Build the application
-go build -o chronos cmd/chronos/   # Build with specific output name
+go build cmd/chronos/main.go       # Build the application (outputs ./main)
+go build -o chronos cmd/chronos/main.go  # Build with specific output name
 ```
 
 ### Running
 
 ```bash
-./chronos                          # Run the built binary
+./main                             # Run the built binary (default name)
+./chronos                          # Run the built binary (custom name)
 go run cmd/chronos/main.go         # Run directly from source
 ./chronos -backup /path/to/backup  # Backup database to specified location
 ./chronos -debug                   # Run with debug logging enabled
 ./chronos -db /path/to/custom.db   # Use custom database location
+./chronos --help                   # Show all available command-line options
 ```
+
+### Command-Line Options
+
+- **`-db <path>`** - Specify custom database file location  
+  Default: `~/.local/share/chronos/data.db`
+- **`-backup <path>`** - Backup database to specified location and exit
+- **`-debug`** - Enable debug logging to `/tmp/chronos_debug.txt` and `/tmp/chronos_getevents_debug.txt`
+- **`--help`** - Show all available command-line options
 
 ### Testing
 

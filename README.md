@@ -27,7 +27,11 @@ basically gave Claude Code the reins...
 ```bash
 git clone https://github.com/samuelstranges/chronos.git
 cd chronos
-go build
+go build cmd/chronos/main.go
+./main
+
+# Or build with specific output name
+go build -o chronos cmd/chronos/main.go
 ./chronos
 
 # Custom database location
@@ -38,7 +42,18 @@ go build
 
 # Enable debug logging
 ./chronos -debug
+
+# Show all available command-line options
+./chronos --help
 ```
+
+## Command-Line Options
+
+- **`-db <path>`** - Specify custom database file location  
+  Default: `~/.local/share/chronos/data.db`
+- **`-backup <path>`** - Backup database to specified location and exit
+- **`-debug`** - Enable debug logging to `/tmp/chronos_debug.txt` and `/tmp/chronos_getevents_debug.txt`
+- **`--help`** - Show all available command-line options
 
 ## Usage
 
