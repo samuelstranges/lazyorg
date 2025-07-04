@@ -52,7 +52,8 @@ go build -o chronos cmd/chronos/main.go
 - **`-db <path>`** - Specify custom database file location  
   Default: `~/.local/share/chronos/data.db`
 - **`-backup <path>`** - Backup database to specified location and exit
-- **`-debug`** - Enable debug logging to `/tmp/chronos_debug.txt` and `/tmp/chronos_getevents_debug.txt`
+- **`-debug`** - Enable debug logging to `/tmp/chronos_debug.txt` and
+  `/tmp/chronos_getevents_debug.txt`
 - **`--help`** - Show all available command-line options
 
 ## Usage
@@ -156,8 +157,37 @@ specify a custom location:
 
 Command line flags take precedence over config file settings.
 
+## Future
+
+- fix timezone technical debt
+- desktop notifications
+- export to `.ics` and `.csv`, `.json` (import probably not due to limitations
+  of 30 min events with no overlap)
+- enhanced recurrence rules (eg "repeat every weekday", "first friday of the
+  month")
+- additional views: daily view, monthly view, agenda view
+- export today's agenda flag
+- birthdays toggle (using carddav)
+- tagging (and filtering by tag)
+- automated backups
+- weather integration
+- add links (and open links with 'O'): eg a google meeting link:
+    - could these meeting links be dynamically created? probably out of scope
+- custom event template in config file
+- encrypt database (gpg integration?): probably shouldn't use claude code for
+  this feature...
+- commandline flags:
+    - next event
+    - current event
+
+## Not planned
+
+- syncing: using a local database as a single source of truth improves speed and
+  flexibility (undo/redo of mass change of events would be hard to sync), and
+  fits well within the constraints of a TUI
+
 ## Acknowledgments
 
+- Forked from [HubertBel/lazyorg](https://github.com/HubertBel/lazyorg)
 - Inspired by [lazygit](https://github.com/jesseduffield/lazygit)
 - Built with [gocui](https://github.com/jroimartin/gocui) TUI framework
-- Forked from [HubertBel/lazyorg](https://github.com/HubertBel/lazyorg)
