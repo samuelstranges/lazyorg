@@ -97,6 +97,11 @@ func (em *EventManager) DeleteEvent(eventId int) error {
 	if err != nil {
 		return err
 	}
+	
+	// Check if event exists
+	if eventBefore == nil {
+		return errors.New("event not found: cannot delete non-existent event")
+	}
 
 	err = em.database.DeleteEventById(eventId)
 	if err != nil {
@@ -118,6 +123,12 @@ func (em *EventManager) UpdateEvent(eventId int, newEvent *calendar.Event) bool 
 	eventBefore, err := em.database.GetEventById(eventId)
 	if err != nil {
 		em.showError("Database Error", "Failed to retrieve original event: "+err.Error())
+		return false
+	}
+	
+	// Check if event exists
+	if eventBefore == nil {
+		em.showError("Event Not Found", "Cannot update event: event does not exist")
 		return false
 	}
 
