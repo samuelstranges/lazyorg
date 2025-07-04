@@ -66,9 +66,30 @@ reference below:
 
 ### Search
 
-- `/` - Search events in current week
+- `/` - Search events with text and date filters
 - `n/N` - Go to next/previous search result
 - `Esc` - Clear search
+
+#### Search Filters
+
+The search function supports multiple types of filters:
+
+**Text Search:**
+- Search across event names, descriptions, and locations
+- Case-insensitive matching
+- Partial text matching supported
+
+**Date Filters:**
+- **From Date**: Filter events starting from a specific date
+- **To Date**: Filter events ending by a specific date
+- **Date Format**: Use `YYYY-MM-DD` format (e.g., `2024-12-25`)
+- **Today Shortcut**: Use `t` to represent today's date
+
+**Examples:**
+- Text only: `meeting` (finds all events containing "meeting")
+- Date range: From `2024-01-01` to `2024-01-31` (January events)
+- Today shortcut: From `t` to `t` (today's events only)
+- Mixed: `doctor` with From Date `t` (today's appointments with "doctor")
 
 ### Operations
 
@@ -85,7 +106,8 @@ reference below:
 When creating a new event (`a`), you'll be prompted to fill in:
 
 - **Name**: Title of event
-- **Time**: Date and time of the event
+- **Date**: Date of the event (YYYY-MM-DD format)
+- **Time**: Time of the event (HH:MM format, 30-minute intervals)
 - **Location** (optional): Location of the event
 - **Duration**: Duration of the event in hours (0.5 = 30 minutes)
 - **Frequency**: Repeat interval in days (default: 7 for weekly)

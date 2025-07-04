@@ -243,7 +243,7 @@ func (epv *EventPopupView) ShowSearchPopup(g *gocui.Gui) error {
 		return nil
 	}
 
-	epv.Form = epv.SearchForm(g, "Search Events")
+	epv.Form = epv.SearchForm(g, "Search: today's date: t")
 
 	epv.addKeybind(gocui.KeyEsc, epv.Close)
 	epv.addKeybind(gocui.KeyEnter, epv.ExecuteSearch)
