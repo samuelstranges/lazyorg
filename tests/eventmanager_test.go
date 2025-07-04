@@ -48,19 +48,19 @@ func TestBulkDeleteUndoRedo(t *testing.T) {
 	event3 := createTestEvent("Different Event", "Different event", "Location 3", 2*time.Hour)
 
 	// Add events
-	_, err := em.AddEvent(event1)
-	if err != nil {
-		t.Fatalf("Failed to add event1: %v", err)
+	_, success := em.AddEvent(event1)
+	if !success {
+		t.Fatalf("Failed to add event1")
 	}
 
-	_, err = em.AddEvent(event2)
-	if err != nil {
-		t.Fatalf("Failed to add event2: %v", err)
+	_, success = em.AddEvent(event2)
+	if !success {
+		t.Fatalf("Failed to add event2")
 	}
 
-	_, err = em.AddEvent(event3)
-	if err != nil {
-		t.Fatalf("Failed to add event3: %v", err)
+	_, success = em.AddEvent(event3)
+	if !success {
+		t.Fatalf("Failed to add event3")
 	}
 
 	// Verify initial count
@@ -152,9 +152,9 @@ func TestAddEventUndoRedo(t *testing.T) {
 	event := createTestEvent("Add Test", "Test add event", "Test Location", 0)
 
 	// Add event
-	_, err := em.AddEvent(event)
-	if err != nil {
-		t.Fatalf("Failed to add event: %v", err)
+	_, success := em.AddEvent(event)
+	if !success {
+		t.Fatalf("Failed to add event")
 	}
 
 	// Verify event was added
@@ -207,13 +207,13 @@ func TestDeleteEventUndoRedo(t *testing.T) {
 	event := createTestEvent("Delete Test", "Test delete event", "Test Location", 0)
 
 	// Add event first
-	addedEvent, err := em.AddEvent(event)
-	if err != nil {
-		t.Fatalf("Failed to add event: %v", err)
+	addedEvent, success := em.AddEvent(event)
+	if !success {
+		t.Fatalf("Failed to add event")
 	}
 
 	// Delete the event
-	err = em.DeleteEvent(addedEvent.Id)
+	err := em.DeleteEvent(addedEvent.Id)
 	if err != nil {
 		t.Fatalf("Failed to delete event: %v", err)
 	}
@@ -271,9 +271,9 @@ func TestUndoRedoStackLimits(t *testing.T) {
 
 	// Add an event
 	event := createTestEvent("Stack Test", "Test stack limits", "Test Location", 0)
-	_, err := em.AddEvent(event)
-	if err != nil {
-		t.Fatalf("Failed to add event: %v", err)
+	_, success := em.AddEvent(event)
+	if !success {
+		t.Fatalf("Failed to add event")
 	}
 
 	// Now should be able to undo
@@ -287,7 +287,7 @@ func TestUndoRedoStackLimits(t *testing.T) {
 	}
 
 	// Undo the add
-	err = em.Undo()
+	err := em.Undo()
 	if err != nil {
 		t.Fatalf("Failed to undo: %v", err)
 	}
@@ -299,9 +299,9 @@ func TestUndoRedoStackLimits(t *testing.T) {
 
 	// New action should clear redo stack
 	event2 := createTestEvent("New Action", "Clears redo stack", "Test Location", 0)
-	_, err = em.AddEvent(event2)
-	if err != nil {
-		t.Fatalf("Failed to add second event: %v", err)
+	_, success = em.AddEvent(event2)
+	if !success {
+		t.Fatalf("Failed to add second event")
 	}
 
 	// Redo stack should be cleared
