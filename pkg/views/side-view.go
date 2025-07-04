@@ -1,9 +1,9 @@
 package views
 
 import (
-	"github.com/HubertBel/lazyorg/internal/calendar"
-	"github.com/HubertBel/lazyorg/internal/config"
-	"github.com/HubertBel/lazyorg/internal/database"
+	"github.com/samuelstranges/chronos/internal/calendar"
+	"github.com/samuelstranges/chronos/internal/config"
+	"github.com/samuelstranges/chronos/internal/database"
 	"github.com/jroimartin/gocui"
 )
 

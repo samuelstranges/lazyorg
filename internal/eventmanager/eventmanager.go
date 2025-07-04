@@ -5,8 +5,8 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/HubertBel/lazyorg/internal/calendar"
-	"github.com/HubertBel/lazyorg/internal/database"
+	"github.com/samuelstranges/chronos/internal/calendar"
+	"github.com/samuelstranges/chronos/internal/database"
 )
 
 type ActionType string

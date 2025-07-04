@@ -4,22 +4,23 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-LazyOrg is a terminal-based calendar and note-taking application written in Go. It provides a TUI interface for managing events, taking notes, and organizing your schedule with vim-style keybindings.
+Chronos is a sophisticated terminal-based calendar and event management system written in Go. It provides a TUI interface for managing events with advanced features like overlap prevention, undo/redo operations, and vim-style keybindings.
 
 ## Development Commands
 
 ### Building
 ```bash
 go build                           # Build the application
-go build -o lazyorg cmd/lazyorg/   # Build with specific output name
+go build -o chronos cmd/chronos/   # Build with specific output name
 ```
 
 ### Running
 ```bash
-./lazyorg                          # Run the built binary
-go run cmd/lazyorg/main.go         # Run directly from source
-./lazyorg -backup /path/to/backup  # Backup database to specified location
-./lazyorg -debug                   # Run with debug logging enabled
+./chronos                          # Run the built binary
+go run cmd/chronos/main.go         # Run directly from source
+./chronos -backup /path/to/backup  # Backup database to specified location
+./chronos -debug                   # Run with debug logging enabled
+./chronos -db /path/to/custom.db   # Use custom database location
 ```
 
 ### Testing
@@ -42,7 +43,7 @@ go mod download                    # Download dependencies
 ### Core Components
 
 **Main Application Flow:**
-- `cmd/lazyorg/main.go` - Entry point, handles CLI flags, database initialization, and GUI setup
+- `cmd/chronos/main.go` - Entry point, handles CLI flags, database initialization, and GUI setup
 - `pkg/views/app-view.go` - Main application view that orchestrates all UI components
 - `internal/ui/keybindings.go` - Global keybinding configuration
 
@@ -67,8 +68,13 @@ go mod download                    # Download dependencies
 ### Database Schema
 - **events table**: id, name, description, location, time, duration, frequency, occurence, color
 - **notes table**: id, content, updated_at
-- Database location: `~/.local/share/lazyorg/data.db`
-- Configuration: `~/.config/lazyorg/config.json`
+- Database location: `~/.local/share/chronos/data.db` (default) or custom path via `-db` flag or config file
+- Configuration: `~/.config/chronos/config.json`
+
+### Database Configuration
+- **Command line**: `./chronos -db /path/to/custom.db`
+- **Config file**: Set `database_path` in `~/.config/chronos/config.json`
+- **Priority**: Command line flag > config file > default location
 
 ### Testing Strategy
 - Unit tests focus on EventManager functionality
@@ -215,12 +221,12 @@ if event.Time.Location().String() == "UTC" {
 **Future Work**: This is the SAME underlying issue as overlap detection - requires database migration to properly fix
 
 ### Debug Logging
-LazyOrg includes comprehensive debug logging for troubleshooting time bounds and event overlap issues:
+Chronos includes comprehensive debug logging for troubleshooting time bounds and event overlap issues:
 
 **Primary Debug Files:**
-- **`/tmp/lazyorg_debug.txt`** - Main debug output from paste operations and overlap checking
-- **`/tmp/lazyorg_getevents_debug.txt`** - Database query debugging from GetEventsByDate function
-- **`/tmp/lazyorg_nav_debug.txt`** - Navigation debugging from JumpToNextEvent/JumpToPrevEvent functions
+- **`/tmp/chronos_debug.txt`** - Main debug output from paste operations and overlap checking
+- **`/tmp/chronos_getevents_debug.txt`** - Database query debugging from GetEventsByDate function
+- **`/tmp/chronos_nav_debug.txt`** - Navigation debugging from JumpToNextEvent/JumpToPrevEvent functions
 
 **Debug Sources:**
 - **Paste Operations** (`pkg/views/app-view.go:608-680`): Calendar vs view date synchronization
@@ -238,7 +244,7 @@ LazyOrg includes comprehensive debug logging for troubleshooting time bounds and
 - Navigation logic with wrap-around behavior and event selection
 
 **Activation:**
-- Enable with `./lazyorg -debug` command line flag
+- Enable with `./chronos -debug` command line flag
 - When disabled, no debug files are created (normal operation)
 - When enabled, creates debug files automatically during paste operations and navigation
 

@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/HubertBel/lazyorg/internal/utils"
+	"github.com/samuelstranges/chronos/internal/utils"
 )
 
 type Day struct {

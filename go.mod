@@ -1,4 +1,4 @@
-module github.com/HubertBel/lazyorg
+module github.com/samuelstranges/chronos
 
 go 1.22.0
 

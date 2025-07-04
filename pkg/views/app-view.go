@@ -6,11 +6,11 @@ import (
 	"sort"
 	"time"
 
-	"github.com/HubertBel/lazyorg/internal/calendar"
-	"github.com/HubertBel/lazyorg/internal/config"
-	"github.com/HubertBel/lazyorg/internal/database"
-	"github.com/HubertBel/lazyorg/internal/eventmanager"
-	"github.com/HubertBel/lazyorg/internal/utils"
+	"github.com/samuelstranges/chronos/internal/calendar"
+	"github.com/samuelstranges/chronos/internal/config"
+	"github.com/samuelstranges/chronos/internal/database"
+	"github.com/samuelstranges/chronos/internal/eventmanager"
+	"github.com/samuelstranges/chronos/internal/utils"
 	"github.com/jroimartin/gocui"
 	"github.com/nsf/termbox-go"
 )
@@ -312,7 +312,7 @@ func (av *AppView) getAllEventsFromWeek() []*calendar.Event {
 	debugInfo += fmt.Sprintf("DebugMode = %t\n", av.DebugMode)
 	debugInfo += fmt.Sprintf("Current week start: %s\n", av.Calendar.CurrentWeek.Days[0].Date.Format("2006-01-02"))
 	debugInfo += fmt.Sprintf("Current week end: %s\n", av.Calendar.CurrentWeek.Days[6].Date.Format("2006-01-02"))
-	av.appendDebugLog("/tmp/lazyorg_nav_debug.txt", debugInfo)
+	av.appendDebugLog("/tmp/chronos_nav_debug.txt", debugInfo)
 	
 	// Collect all events from all days in the week
 	for dayIndex, day := range av.Calendar.CurrentWeek.Days {
@@ -320,7 +320,7 @@ func (av *AppView) getAllEventsFromWeek() []*calendar.Event {
 		for eventIndex, event := range day.Events {
 			debugInfo += fmt.Sprintf("  Event %d: %s at %s\n", eventIndex, event.Name, event.Time.Format("2006-01-02 15:04:05"))
 		}
-		av.appendDebugLog("/tmp/lazyorg_nav_debug.txt", debugInfo)
+		av.appendDebugLog("/tmp/chronos_nav_debug.txt", debugInfo)
 		allEvents = append(allEvents, day.Events...)
 	}
 	
@@ -331,7 +331,7 @@ func (av *AppView) getAllEventsFromWeek() []*calendar.Event {
 		localTime := event.Time.In(time.Local)
 		debugInfo += fmt.Sprintf("  %d: %s at %s (Local: %s, TZ: %s, Unix: %d)\n", i, event.Name, event.Time.Format("2006-01-02 15:04:05"), localTime.Format("2006-01-02 15:04:05"), event.Time.Location().String(), event.Time.Unix())
 	}
-	av.appendDebugLog("/tmp/lazyorg_nav_debug.txt", debugInfo)
+	av.appendDebugLog("/tmp/chronos_nav_debug.txt", debugInfo)
 	
 	// Sort by time - normalize timezones to avoid mixed UTC/Local storage issues
 	sort.Slice(allEvents, func(i, j int) bool {
@@ -363,7 +363,7 @@ func (av *AppView) getAllEventsFromWeek() []*calendar.Event {
 		debugInfo += fmt.Sprintf("  %d: %s at %s (Local: %s, Unix: %d)\n", i, event.Name, event.Time.Format("2006-01-02 15:04:05"), localTime.Format("2006-01-02 15:04:05"), event.Time.Unix())
 	}
 	debugInfo += fmt.Sprintf("--- End getAllEventsFromWeek() ---\n")
-	av.appendDebugLog("/tmp/lazyorg_nav_debug.txt", debugInfo)
+	av.appendDebugLog("/tmp/chronos_nav_debug.txt", debugInfo)
 	
 	return allEvents
 }
@@ -740,7 +740,7 @@ func (av *AppView) PasteEvent(g *gocui.Gui) error {
 				finalDebug += fmt.Sprintf("  Calendar.CurrentDay.Date: %s\n", av.Calendar.CurrentDay.Date.Format("2006-01-02 15:04:05"))
 				finalDebug += fmt.Sprintf("  Target Date from View: %s\n", targetDate.Format("2006-01-02 15:04:05"))
 				finalDebug += fmt.Sprintf("  FINAL EVENT TIME: %s\n", newEvent.Time.Format("2006-01-02 15:04:05"))
-				os.WriteFile("/tmp/lazyorg_debug.txt", []byte(debugInfo + finalDebug), 0644)
+				os.WriteFile("/tmp/chronos_debug.txt", []byte(debugInfo + finalDebug), 0644)
 			}
 
 			// Add to database

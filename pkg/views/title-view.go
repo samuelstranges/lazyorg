@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/HubertBel/lazyorg/internal/calendar"
-	"github.com/HubertBel/lazyorg/internal/utils"
+	"github.com/samuelstranges/chronos/internal/calendar"
+	"github.com/samuelstranges/chronos/internal/utils"
 	"github.com/jroimartin/gocui"
 )
 

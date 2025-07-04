@@ -6,10 +6,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/HubertBel/lazyorg/internal/calendar"
-	"github.com/HubertBel/lazyorg/internal/database"
-	"github.com/HubertBel/lazyorg/internal/eventmanager"
-	"github.com/HubertBel/lazyorg/internal/utils"
+	"github.com/samuelstranges/chronos/internal/calendar"
+	"github.com/samuelstranges/chronos/internal/database"
+	"github.com/samuelstranges/chronos/internal/eventmanager"
+	"github.com/samuelstranges/chronos/internal/utils"
 	component "github.com/j-04/gocui-component"
 	"github.com/jroimartin/gocui"
 )

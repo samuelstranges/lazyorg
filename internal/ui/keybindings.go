@@ -1,7 +1,7 @@
 package ui
 
 import (
-	"github.com/HubertBel/lazyorg/pkg/views"
+	"github.com/samuelstranges/chronos/pkg/views"
 	"github.com/jroimartin/gocui"
 )
 

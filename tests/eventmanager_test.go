@@ -5,9 +5,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/HubertBel/lazyorg/internal/calendar"
-	"github.com/HubertBel/lazyorg/internal/database"
-	"github.com/HubertBel/lazyorg/internal/eventmanager"
+	"github.com/samuelstranges/chronos/internal/calendar"
+	"github.com/samuelstranges/chronos/internal/database"
+	"github.com/samuelstranges/chronos/internal/eventmanager"
 )
 
 // setupTestDB creates an in-memory database for testing

@@ -7,8 +7,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/HubertBel/lazyorg/internal/calendar"
-	"github.com/HubertBel/lazyorg/internal/utils"
+	"github.com/samuelstranges/chronos/internal/calendar"
+	"github.com/samuelstranges/chronos/internal/utils"
 	"github.com/jroimartin/gocui"
 	"github.com/nsf/termbox-go"
 )
@@ -99,7 +99,7 @@ func (dv *DayView) updateCurrentTimeHighlight(g *gocui.Gui) error {
 	}
 
 	// Debug logging
-	if f, err = os.OpenFile("/tmp/lazyorg_currenttime_debug.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644); err == nil {
+	if f, err = os.OpenFile("/tmp/chronos_currenttime_debug.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644); err == nil {
 		fmt.Fprintf(f, "updateCurrentTimeHighlight: ViewDate=%s, Now=%s, SameYear=%t, SameMonth=%t, SameDay=%t\n",
 			dv.Day.Date.Format("2006-01-02"),
 			now.Format("2006-01-02"),

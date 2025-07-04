@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/HubertBel/lazyorg/internal/calendar"
+	"github.com/samuelstranges/chronos/internal/calendar"
 	"github.com/jroimartin/gocui"
 	_ "github.com/mattn/go-sqlite3"
 )
@@ -177,7 +177,7 @@ func (database *Database) GetEventsByDate(date time.Time) ([]*calendar.Event, er
 
 	// Write debug info only if in debug mode
 	if database.DebugMode {
-		os.WriteFile("/tmp/lazyorg_getevents_debug.txt", []byte(debugInfo), 0644)
+		os.WriteFile("/tmp/chronos_getevents_debug.txt", []byte(debugInfo), 0644)
 	}
 
 	return events, nil
@@ -357,13 +357,13 @@ func (database *Database) CheckEventOverlap(newEvent calendar.Event, excludeEven
 		
 		if overlap {
 			debugInfo += fmt.Sprintf("  RESULT: OVERLAP DETECTED\n")
-			os.WriteFile("/tmp/lazyorg_debug.txt", []byte(debugInfo), 0644)
+			os.WriteFile("/tmp/chronos_debug.txt", []byte(debugInfo), 0644)
 			return true, nil // Found an overlap
 		}
 	}
 	
 	debugInfo += fmt.Sprintf("  RESULT: NO OVERLAP\n")
-	os.WriteFile("/tmp/lazyorg_debug.txt", []byte(debugInfo), 0644)
+	os.WriteFile("/tmp/chronos_debug.txt", []byte(debugInfo), 0644)
 	
 	return false, nil // No overlap found
 }
