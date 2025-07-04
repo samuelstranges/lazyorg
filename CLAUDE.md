@@ -424,6 +424,7 @@ The project recently added:
 
 - **Unified Date Format**: All date fields now use YYYYMMDD format (no dashes) for consistency across goto, add/edit, and search forms
 - **Consistent 't' Usage**: Changed "Jump to today" keybinding from 'T' to 't' for consistency with 't' shortcut in date fields
+- **Symmetric Day Boundary Navigation**: Fixed time navigation to work symmetrically - going up from 00:00 now goes to 23:30 of previous day, matching the behavior of going down from 23:30 to 00:00 of next day
 - **Event Overlap Prevention**: All event operations now prevent scheduling
   conflicts
 - **Current Time Highlighting**: Purple indicators show current half-hour in

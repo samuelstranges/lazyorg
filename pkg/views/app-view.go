@@ -164,12 +164,20 @@ func (av *AppView) UpdateToNextTime(g *gocui.Gui) {
 	_, height := g.CurrentView().Size()
 	if _, y := g.CurrentView().Cursor(); y < height-1 {
 		av.Calendar.UpdateToNextTime()
+	} else {
+		// At bottom of day, move to next day at 00:00
+		av.Calendar.UpdateToNextDay()
+		av.Calendar.GotoTime(0, 0)
 	}
 }
 
 func (av *AppView) UpdateToPrevTime(g *gocui.Gui) {
 	if _, y := g.CurrentView().Cursor(); y > 0 {
 		av.Calendar.UpdateToPrevTime()
+	} else {
+		// At top of day (00:00), move to previous day at 23:30
+		av.Calendar.UpdateToPrevDay()
+		av.Calendar.GotoTime(23, 30)
 	}
 }
 
