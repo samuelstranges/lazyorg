@@ -40,7 +40,7 @@ func (kbv *KeybindsView) Update(g *gocui.Gui) error {
 	fmt.Fprintln(v, " h/l or ←/→   - Previous/Next day")
 	fmt.Fprintln(v, " H/L          - Previous/Next week")
 	fmt.Fprintln(v, " j/k or ↓/↑   - Move time cursor down/up")
-	fmt.Fprintln(v, " T            - Jump to today")
+	fmt.Fprintln(v, " t            - Jump to today")
 	fmt.Fprintln(v, "")
 	fmt.Fprintln(v, " Goto:")
 	fmt.Fprintln(v, " g            - Goto date/time")

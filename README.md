@@ -65,7 +65,7 @@ reference below:
 - `h/l` or `←/→` - Previous/Next day
 - `H/L` - Previous/Next week
 - `j/k` or `↑/↓` - Move time cursor up/down
-- `T` - Jump to today
+- `t` - Jump to today
 - `g` - Go to specific date
 - `w/b` - Jump to next/previous event
 

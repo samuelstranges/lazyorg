@@ -222,8 +222,8 @@ The search functionality (`/` key) provides powerful filtering capabilities for 
 **Search Form Fields:**
 
 - **Query**: Text search across event names, descriptions, and locations (case-insensitive, partial matching)
-- **From Date**: Optional start date filter (YYYY-MM-DD format or 't' for today)
-- **To Date**: Optional end date filter (YYYY-MM-DD format or 't' for today)
+- **From Date**: Optional start date filter (YYYYMMDD format or 't' for today)
+- **To Date**: Optional end date filter (YYYYMMDD format or 't' for today)
 
 **Date Shortcut:**
 
@@ -423,6 +423,7 @@ event overlap issues:
 The project recently added:
 
 - **Unified Date Format**: All date fields now use YYYYMMDD format (no dashes) for consistency across goto, add/edit, and search forms
+- **Consistent 't' Usage**: Changed "Jump to today" keybinding from 'T' to 't' for consistency with 't' shortcut in date fields
 - **Event Overlap Prevention**: All event operations now prevent scheduling
   conflicts
 - **Current Time Highlighting**: Purple indicators show current half-hour in
