@@ -7,13 +7,11 @@ import (
 )
 
 type Config struct {
-	HideNotesOnStartup bool `json:"hide_notes_on_startup"`
 	HideDayOnStartup   bool `json:"hide_day_on_startup"`
 }
 
 func GetDefaultConfig() *Config {
 	return &Config{
-		HideNotesOnStartup: true,
 		HideDayOnStartup:   true,
 	}
 }

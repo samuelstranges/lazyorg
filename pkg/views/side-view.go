@@ -22,9 +22,6 @@ func NewSideView(c *calendar.Calendar, db *database.Database, cfg *config.Config
 	if !cfg.HideDayOnStartup {
 		sv.AddChild("hover", NewHoverView(c))
 	}
-	if !cfg.HideNotesOnStartup {
-		sv.AddChild("notepad", NewNotepadView(c, db))
-	}
 
 	return sv
 }
@@ -55,24 +52,12 @@ func (sv *SideView) Update(g *gocui.Gui) error {
 }
 
 func (sv *SideView) updateChildViewProperties() {
-	heightHover := int(float64(sv.H) * 0.5)
-	heightNotepad := sv.H - heightHover - 2
-
 	if hoverView, ok := sv.GetChild("hover"); ok {
 		hoverView.SetProperties(
 			sv.X,
 			sv.Y,
 			sv.W,
-			heightHover,
-		)
-	}
-
-	if notepadView, ok := sv.GetChild("notepad"); ok {
-		notepadView.SetProperties(
-			sv.X,
-			sv.Y+heightHover+1,
-			sv.W,
-			heightNotepad,
+			sv.H,
 		)
 	}
 }

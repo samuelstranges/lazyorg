@@ -7,7 +7,7 @@
 </p>
 
 <div align="center" style="font-size: 1.2rem; margin-top: 1rem; color: #555;">
-  A simple terminal-based calendar and note-taking application.
+  A simple terminal-based calendar application.
 </div>
 
 <hr style="margin: 2rem auto; width: 80%; border: 1px solid #ddd;">
@@ -33,7 +33,6 @@ been doing a little vibecoding on this project... added:
 
 - 📅 Terminal-based calendar interface
 - ✨ Event creation and management
-- 📝 Integrated simple notepad
 - ⌨️ Vim-style keybindings
 
 ## Installation
@@ -105,8 +104,6 @@ fields:
 ### View Controls
 
 - `Ctrl+s` - Show/Hide side view
-- `Ctrl+n` - Open/Close notepad
-- `Ctrl+r` - Clear notepad content
 - `?` - Toggle help menu
 
 ### Global

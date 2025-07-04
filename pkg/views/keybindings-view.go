@@ -67,8 +67,6 @@ func (kbv *KeybindsView) Update(g *gocui.Gui) error {
 	fmt.Fprintln(v, "")
 	fmt.Fprintln(v, " View Controls:")
 	fmt.Fprintln(v, " Ctrl+s       - Show/Hide side view")
-	fmt.Fprintln(v, " Ctrl+n       - Open/Close notepad")
-	fmt.Fprintln(v, " Ctrl+r       - Clear notepad content (when in notepad)")
 	fmt.Fprintln(v, " ?            - Toggle this help")
 	fmt.Fprintln(v, "")
 	fmt.Fprintln(v, " Global:")

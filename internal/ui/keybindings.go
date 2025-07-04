@@ -16,9 +16,6 @@ func InitKeybindings(g *gocui.Gui, av *views.AppView) error {
 	if err := initMainKeybindings(g, av); err != nil {
 		return err
 	}
-	if err := initNotepadKeybindings(g, av); err != nil {
-		return err
-	}
 	if err := initHelpKeybindings(g, av); err != nil {
 		return err
 	}
@@ -55,7 +52,6 @@ func initMainKeybindings(g *gocui.Gui, av *views.AppView) error {
 		{'n', func(g *gocui.Gui, v *gocui.View) error { av.GoToNextMatch(); av.UpdateCurrentView(g); return nil }},
 		{'N', func(g *gocui.Gui, v *gocui.View) error { av.GoToPrevMatch(); av.UpdateCurrentView(g); return nil }},
 		{gocui.KeyEsc, func(g *gocui.Gui, v *gocui.View) error { av.ClearSearch(); return nil }},
-		{gocui.KeyCtrlN, func(g *gocui.Gui, v *gocui.View) error { return av.ChangeToNotepadView(g) }},
 		{gocui.KeyCtrlS, func(g *gocui.Gui, v *gocui.View) error { return av.ShowOrHideSideView(g) }},
 		{'?', func(g *gocui.Gui, v *gocui.View) error { return av.ShowKeybinds(g) }},
 		{'q', func(g *gocui.Gui, v *gocui.View) error { return quit(g, v) }},
@@ -71,28 +67,14 @@ func initMainKeybindings(g *gocui.Gui, av *views.AppView) error {
 	return nil
 }
 
-func initNotepadKeybindings(g *gocui.Gui, av *views.AppView) error {
-	notepadKeybindings := []Keybind{
-		{gocui.KeyCtrlR, func(g *gocui.Gui, v *gocui.View) error { return av.ClearNotepadContent(g) }},
-		{gocui.KeyCtrlN, func(g *gocui.Gui, v *gocui.View) error { return av.ReturnToMainView(g) }},
-		{gocui.KeyEsc, func(g *gocui.Gui, v *gocui.View) error { return av.ReturnToMainView(g) }},
-	}
-	for _, kb := range notepadKeybindings {
-		if err := g.SetKeybinding("notepad", kb.key, gocui.ModNone, kb.handler); err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
 
 func initHelpKeybindings(g *gocui.Gui, av *views.AppView) error {
-	notepadKeybindings := []Keybind{
+	helpKeybindings := []Keybind{
 		{gocui.KeyEsc, func(g *gocui.Gui, v *gocui.View) error { return av.ShowKeybinds(g) }},
 		{'?', func(g *gocui.Gui, v *gocui.View) error { return av.ShowKeybinds(g) }},
 		{'q', func(g *gocui.Gui, v *gocui.View) error { return quit(g, v) }},
 	}
-	for _, kb := range notepadKeybindings {
+	for _, kb := range helpKeybindings {
 		if err := g.SetKeybinding("keybinds", kb.key, gocui.ModNone, kb.handler); err != nil {
 			return err
 		}

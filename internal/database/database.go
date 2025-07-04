@@ -52,15 +52,6 @@ func (database *Database) createTables() error {
 		return err
 	}
 
-	_, err = database.db.Exec(`
-        CREATE TABLE IF NOT EXISTS notes (
-        id INTEGER NOT NULL PRIMARY KEY,
-        content TEXT NOT NULL,
-        updated_at DATETIME NOT NULL
-    )`)
-	if err != nil {
-		return err
-	}
 
 	return nil
 }
@@ -232,27 +223,6 @@ func (database *Database) UpdateEventByName(name string) error {
 	return nil
 }
 
-func (database *Database) SaveNote(content string) error {
-	_, err := database.db.Exec("DELETE FROM notes")
-	if err != nil {
-		return err
-	}
-
-	_, err = database.db.Exec(`INSERT INTO notes (
-            content, updated_at
-        ) VALUES (?, datetime('now'))`, content)
-
-	return err
-}
-
-func (database *Database) GetLatestNote() (string, error) {
-	var content string
-	err := database.db.QueryRow(
-		"SELECT content FROM notes ORDER BY updated_at DESC LIMIT 1",
-	).Scan(&content)
-
-	return content, err
-}
 
 func (database *Database) GetEventsByName(name string) ([]*calendar.Event, error) {
 	rows, err := database.db.Query(`

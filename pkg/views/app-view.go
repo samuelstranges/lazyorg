@@ -78,7 +78,7 @@ func NewAppView(g *gocui.Gui, db *database.Database, cfg *config.Config) *AppVie
 	av.setupErrorHandler(g)
 	
 	// Only add side view if it will have children
-	if !cfg.HideDayOnStartup || !cfg.HideNotesOnStartup {
+	if !cfg.HideDayOnStartup {
 		av.AddChild("side", NewSideView(c, db, cfg))
 	}
 	
@@ -174,7 +174,7 @@ func (av *AppView) ShowOrHideSideView(g *gocui.Gui) error {
 	MainViewWidthRatio = 0.8
 
 	// Only add side view if it will have children
-	if !av.Config.HideDayOnStartup || !av.Config.HideNotesOnStartup {
+	if !av.Config.HideDayOnStartup {
 		av.AddChild("side", NewSideView(av.Calendar, av.Database, av.Config))
 	}
 
@@ -531,67 +531,8 @@ func (av *AppView) ShowGotoPopup(g *gocui.Gui) error {
 	return nil
 }
 
-func (av *AppView) ChangeToNotepadView(g *gocui.Gui) error {
-	// Check if notepad exists, if not create the side view and notepad
-	if _, ok := av.FindChildView("notepad"); !ok {
-		// Ensure side view exists
-		if _, ok := av.GetChild("side"); !ok {
-			SideViewWidthRatio = 0.2
-			MainViewWidthRatio = 0.8
-			av.AddChild("side", NewSideView(av.Calendar, av.Database, av.Config))
-		}
-		
-		// Add notepad to side view if it doesn't exist
-		if sideView, ok := av.GetChild("side"); ok {
-			if _, ok := sideView.(*SideView).GetChild("notepad"); !ok {
-				sideView.(*SideView).AddChild("notepad", NewNotepadView(av.Calendar, av.Database))
-			}
-		}
-	}
-	
-	_, err := g.SetCurrentView("notepad")
-	if err != nil {
-		return err
-	}
-	if view, ok := av.FindChildView("notepad"); ok {
-		if notepadView, ok := view.(*NotepadView); ok {
-			notepadView.IsActive = true
-		}
-	}
-
-	return nil
-}
-
-func (av *AppView) ClearNotepadContent(g *gocui.Gui) error {
-	if view, ok := av.FindChildView("notepad"); ok {
-		if notepadView, ok := view.(*NotepadView); ok {
-			return notepadView.ClearContent(g)
-		}
-	}
-
-	return nil
-}
-
-func (av *AppView) SaveNotepadContent(g *gocui.Gui) error {
-	if view, ok := av.FindChildView("notepad"); ok {
-		if notepadView, ok := view.(*NotepadView); ok {
-			return notepadView.SaveContent(g)
-		}
-	}
-
-	return nil
-}
 
 func (av *AppView) ReturnToMainView(g *gocui.Gui) error {
-	if err := av.SaveNotepadContent(g); err != nil {
-		return err
-	}
-	if view, ok := av.FindChildView("notepad"); ok {
-		if notepadView, ok := view.(*NotepadView); ok {
-			notepadView.IsActive = false
-		}
-	}
-
 	viewName := WeekdayNames[av.Calendar.CurrentDay.Date.Weekday()]
 	g.SetCurrentView(viewName)
 	return av.UpdateCurrentView(g)
@@ -927,9 +868,6 @@ func (av *AppView) UpdateCurrentView(g *gocui.Gui) error {
 				return nil
 			}
 		}
-	}
-	if g.CurrentView() != nil && g.CurrentView().Name() == "notepad" {
-		return nil
 	}
 
 	g.Cursor = true
