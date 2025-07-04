@@ -220,7 +220,7 @@ func (epv *EventPopupView) ShowColorPickerPopup(g *gocui.Gui) error {
 		return nil
 	}
 
-	epv.Form = epv.ColorPickerForm(g, "Select Color (r/g/y/b/m/c/w or full name)")
+	epv.Form = epv.ColorPickerForm(g, "Color: r/g/y/b/m/c/w")
 
 	epv.addKeybind(gocui.KeyEsc, epv.Close)
 	epv.addKeybind(gocui.KeyEnter, epv.SelectColor)
