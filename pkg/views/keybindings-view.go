@@ -20,6 +20,7 @@ func NewKeybindsView() *KeybindsView {
 // getKeybindingsContent returns the keybindings content as a slice of strings
 func (kbv *KeybindsView) getKeybindingsContent() []string {
 	return []string{
+		"",
 		" q           - Quit",
 		"",
 		" Navigation:",
@@ -49,7 +50,6 @@ func (kbv *KeybindsView) getKeybindingsContent() []string {
 		" Undo Buffer:",
 		" u           - Undo last action",
 		" r           - Redo last undone action",
-		"",
 	}
 }
 
