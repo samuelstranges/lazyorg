@@ -747,11 +747,11 @@ func TestOptionalValidationFunctions(t *testing.T) {
 		testFunc func(string) bool
 	}{
 		// ValidateOptionalEventDate tests
-		{"Empty date should be valid", "", true, utils.ValidateOptionalEventDate},
-		{"Valid date should be valid", "2024-12-25", true, utils.ValidateOptionalEventDate},
-		{"Invalid date should be invalid", "invalid", false, utils.ValidateOptionalEventDate},
-		{"Wrong date format should be invalid", "25-12-2024", false, utils.ValidateOptionalEventDate},
-		{"Date with spaces should be valid when trimmed", "  2024-12-25  ", true, utils.ValidateOptionalEventDate},
+		{"Empty date should be valid", "", true, utils.ValidateOptionalDate},
+		{"Valid date should be valid", "20241225", true, utils.ValidateOptionalDate},
+		{"Invalid date should be invalid", "invalid", false, utils.ValidateOptionalDate},
+		{"Wrong date format should be invalid", "25-12-2024", false, utils.ValidateOptionalDate},
+		{"Date with spaces should be valid when trimmed", "  20241225  ", true, utils.ValidateOptionalDate},
 		
 		// ValidateOptionalEventTime tests
 		{"Empty time should be valid", "", true, utils.ValidateOptionalEventTime},
@@ -810,8 +810,8 @@ func TestSearchEventsWithFilters(t *testing.T) {
 		{
 			name: "Search by date only (single day)",
 			criteria: database.SearchCriteria{
-				StartDate: "2024-12-25",
-				EndDate:   "2024-12-25",
+				StartDate: "20241225",
+				EndDate:   "20241225",
 			},
 			expectedCount:  3,
 			expectedEvents: []string{"Morning Meeting", "Lunch", "Afternoon Meeting"},
@@ -819,9 +819,9 @@ func TestSearchEventsWithFilters(t *testing.T) {
 		{
 			name: "Search by time range within a day",
 			criteria: database.SearchCriteria{
-				StartDate: "2024-12-25",
+				StartDate: "20241225",
 				StartTime: "12:00",
-				EndDate:   "2024-12-25",
+				EndDate:   "20241225",
 				EndTime:   "16:00",
 			},
 			expectedCount:  2,
@@ -831,8 +831,8 @@ func TestSearchEventsWithFilters(t *testing.T) {
 			name: "Search by text with date filter",
 			criteria: database.SearchCriteria{
 				Query:     "lunch",
-				StartDate: "2024-12-25",
-				EndDate:   "2024-12-25",
+				StartDate: "20241225",
+				EndDate:   "20241225",
 			},
 			expectedCount:  1,
 			expectedEvents: []string{"Lunch"},
@@ -840,8 +840,8 @@ func TestSearchEventsWithFilters(t *testing.T) {
 		{
 			name: "Search across multiple days",
 			criteria: database.SearchCriteria{
-				StartDate: "2024-12-25",
-				EndDate:   "2024-12-26",
+				StartDate: "20241225",
+				EndDate:   "20241226",
 			},
 			expectedCount:  4,
 			expectedEvents: []string{"Morning Meeting", "Lunch", "Afternoon Meeting", "Dinner"},
@@ -849,7 +849,7 @@ func TestSearchEventsWithFilters(t *testing.T) {
 		{
 			name: "Search with start date only",
 			criteria: database.SearchCriteria{
-				StartDate: "2024-12-26",
+				StartDate: "20241226",
 			},
 			expectedCount:  1,
 			expectedEvents: []string{"Dinner"},
@@ -857,7 +857,7 @@ func TestSearchEventsWithFilters(t *testing.T) {
 		{
 			name: "Search with end date only",
 			criteria: database.SearchCriteria{
-				EndDate: "2024-12-25",
+				EndDate: "20241225",
 			},
 			expectedCount:  3,
 			expectedEvents: []string{"Morning Meeting", "Lunch", "Afternoon Meeting"},
@@ -873,8 +873,8 @@ func TestSearchEventsWithFilters(t *testing.T) {
 		{
 			name: "Search with date range that has no events",
 			criteria: database.SearchCriteria{
-				StartDate: "2024-12-24",
-				EndDate:   "2024-12-24",
+				StartDate: "20241224",
+				EndDate:   "20241224",
 			},
 			expectedCount:  0,
 			expectedEvents: []string{},
@@ -945,8 +945,8 @@ func TestSearchEventsWithFiltersEdgeCases(t *testing.T) {
 		{
 			name: "Default start time should be 00:00",
 			criteria: database.SearchCriteria{
-				StartDate: "2024-01-01",
-				EndDate:   "2024-01-01",
+				StartDate: "20240101",
+				EndDate:   "20240101",
 			},
 			expectedCount: 2, // Should include midnight event and late night event
 			description:   "When no start time specified, should default to 00:00",
@@ -954,8 +954,8 @@ func TestSearchEventsWithFiltersEdgeCases(t *testing.T) {
 		{
 			name: "Default end time should be 23:59",
 			criteria: database.SearchCriteria{
-				StartDate: "2024-01-01",
-				EndDate:   "2024-01-01",
+				StartDate: "20240101",
+				EndDate:   "20240101",
 			},
 			expectedCount: 2, // Should include events until end of day
 			description:   "When no end time specified, should default to 23:59",
@@ -963,9 +963,9 @@ func TestSearchEventsWithFiltersEdgeCases(t *testing.T) {
 		{
 			name: "Exact time match",
 			criteria: database.SearchCriteria{
-				StartDate: "2024-01-01",
+				StartDate: "20240101",
 				StartTime: "23:30",
-				EndDate:   "2024-01-01",
+				EndDate:   "20240101",
 				EndTime:   "23:30",
 			},
 			expectedCount: 1, // Should find exactly the 23:30 event
@@ -974,9 +974,9 @@ func TestSearchEventsWithFiltersEdgeCases(t *testing.T) {
 		{
 			name: "Cross-day boundary search",
 			criteria: database.SearchCriteria{
-				StartDate: "2024-01-01",
+				StartDate: "20240101",
 				StartTime: "23:00",
-				EndDate:   "2024-01-02",
+				EndDate:   "20240102",
 				EndTime:   "07:00",
 			},
 			expectedCount: 2, // Late night + early morning
@@ -1006,7 +1006,7 @@ func TestSearchEventsWithTodayShortcut(t *testing.T) {
 	defer db.CloseDatabase()
 
 	// Get today's date for comparison
-	today := time.Now().Format("2006-01-02")
+	today := time.Now().Format("20060102")
 
 	// Add test events - one for yesterday, today, and tomorrow
 	testEvents := []calendar.Event{

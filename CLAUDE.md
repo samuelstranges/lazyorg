@@ -224,8 +224,8 @@ The search functionality (`/` key) provides powerful filtering capabilities for 
 
 - `Query: "meeting"` → Find all events containing "meeting"
 - `From Date: t` → Find all events from today onwards  
-- `To Date: 2024-12-31` → Find all events up to Dec 31st
-- `From Date: 2024-12-25, To Date: 2024-12-31` → Find events in that date range
+- `To Date: 20241231` → Find all events up to Dec 31st
+- `From Date: 20241225, To Date: 20241231` → Find events in that date range
 - `Query: "lunch", From Date: t` → Find lunch events from today onwards
 - `From Date: t, To Date: t` → Find only today's events
 
@@ -234,7 +234,7 @@ The search functionality (`/` key) provides powerful filtering capabilities for 
 - Database function: `SearchEventsWithFilters(criteria SearchCriteria)`
 - Text search uses SQL LIKE with case-insensitive matching
 - Date filters automatically use 00:00-23:59 time ranges for full-day coverage
-- 't' shortcut resolved at query time using `time.Now().Format("2006-01-02")`
+- 't' shortcut resolved at query time using `time.Now().Format("20060102")`
 - Navigation works with search results (`w`/`b` keys, search result counter)
 
 **Form Component Note:**
@@ -412,6 +412,7 @@ event overlap issues:
 
 The project recently added:
 
+- **Unified Date Format**: All date fields now use YYYYMMDD format (no dashes) for consistency across goto, add/edit, and search forms
 - **Event Overlap Prevention**: All event operations now prevent scheduling
   conflicts
 - **Current Time Highlighting**: Purple indicators show current half-hour in

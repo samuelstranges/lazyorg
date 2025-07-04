@@ -228,6 +228,17 @@ func ValidateOptionalEventDate(value string) bool {
 	return ValidateEventDate(value)
 }
 
+func ValidateOptionalDate(value string) bool {
+	value = strings.TrimSpace(value)
+	if value == "" {
+		return true
+	}
+	if value == "t" {
+		return true
+	}
+	return ValidateDate(value)
+}
+
 func ValidateOptionalEventTime(value string) bool {
 	value = strings.TrimSpace(value)
 	if value == "" {

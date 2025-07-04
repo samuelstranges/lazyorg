@@ -49,7 +49,7 @@ func (epv *EventPopupView) ShowNewEventPopup(g *gocui.Gui) error {
 	}
 
 	currentDate := epv.Calendar.CurrentDay.Date
-	defaultDate := currentDate.Format("2006-01-02")
+	defaultDate := fmt.Sprintf("%04d%02d%02d", currentDate.Year(), currentDate.Month(), currentDate.Day())
 	defaultTime := currentDate.Format("15:04")
 	
 	epv.Form = epv.NewEventForm(g, "New Event", "", defaultDate, defaultTime, "", "", "7", "1", "", "Red")
@@ -76,7 +76,7 @@ func (epv *EventPopupView) ShowEditEventPopup(g *gocui.Gui, eventView *EventView
 
 	event := eventView.Event
 
-	eventDate := event.Time.Format("2006-01-02")
+	eventDate := fmt.Sprintf("%04d%02d%02d", event.Time.Year(), event.Time.Month(), event.Time.Day())
 	eventTime := event.Time.Format("15:04")
 	
 	epv.Form = epv.EditEventForm(g,

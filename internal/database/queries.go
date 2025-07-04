@@ -268,14 +268,14 @@ func (database *Database) SearchEventsWithFilters(criteria SearchCriteria) ([]*c
 		startDate := criteria.StartDate
 		// Handle 't' shortcut for today
 		if startDate == "t" {
-			startDate = time.Now().Format("2006-01-02")
+			startDate = time.Now().Format("20060102")
 		}
 		
 		startTime := "00:00"
 		if criteria.StartTime != "" {
 			startTime = criteria.StartTime
 		}
-		if parsedStart, err := time.ParseInLocation("2006-01-02 15:04", startDate+" "+startTime, time.Local); err == nil {
+		if parsedStart, err := time.ParseInLocation("20060102 15:04", startDate+" "+startTime, time.Local); err == nil {
 			startDateTime = &parsedStart
 		}
 	}
@@ -285,14 +285,14 @@ func (database *Database) SearchEventsWithFilters(criteria SearchCriteria) ([]*c
 		endDate := criteria.EndDate
 		// Handle 't' shortcut for today
 		if endDate == "t" {
-			endDate = time.Now().Format("2006-01-02")
+			endDate = time.Now().Format("20060102")
 		}
 		
 		endTime := "23:59"
 		if criteria.EndTime != "" {
 			endTime = criteria.EndTime
 		}
-		if parsedEnd, err := time.ParseInLocation("2006-01-02 15:04", endDate+" "+endTime, time.Local); err == nil {
+		if parsedEnd, err := time.ParseInLocation("20060102 15:04", endDate+" "+endTime, time.Local); err == nil {
 			// When doing exact time matches, add 59 seconds to be inclusive of the whole minute
 			if criteria.EndTime != "" && criteria.StartTime == criteria.EndTime {
 				parsedEnd = parsedEnd.Add(59 * time.Second)
