@@ -237,3 +237,109 @@ func (database *Database) SearchEvents(query string) ([]*calendar.Event, error) 
 
 	return events, nil
 }
+
+// SearchCriteria holds all search parameters
+type SearchCriteria struct {
+	Query     string
+	StartDate string
+	StartTime string
+	EndDate   string
+	EndTime   string
+}
+
+// SearchEventsWithFilters searches for events with text query and optional date/time filters
+func (database *Database) SearchEventsWithFilters(criteria SearchCriteria) ([]*calendar.Event, error) {
+	var queryParts []string
+	var args []interface{}
+	
+	// Add text search if provided
+	if criteria.Query != "" {
+		query := strings.ToLower(criteria.Query)
+		searchPattern := "%" + query + "%"
+		queryParts = append(queryParts, "(LOWER(name) LIKE ? OR LOWER(description) LIKE ? OR LOWER(location) LIKE ?)")
+		args = append(args, searchPattern, searchPattern, searchPattern)
+	}
+	
+	// Parse and add date/time filters
+	var startDateTime, endDateTime *time.Time
+	
+	// Parse start date/time
+	if criteria.StartDate != "" {
+		startTime := "00:00"
+		if criteria.StartTime != "" {
+			startTime = criteria.StartTime
+		}
+		if parsedStart, err := time.ParseInLocation("2006-01-02 15:04", criteria.StartDate+" "+startTime, time.Local); err == nil {
+			startDateTime = &parsedStart
+		}
+	}
+	
+	// Parse end date/time
+	if criteria.EndDate != "" {
+		endTime := "23:59"
+		if criteria.EndTime != "" {
+			endTime = criteria.EndTime
+		}
+		if parsedEnd, err := time.ParseInLocation("2006-01-02 15:04", criteria.EndDate+" "+endTime, time.Local); err == nil {
+			// When doing exact time matches, add 59 seconds to be inclusive of the whole minute
+			if criteria.EndTime != "" && criteria.StartTime == criteria.EndTime {
+				parsedEnd = parsedEnd.Add(59 * time.Second)
+			}
+			endDateTime = &parsedEnd
+		}
+	}
+	
+	// Add date/time range filters
+	if startDateTime != nil {
+		queryParts = append(queryParts, "time >= ?")
+		args = append(args, startDateTime.Format("2006-01-02 15:04:05"))
+	}
+	
+	if endDateTime != nil {
+		queryParts = append(queryParts, "time <= ?")
+		args = append(args, endDateTime.Format("2006-01-02 15:04:05"))
+	}
+	
+	// If no criteria provided, return empty results
+	if len(queryParts) == 0 {
+		return []*calendar.Event{}, nil
+	}
+	
+	// Build the final query
+	sqlQuery := "SELECT * FROM events WHERE " + strings.Join(queryParts, " AND ") + " ORDER BY time ASC"
+	
+	rows, err := database.db.Query(sqlQuery, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var events []*calendar.Event
+	for rows.Next() {
+		var event calendar.Event
+		var colorInt int
+
+		if err := rows.Scan(
+			&event.Id,
+			&event.Name,
+			&event.Description,
+			&event.Location,
+			&event.Time,
+			&event.DurationHour,
+			&event.FrequencyDay,
+			&event.Occurence,
+			&colorInt,
+		); err != nil {
+			return nil, err
+		}
+
+		if colorInt == 0 {
+			event.Color = calendar.GenerateColorFromName(event.Name)
+		} else {
+			event.Color = gocui.Attribute(colorInt)
+		}
+		events = append(events, &event)
+	}
+
+	return events, nil
+}

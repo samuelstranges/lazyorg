@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/samuelstranges/chronos/internal/calendar"
+	"github.com/samuelstranges/chronos/internal/database"
 	"github.com/jroimartin/gocui"
 )
 
@@ -169,8 +170,8 @@ func (av *AppView) StartSearch(g *gocui.Gui) error {
 	if popup, ok := av.GetChild("popup"); ok {
 		if popupView, ok := popup.(*EventPopupView); ok {
 			// Set up the search callback
-			popupView.SearchCallback = func(query string) error {
-				return av.executeSearchQuery(query)
+			popupView.SearchCallback = func(criteria database.SearchCriteria) error {
+				return av.executeSearchQuery(criteria)
 			}
 			
 			popup.SetProperties(
@@ -186,9 +187,9 @@ func (av *AppView) StartSearch(g *gocui.Gui) error {
 }
 
 // executeSearchQuery performs the actual search and navigates to first result
-func (av *AppView) executeSearchQuery(query string) error {
-	av.searchQuery = query
-	av.searchMatches = av.findMatches(query)
+func (av *AppView) executeSearchQuery(criteria database.SearchCriteria) error {
+	av.searchQuery = criteria.Query
+	av.searchMatches = av.findMatches(criteria)
 	av.currentMatchIndex = 0
 	av.isSearchActive = true
 	
@@ -211,10 +212,10 @@ func (av *AppView) executeSearchQuery(query string) error {
 	return nil
 }
 
-// findMatches searches for events matching the query
-func (av *AppView) findMatches(query string) []*calendar.Event {
-	// Use database search instead of current week only
-	matches, err := av.Database.SearchEvents(query)
+// findMatches searches for events matching the criteria
+func (av *AppView) findMatches(criteria database.SearchCriteria) []*calendar.Event {
+	// Use enhanced database search with date/time filtering
+	matches, err := av.Database.SearchEventsWithFilters(criteria)
 	if err != nil {
 		return []*calendar.Event{}
 	}

@@ -293,6 +293,30 @@ if event.Time.Location().String() == "UTC" {
 **Future Work**: This is the SAME underlying issue as overlap detection -
 requires database migration to properly fix
 
+#### Form Component Field/Button Name Conflicts
+
+**Problem**: The gocui-component form library has naming conflicts when an input field and button share the same name.
+
+**Issue**: Originally, the search form had an input field named "Search" and a button named "Search", which caused the form to render incorrectly:
+- The "Search" button would not appear
+- The input field text would render in the button area (next to "Cancel")
+- Form layout would be completely broken
+
+**Root Cause**: The form component library internally confuses fields and buttons with identical names, causing rendering conflicts.
+
+**Solution**: Renamed the search input field from "Search" to "Query" to avoid the naming conflict.
+
+**Prevention**: When creating forms, ensure input field names and button names are always different:
+- ✅ Good: Field "Query" + Button "Search"
+- ✅ Good: Field "Name" + Button "Add"  
+- ❌ Bad: Field "Search" + Button "Search"
+- ❌ Bad: Field "Edit" + Button "Edit"
+
+**Current Status**: 
+- **Fixed**: Search form now works correctly with "Query" field and "Search" button
+- **Enhanced**: Added date filtering fields ("From Date", "To Date") for advanced search
+- **Tested**: All form functionality verified with comprehensive unit tests
+
 ### Debug Logging
 
 Chronos includes comprehensive debug logging for troubleshooting time bounds and

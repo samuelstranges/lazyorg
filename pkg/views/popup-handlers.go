@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/samuelstranges/chronos/internal/calendar"
+	"github.com/samuelstranges/chronos/internal/database"
 	"github.com/jroimartin/gocui"
 )
 
@@ -178,14 +179,23 @@ func (epv *EventPopupView) ExecuteSearch(g *gocui.Gui, v *gocui.View) error {
 		return nil
 	}
 
-	query := strings.TrimSpace(epv.Form.GetFieldText("Search"))
-	if query == "" {
+	// Collect all search criteria
+	criteria := database.SearchCriteria{
+		Query:     strings.TrimSpace(epv.Form.GetFieldText("Query")),
+		StartDate: strings.TrimSpace(epv.Form.GetFieldText("From Date")),
+		StartTime: "", // No separate time fields in simplified form
+		EndDate:   strings.TrimSpace(epv.Form.GetFieldText("To Date")),
+		EndTime:   "", // No separate time fields in simplified form
+	}
+
+	// At least one search parameter must be provided
+	if criteria.Query == "" && criteria.StartDate == "" && criteria.EndDate == "" {
 		return epv.Close(g, v)
 	}
 
 	// Call the search callback if it exists
 	if epv.SearchCallback != nil {
-		if err := epv.SearchCallback(query); err != nil {
+		if err := epv.SearchCallback(criteria); err != nil {
 			return err
 		}
 	}

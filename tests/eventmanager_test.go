@@ -8,6 +8,7 @@ import (
 	"github.com/samuelstranges/chronos/internal/calendar"
 	"github.com/samuelstranges/chronos/internal/database"
 	"github.com/samuelstranges/chronos/internal/eventmanager"
+	"github.com/samuelstranges/chronos/internal/utils"
 )
 
 // setupTestDB creates an in-memory database for testing
@@ -735,5 +736,264 @@ func TestEventColorGeneration(t *testing.T) {
 	// Note: This test might occasionally fail due to hash collisions, but it's very unlikely
 	if retrievedEvent1.Color == retrievedEvent3.Color {
 		t.Logf("Warning: Events with different names got same color (rare hash collision)")
+	}
+}
+
+func TestOptionalValidationFunctions(t *testing.T) {
+	tests := []struct {
+		name     string
+		value    string
+		expected bool
+		testFunc func(string) bool
+	}{
+		// ValidateOptionalEventDate tests
+		{"Empty date should be valid", "", true, utils.ValidateOptionalEventDate},
+		{"Valid date should be valid", "2024-12-25", true, utils.ValidateOptionalEventDate},
+		{"Invalid date should be invalid", "invalid", false, utils.ValidateOptionalEventDate},
+		{"Wrong date format should be invalid", "25-12-2024", false, utils.ValidateOptionalEventDate},
+		{"Date with spaces should be valid when trimmed", "  2024-12-25  ", true, utils.ValidateOptionalEventDate},
+		
+		// ValidateOptionalEventTime tests
+		{"Empty time should be valid", "", true, utils.ValidateOptionalEventTime},
+		{"Valid time should be valid", "14:30", true, utils.ValidateOptionalEventTime},
+		{"Invalid time (wrong minutes) should be invalid", "14:15", false, utils.ValidateOptionalEventTime},
+		{"Invalid time format should be invalid", "2:30 PM", false, utils.ValidateOptionalEventTime},
+		{"Time with spaces should be valid when trimmed", "  14:00  ", true, utils.ValidateOptionalEventTime},
+		{"Invalid hour should be invalid", "25:30", false, utils.ValidateOptionalEventTime},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := tt.testFunc(tt.value)
+			if result != tt.expected {
+				t.Errorf("Expected %v, got %v for input '%s'", tt.expected, result, tt.value)
+			}
+		})
+	}
+}
+
+func TestSearchEventsWithFilters(t *testing.T) {
+	db := setupTestDB(t)
+	defer db.CloseDatabase()
+
+	// Add test events with known dates/times
+	testEvents := []calendar.Event{
+		*calendar.NewEvent("Morning Meeting", "Team standup", "Office", time.Date(2024, 12, 25, 9, 0, 0, 0, time.Local), 1.0, 0, 1, 0),
+		*calendar.NewEvent("Lunch", "Team lunch", "Restaurant", time.Date(2024, 12, 25, 12, 30, 0, 0, time.Local), 1.5, 0, 1, 0),
+		*calendar.NewEvent("Afternoon Meeting", "Project review", "Office", time.Date(2024, 12, 25, 15, 0, 0, 0, time.Local), 2.0, 0, 1, 0),
+		*calendar.NewEvent("Dinner", "Family dinner", "Home", time.Date(2024, 12, 26, 18, 0, 0, 0, time.Local), 2.0, 0, 1, 0),
+	}
+
+	for _, event := range testEvents {
+		if _, err := db.AddEvent(event); err != nil {
+			t.Fatalf("Failed to add test event %s: %v", event.Name, err)
+		}
+	}
+
+	tests := []struct {
+		name           string
+		criteria       database.SearchCriteria
+		expectedCount  int
+		expectedEvents []string // Names of expected events
+	}{
+		{
+			name: "Search by text only",
+			criteria: database.SearchCriteria{
+				Query: "meeting",
+			},
+			expectedCount:  2,
+			expectedEvents: []string{"Morning Meeting", "Afternoon Meeting"},
+		},
+		{
+			name: "Search by date only (single day)",
+			criteria: database.SearchCriteria{
+				StartDate: "2024-12-25",
+				EndDate:   "2024-12-25",
+			},
+			expectedCount:  3,
+			expectedEvents: []string{"Morning Meeting", "Lunch", "Afternoon Meeting"},
+		},
+		{
+			name: "Search by time range within a day",
+			criteria: database.SearchCriteria{
+				StartDate: "2024-12-25",
+				StartTime: "12:00",
+				EndDate:   "2024-12-25",
+				EndTime:   "16:00",
+			},
+			expectedCount:  2,
+			expectedEvents: []string{"Lunch", "Afternoon Meeting"},
+		},
+		{
+			name: "Search by text with date filter",
+			criteria: database.SearchCriteria{
+				Query:     "lunch",
+				StartDate: "2024-12-25",
+				EndDate:   "2024-12-25",
+			},
+			expectedCount:  1,
+			expectedEvents: []string{"Lunch"},
+		},
+		{
+			name: "Search across multiple days",
+			criteria: database.SearchCriteria{
+				StartDate: "2024-12-25",
+				EndDate:   "2024-12-26",
+			},
+			expectedCount:  4,
+			expectedEvents: []string{"Morning Meeting", "Lunch", "Afternoon Meeting", "Dinner"},
+		},
+		{
+			name: "Search with start date only",
+			criteria: database.SearchCriteria{
+				StartDate: "2024-12-26",
+			},
+			expectedCount:  1,
+			expectedEvents: []string{"Dinner"},
+		},
+		{
+			name: "Search with end date only",
+			criteria: database.SearchCriteria{
+				EndDate: "2024-12-25",
+			},
+			expectedCount:  3,
+			expectedEvents: []string{"Morning Meeting", "Lunch", "Afternoon Meeting"},
+		},
+		{
+			name: "Search with no results",
+			criteria: database.SearchCriteria{
+				Query: "nonexistent",
+			},
+			expectedCount:  0,
+			expectedEvents: []string{},
+		},
+		{
+			name: "Search with date range that has no events",
+			criteria: database.SearchCriteria{
+				StartDate: "2024-12-24",
+				EndDate:   "2024-12-24",
+			},
+			expectedCount:  0,
+			expectedEvents: []string{},
+		},
+		{
+			name: "Empty criteria should return no results",
+			criteria: database.SearchCriteria{
+				Query:     "",
+				StartDate: "",
+				EndDate:   "",
+			},
+			expectedCount:  0,
+			expectedEvents: []string{},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			results, err := db.SearchEventsWithFilters(tt.criteria)
+			if err != nil {
+				t.Fatalf("SearchEventsWithFilters failed: %v", err)
+			}
+
+			if len(results) != tt.expectedCount {
+				t.Errorf("Expected %d results, got %d", tt.expectedCount, len(results))
+			}
+
+			// Check that we got the expected events
+			if len(tt.expectedEvents) > 0 {
+				resultNames := make(map[string]bool)
+				for _, event := range results {
+					resultNames[event.Name] = true
+				}
+
+				for _, expectedName := range tt.expectedEvents {
+					if !resultNames[expectedName] {
+						t.Errorf("Expected event '%s' not found in results", expectedName)
+					}
+				}
+			}
+		})
+	}
+}
+
+func TestSearchEventsWithFiltersEdgeCases(t *testing.T) {
+	db := setupTestDB(t)
+	defer db.CloseDatabase()
+
+	// Add events at specific times to test edge cases
+	testEvents := []calendar.Event{
+		*calendar.NewEvent("Midnight Event", "At midnight", "Home", time.Date(2024, 1, 1, 0, 0, 0, 0, time.Local), 1.0, 0, 1, 0),
+		*calendar.NewEvent("Late Night Event", "Before midnight", "Home", time.Date(2024, 1, 1, 23, 30, 0, 0, time.Local), 1.0, 0, 1, 0),
+		*calendar.NewEvent("Early Morning", "Early start", "Office", time.Date(2024, 1, 2, 6, 0, 0, 0, time.Local), 1.0, 0, 1, 0),
+	}
+
+	for _, event := range testEvents {
+		if _, err := db.AddEvent(event); err != nil {
+			t.Fatalf("Failed to add test event %s: %v", event.Name, err)
+		}
+	}
+
+	tests := []struct {
+		name          string
+		criteria      database.SearchCriteria
+		expectedCount int
+		description   string
+	}{
+		{
+			name: "Default start time should be 00:00",
+			criteria: database.SearchCriteria{
+				StartDate: "2024-01-01",
+				EndDate:   "2024-01-01",
+			},
+			expectedCount: 2, // Should include midnight event and late night event
+			description:   "When no start time specified, should default to 00:00",
+		},
+		{
+			name: "Default end time should be 23:59",
+			criteria: database.SearchCriteria{
+				StartDate: "2024-01-01",
+				EndDate:   "2024-01-01",
+			},
+			expectedCount: 2, // Should include events until end of day
+			description:   "When no end time specified, should default to 23:59",
+		},
+		{
+			name: "Exact time match",
+			criteria: database.SearchCriteria{
+				StartDate: "2024-01-01",
+				StartTime: "23:30",
+				EndDate:   "2024-01-01",
+				EndTime:   "23:30",
+			},
+			expectedCount: 1, // Should find exactly the 23:30 event
+			description:   "Should find events at exact specified time",
+		},
+		{
+			name: "Cross-day boundary search",
+			criteria: database.SearchCriteria{
+				StartDate: "2024-01-01",
+				StartTime: "23:00",
+				EndDate:   "2024-01-02",
+				EndTime:   "07:00",
+			},
+			expectedCount: 2, // Late night + early morning
+			description:   "Should handle searches that cross day boundaries",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			results, err := db.SearchEventsWithFilters(tt.criteria)
+			if err != nil {
+				t.Fatalf("SearchEventsWithFilters failed: %v", err)
+			}
+
+			if len(results) != tt.expectedCount {
+				t.Errorf("%s: Expected %d results, got %d", tt.description, tt.expectedCount, len(results))
+				for i, event := range results {
+					t.Logf("  Result %d: %s at %s", i+1, event.Name, event.Time.Format("2006-01-02 15:04"))
+				}
+			}
+		})
 	}
 }

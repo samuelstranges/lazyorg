@@ -20,7 +20,7 @@ type EventPopupView struct {
 	EventManager *eventmanager.EventManager
 
 	IsVisible bool
-	SearchCallback func(query string) error
+	SearchCallback func(criteria database.SearchCriteria) error
 	ColorPickerCallback func(colorName string) error
 }
 
@@ -254,6 +254,8 @@ func (epv *EventPopupView) ShowSearchPopup(g *gocui.Gui) error {
 	epv.Form.SetCurrentItem(0)
 	epv.IsVisible = true
 	epv.Form.Draw()
+
+	epv.positionCursorsAtEnd(g)
 
 	return nil
 }

@@ -64,11 +64,13 @@ func (epv *EventPopupView) ColorPickerForm(g *gocui.Gui, title string) *componen
 	return form
 }
 
-// SearchForm creates a form for searching events
+// SearchForm creates a form for searching events with optional date filters
 func (epv *EventPopupView) SearchForm(g *gocui.Gui, title string) *component.Form {
 	form := component.NewForm(g, title, epv.X, epv.Y, epv.W, epv.H)
 	
-	form.AddInputField("Search", LabelWidth, FieldWidth).SetText("")
+	form.AddInputField("Query", LabelWidth, FieldWidth).SetText("")
+	form.AddInputField("From Date", LabelWidth, FieldWidth).SetText("").AddValidate("Invalid date (YYYY-MM-DD or empty)", utils.ValidateOptionalEventDate)
+	form.AddInputField("To Date", LabelWidth, FieldWidth).SetText("").AddValidate("Invalid date (YYYY-MM-DD or empty)", utils.ValidateOptionalEventDate)
 	
 	return form
 }
