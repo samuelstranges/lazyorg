@@ -205,6 +205,43 @@ something in the gocui framework. This includes:
 - UI operations gracefully handle and display errors to users
 - Test setup includes proper cleanup with `defer` statements
 
+### Enhanced Search System
+
+The search functionality (`/` key) provides powerful filtering capabilities for finding events across the entire database.
+
+**Search Form Fields:**
+
+- **Query**: Text search across event names, descriptions, and locations (case-insensitive, partial matching)
+- **From Date**: Optional start date filter (YYYY-MM-DD format or 't' for today)
+- **To Date**: Optional end date filter (YYYY-MM-DD format or 't' for today)
+
+**Date Shortcut:**
+
+- Use **'t'** in either date field as a shortcut for today's date
+- Examples: `From Date: t` finds events from today onwards, `To Date: t` finds events up to today
+
+**Usage Examples:**
+
+- `Query: "meeting"` → Find all events containing "meeting"
+- `From Date: t` → Find all events from today onwards  
+- `To Date: 2024-12-31` → Find all events up to Dec 31st
+- `From Date: 2024-12-25, To Date: 2024-12-31` → Find events in that date range
+- `Query: "lunch", From Date: t` → Find lunch events from today onwards
+- `From Date: t, To Date: t` → Find only today's events
+
+**Implementation Details:**
+
+- Database function: `SearchEventsWithFilters(criteria SearchCriteria)`
+- Text search uses SQL LIKE with case-insensitive matching
+- Date filters automatically use 00:00-23:59 time ranges for full-day coverage
+- 't' shortcut resolved at query time using `time.Now().Format("2006-01-02")`
+- Navigation works with search results (`w`/`b` keys, search result counter)
+
+**Form Component Note:**
+
+- Field name "Query" (not "Search") to avoid naming conflict with "Search" button
+- Validation messages document the 't' shortcut in tooltips
+
 ### Known Issues and Technical Debt
 
 #### Mixed Timezone Storage in Database
@@ -384,6 +421,7 @@ The project recently added:
   management
 - **Automatic View Refresh**: Current time highlighting updates automatically
   after all operations
+- **Enhanced Search with Date Filtering**: Search form now supports text queries plus optional date range filtering with 't' shortcut for today
 
 Previous features:
 
@@ -391,7 +429,7 @@ Previous features:
 - Undo/redo functionality (`u` and `r` keys)
 - Yank/paste system for events (`y`, `p`, `d` keys)
 - Jump navigation (`g` key)
-- Search within current week (`/` key)
+- Enhanced search with date filtering (`/` key) - supports text queries and date ranges with 't' shortcut
 - Previous/next event navigation within week (`w` and `b` keys)
 
 ## notes

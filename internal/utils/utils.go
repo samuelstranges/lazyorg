@@ -222,6 +222,9 @@ func ValidateOptionalEventDate(value string) bool {
 	if value == "" {
 		return true
 	}
+	if value == "t" {
+		return true
+	}
 	return ValidateEventDate(value)
 }
 

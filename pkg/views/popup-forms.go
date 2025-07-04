@@ -69,8 +69,8 @@ func (epv *EventPopupView) SearchForm(g *gocui.Gui, title string) *component.For
 	form := component.NewForm(g, title, epv.X, epv.Y, epv.W, epv.H)
 	
 	form.AddInputField("Query", LabelWidth, FieldWidth).SetText("")
-	form.AddInputField("From Date", LabelWidth, FieldWidth).SetText("").AddValidate("Invalid date (YYYY-MM-DD or empty)", utils.ValidateOptionalEventDate)
-	form.AddInputField("To Date", LabelWidth, FieldWidth).SetText("").AddValidate("Invalid date (YYYY-MM-DD or empty)", utils.ValidateOptionalEventDate)
+	form.AddInputField("From Date", LabelWidth, FieldWidth).SetText("").AddValidate("Invalid date (YYYY-MM-DD, 't' for today, or empty)", utils.ValidateOptionalEventDate)
+	form.AddInputField("To Date", LabelWidth, FieldWidth).SetText("").AddValidate("Invalid date (YYYY-MM-DD, 't' for today, or empty)", utils.ValidateOptionalEventDate)
 	
 	return form
 }

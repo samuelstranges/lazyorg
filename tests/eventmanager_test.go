@@ -760,6 +760,9 @@ func TestOptionalValidationFunctions(t *testing.T) {
 		{"Invalid time format should be invalid", "2:30 PM", false, utils.ValidateOptionalEventTime},
 		{"Time with spaces should be valid when trimmed", "  14:00  ", true, utils.ValidateOptionalEventTime},
 		{"Invalid hour should be invalid", "25:30", false, utils.ValidateOptionalEventTime},
+		
+		// Test 't' shortcut for date
+		{"'t' should be valid for date", "t", true, utils.ValidateOptionalEventDate},
 	}
 
 	for _, tt := range tests {
@@ -978,6 +981,85 @@ func TestSearchEventsWithFiltersEdgeCases(t *testing.T) {
 			},
 			expectedCount: 2, // Late night + early morning
 			description:   "Should handle searches that cross day boundaries",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			results, err := db.SearchEventsWithFilters(tt.criteria)
+			if err != nil {
+				t.Fatalf("SearchEventsWithFilters failed: %v", err)
+			}
+
+			if len(results) != tt.expectedCount {
+				t.Errorf("%s: Expected %d results, got %d", tt.description, tt.expectedCount, len(results))
+				for i, event := range results {
+					t.Logf("  Result %d: %s at %s", i+1, event.Name, event.Time.Format("2006-01-02 15:04"))
+				}
+			}
+		})
+	}
+}
+
+func TestSearchEventsWithTodayShortcut(t *testing.T) {
+	db := setupTestDB(t)
+	defer db.CloseDatabase()
+
+	// Get today's date for comparison
+	today := time.Now().Format("2006-01-02")
+
+	// Add test events - one for yesterday, today, and tomorrow
+	testEvents := []calendar.Event{
+		*calendar.NewEvent("Yesterday Event", "Yesterday's event", "Location", time.Now().AddDate(0, 0, -1), 1.0, 0, 1, 0),
+		*calendar.NewEvent("Today Event", "Today's event", "Location", time.Now(), 1.0, 0, 1, 0),
+		*calendar.NewEvent("Tomorrow Event", "Tomorrow's event", "Location", time.Now().AddDate(0, 0, 1), 1.0, 0, 1, 0),
+	}
+
+	for _, event := range testEvents {
+		if _, err := db.AddEvent(event); err != nil {
+			t.Fatalf("Failed to add test event %s: %v", event.Name, err)
+		}
+	}
+
+	tests := []struct {
+		name           string
+		criteria       database.SearchCriteria
+		expectedCount  int
+		description    string
+	}{
+		{
+			name: "Search from 't' (today) should find today and tomorrow events",
+			criteria: database.SearchCriteria{
+				StartDate: "t",
+			},
+			expectedCount: 2, // Today and tomorrow events
+			description:   "Using 't' as start date should find events from today onwards",
+		},
+		{
+			name: "Search to 't' (today) should find yesterday and today events",
+			criteria: database.SearchCriteria{
+				EndDate: "t",
+			},
+			expectedCount: 2, // Yesterday and today events
+			description:   "Using 't' as end date should find events up to today",
+		},
+		{
+			name: "Search exactly 't' to 't' should find only today's events",
+			criteria: database.SearchCriteria{
+				StartDate: "t",
+				EndDate:   "t",
+			},
+			expectedCount: 1, // Only today's event
+			description:   "Using 't' for both dates should find only today's events",
+		},
+		{
+			name: "Compare 't' with explicit today date should be equivalent",
+			criteria: database.SearchCriteria{
+				StartDate: today,
+				EndDate:   today,
+			},
+			expectedCount: 1, // Should match the 't' to 't' result
+			description:   "Explicit today date should work same as 't' shortcut",
 		},
 	}
 
