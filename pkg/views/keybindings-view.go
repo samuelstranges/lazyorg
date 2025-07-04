@@ -17,10 +17,9 @@ func NewKeybindsView() *KeybindsView {
 	}
 }
 
-// GetRequiredHeight returns the number of lines needed for all keybinding content
-func (kbv *KeybindsView) GetRequiredHeight() int {
-	// Count all the content lines (including empty lines and borders)
-	lines := []string{
+// getKeybindingsContent returns the keybindings content as a slice of strings
+func (kbv *KeybindsView) getKeybindingsContent() []string {
+	return []string{
 		" q           - Quit",
 		"",
 		" Navigation:",
@@ -32,7 +31,7 @@ func (kbv *KeybindsView) GetRequiredHeight() int {
 		" w           - Jump to next event",
 		" b           - Jump to previous event",
 		"",
-		"Advanced Search",
+		" Advanced Search:",
 		" /           - Search events (name/desc/loc)",
 		" n           - Next search match",
 		" N           - Previous search match",
@@ -52,6 +51,11 @@ func (kbv *KeybindsView) GetRequiredHeight() int {
 		" r           - Redo last undone action",
 		"",
 	}
+}
+
+// GetRequiredHeight returns the number of lines needed for all keybinding content
+func (kbv *KeybindsView) GetRequiredHeight() int {
+	lines := kbv.getKeybindingsContent()
 	return len(lines) + 2 // +2 for top and bottom borders
 }
 func (kbv *KeybindsView) Update(g *gocui.Gui) error {
@@ -72,32 +76,10 @@ func (kbv *KeybindsView) Update(g *gocui.Gui) error {
 		v.Title = " Keybindings "
 	}
 	v.Clear()
-	fmt.Fprintln(v, " q           - Quit")
-	fmt.Fprintln(v, "")
-	fmt.Fprintln(v, " Navigation:")
-	fmt.Fprintln(v, " h/l or ←/→  - Previous/Next day")
-	fmt.Fprintln(v, " H/L         - Previous/Next week")
-	fmt.Fprintln(v, " j/k or ↓/↑  - Move time cursor down/up")
-	fmt.Fprintln(v, " t           - Jump to today")
-	fmt.Fprintln(v, " g           - Goto date/time form")
-	fmt.Fprintln(v, "")
-	fmt.Fprintln(v, " Events:")
-	fmt.Fprintln(v, " a           - Add new event")
-	fmt.Fprintln(v, " e           - Edit event")
-	fmt.Fprintln(v, " c           - Color picker")
-	fmt.Fprintln(v, " w           - Jump to next event")
-	fmt.Fprintln(v, " b           - Jump to previous event")
-	fmt.Fprintln(v, " /           - Search events (name/desc/loc)")
-	fmt.Fprintln(v, " n           - Next search match")
-	fmt.Fprintln(v, " N           - Previous search match")
-	fmt.Fprintln(v, " Esc         - Clear search")
-	fmt.Fprintln(v, " y           - Copy event")
-	fmt.Fprintln(v, " p           - Paste event")
-	fmt.Fprintln(v, " d           - Delete event")
-	fmt.Fprintln(v, " D           - Delete events with same name")
-	fmt.Fprintln(v, " c           - Change event color")
-	fmt.Fprintln(v, " u           - Undo last action")
-	fmt.Fprintln(v, " r           - Redo last undone action")
+	lines := kbv.getKeybindingsContent()
+	for _, line := range lines {
+		fmt.Fprintln(v, line)
+	}
 	g.SetViewOnTop("keybinds")
 	return nil
 }
