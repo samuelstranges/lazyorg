@@ -9,11 +9,12 @@ import (
 )
 
 // NewEventForm creates a form for adding new events
-func (epv *EventPopupView) NewEventForm(g *gocui.Gui, title, name, time, location, duration, frequency, occurence, description, color string) *component.Form {
+func (epv *EventPopupView) NewEventForm(g *gocui.Gui, title, name, date, time, location, duration, frequency, occurence, description, color string) *component.Form {
 	form := component.NewForm(g, title, epv.X, epv.Y, epv.W, epv.H)
 
 	form.AddInputField("Name", LabelWidth, FieldWidth).SetText(name).AddValidate("Invalid name", utils.ValidateName)
-	form.AddInputField("Time", LabelWidth, FieldWidth).SetText(time).AddValidate("Invalid time", utils.ValidateTime)
+	form.AddInputField("Date", LabelWidth, FieldWidth).SetText(date).AddValidate("Invalid date (YYYY-MM-DD)", utils.ValidateEventDate)
+	form.AddInputField("Time", LabelWidth, FieldWidth).SetText(time).AddValidate("Invalid time (HH:MM)", utils.ValidateEventTime)
 	form.AddInputField("Location", LabelWidth, FieldWidth).SetText(location)
 	form.AddInputField("Duration (eg. 1.5)", LabelWidth, FieldWidth).SetText(duration).AddValidate("Invalid duration", utils.ValidateDuration)
 	form.AddInputField("Frequency", LabelWidth, FieldWidth).SetText(frequency).AddValidate("Invalid frequency", utils.ValidateNumber)
@@ -25,11 +26,12 @@ func (epv *EventPopupView) NewEventForm(g *gocui.Gui, title, name, time, locatio
 }
 
 // EditEventForm creates a form for editing existing events
-func (epv *EventPopupView) EditEventForm(g *gocui.Gui, title, name, time, location, duration, description, color string) *component.Form {
+func (epv *EventPopupView) EditEventForm(g *gocui.Gui, title, name, date, time, location, duration, description, color string) *component.Form {
 	form := component.NewForm(g, title, epv.X, epv.Y, epv.W, epv.H)
 
 	form.AddInputField("Name", LabelWidth, FieldWidth).SetText(name).AddValidate("Invalid name", utils.ValidateName)
-	form.AddInputField("Time", LabelWidth, FieldWidth).SetText(time).AddValidate("Invalid time", utils.ValidateTime)
+	form.AddInputField("Date", LabelWidth, FieldWidth).SetText(date).AddValidate("Invalid date (YYYY-MM-DD)", utils.ValidateEventDate)
+	form.AddInputField("Time", LabelWidth, FieldWidth).SetText(time).AddValidate("Invalid time (HH:MM)", utils.ValidateEventTime)
 	form.AddInputField("Location", LabelWidth, FieldWidth).SetText(location)
 	form.AddInputField("Duration", LabelWidth, FieldWidth).SetText(duration).AddValidate("Invalid duration", utils.ValidateDuration)
 	form.AddInputField("Color", LabelWidth, FieldWidth).SetText(color)

@@ -18,8 +18,12 @@ func (epv *EventPopupView) CreateEventFromInputs(existingEvent *calendar.Event) 
 	}
 
 	name := epv.Form.GetFieldText("Name")
-	time, _ := time.ParseInLocation(TimeFormat, epv.Form.GetFieldText("Time"), epv.Calendar.CurrentDay.Date.Location())
+	dateStr := epv.Form.GetFieldText("Date")
+	timeStr := epv.Form.GetFieldText("Time")
 	location := epv.Form.GetFieldText("Location")
+	
+	// Parse date and time separately then combine
+	dateTime, _ := time.ParseInLocation("2006-01-02 15:04", dateStr+" "+timeStr, epv.Calendar.CurrentDay.Date.Location())
 
 	// Try both field names since NewEventForm and EditEventForm use different labels
 	durationText := strings.TrimSpace(epv.Form.GetFieldText("Duration (eg. 1.5)"))
@@ -50,7 +54,7 @@ func (epv *EventPopupView) CreateEventFromInputs(existingEvent *calendar.Event) 
 		color = calendar.GenerateColorFromName(name)
 	}
 
-	return calendar.NewEvent(name, description, location, time, duration, frequency, occurence, color)
+	return calendar.NewEvent(name, description, location, dateTime, duration, frequency, occurence, color)
 }
 
 // AddEvent handler for adding new events

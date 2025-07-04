@@ -48,7 +48,11 @@ func (epv *EventPopupView) ShowNewEventPopup(g *gocui.Gui) error {
 		return nil
 	}
 
-	epv.Form = epv.NewEventForm(g, "New Event", "", epv.Calendar.CurrentDay.Date.Format(TimeFormat), "", "", "7", "1", "", "Red")
+	currentDate := epv.Calendar.CurrentDay.Date
+	defaultDate := currentDate.Format("2006-01-02")
+	defaultTime := currentDate.Format("15:04")
+	
+	epv.Form = epv.NewEventForm(g, "New Event", "", defaultDate, defaultTime, "", "", "7", "1", "", "Red")
 
 	epv.addKeybind(gocui.KeyEsc, epv.Close)
 	epv.addKeybind(gocui.KeyEnter, epv.AddEvent)
@@ -72,10 +76,14 @@ func (epv *EventPopupView) ShowEditEventPopup(g *gocui.Gui, eventView *EventView
 
 	event := eventView.Event
 
+	eventDate := event.Time.Format("2006-01-02")
+	eventTime := event.Time.Format("15:04")
+	
 	epv.Form = epv.EditEventForm(g,
 		"Edit Event",
 		event.Name,
-		event.Time.Format(TimeFormat),
+		eventDate,
+		eventTime,
 		event.Location,
 		strconv.FormatFloat(event.DurationHour, 'f', -1, 64),
 		event.Description,

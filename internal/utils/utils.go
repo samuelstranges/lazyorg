@@ -162,3 +162,57 @@ func ValidateDate(value string) bool {
 	_, err = time.Parse("20060102", value)
 	return err == nil
 }
+
+func ValidateEventDate(value string) bool {
+	regex := regexp.MustCompile(`^\d{4}-\d{2}-\d{2}$`)
+	if !regex.MatchString(value) {
+		return false
+	}
+
+	parts := strings.Split(value, "-")
+	if len(parts) != 3 {
+		return false
+	}
+
+	year, err := strconv.Atoi(parts[0])
+	if err != nil || year < 1900 || year > 2100 {
+		return false
+	}
+
+	month, err := strconv.Atoi(parts[1])
+	if err != nil || month < 1 || month > 12 {
+		return false
+	}
+
+	day, err := strconv.Atoi(parts[2])
+	if err != nil || day < 1 || day > 31 {
+		return false
+	}
+
+	_, err = time.Parse("2006-01-02", value)
+	return err == nil
+}
+
+func ValidateEventTime(value string) bool {
+	regex := regexp.MustCompile(`^\d{2}:\d{2}$`)
+	if !regex.MatchString(value) {
+		return false
+	}
+
+	parts := strings.Split(value, ":")
+	if len(parts) != 2 {
+		return false
+	}
+
+	hours, err := strconv.Atoi(parts[0])
+	if err != nil || hours < 0 || hours > 23 {
+		return false
+	}
+
+	minutes, err := strconv.Atoi(parts[1])
+	if err != nil || (minutes != 0 && minutes != 30) {
+		return false
+	}
+
+	return true
+}
