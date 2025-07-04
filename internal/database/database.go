@@ -398,6 +398,90 @@ func (database *Database) CheckEventOverlap(newEvent calendar.Event, excludeEven
 	return false, nil // No overlap found
 }
 
+// GetAllEvents returns all events sorted by time
+func (database *Database) GetAllEvents() ([]*calendar.Event, error) {
+	rows, err := database.db.Query(`
+        SELECT * FROM events ORDER BY time ASC`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var events []*calendar.Event
+	for rows.Next() {
+		var event calendar.Event
+		var colorInt int
+
+		if err := rows.Scan(
+			&event.Id,
+			&event.Name,
+			&event.Description,
+			&event.Location,
+			&event.Time,
+			&event.DurationHour,
+			&event.FrequencyDay,
+			&event.Occurence,
+			&colorInt,
+		); err != nil {
+			return nil, err
+		}
+
+		if colorInt == 0 {
+			event.Color = calendar.GenerateColorFromName(event.Name)
+		} else {
+			event.Color = gocui.Attribute(colorInt)
+		}
+		events = append(events, &event)
+	}
+
+	return events, nil
+}
+
+// SearchEvents searches for events by name, description, or location across all events
+func (database *Database) SearchEvents(query string) ([]*calendar.Event, error) {
+	query = strings.ToLower(query)
+	searchPattern := "%" + query + "%"
+	
+	rows, err := database.db.Query(`
+        SELECT * FROM events 
+        WHERE LOWER(name) LIKE ? OR LOWER(description) LIKE ? OR LOWER(location) LIKE ?
+        ORDER BY time ASC`,
+		searchPattern, searchPattern, searchPattern)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var events []*calendar.Event
+	for rows.Next() {
+		var event calendar.Event
+		var colorInt int
+
+		if err := rows.Scan(
+			&event.Id,
+			&event.Name,
+			&event.Description,
+			&event.Location,
+			&event.Time,
+			&event.DurationHour,
+			&event.FrequencyDay,
+			&event.Occurence,
+			&colorInt,
+		); err != nil {
+			return nil, err
+		}
+
+		if colorInt == 0 {
+			event.Color = calendar.GenerateColorFromName(event.Name)
+		} else {
+			event.Color = gocui.Attribute(colorInt)
+		}
+		events = append(events, &event)
+	}
+
+	return events, nil
+}
+
 func (database *Database) CloseDatabase() error {
 	if database.db == nil {
 		return nil

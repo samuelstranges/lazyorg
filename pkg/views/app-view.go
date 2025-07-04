@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"os"
 	"sort"
-	"strings"
 	"time"
 
 	"github.com/HubertBel/lazyorg/internal/calendar"
@@ -218,47 +217,16 @@ func (av *AppView) UpdateToPrevTime(g *gocui.Gui) {
 }
 
 func (av *AppView) JumpToNextEvent() {
-	// Always write this to verify the function is called
-	os.WriteFile("/tmp/lazyorg_nav_debug.txt", []byte("JumpToNextEvent() called\n"), 0644)
-	
-	if av.DebugMode {
-		// Clear and start fresh debug log
-		os.WriteFile("/tmp/lazyorg_nav_debug.txt", []byte("DEBUG MODE ENABLED - JumpToNextEvent() called\n"), 0644)
-	} else {
-		av.appendDebugLog("/tmp/lazyorg_nav_debug.txt", "DEBUG MODE DISABLED\n")
-	}
-	
-	allEvents := av.getAllEventsFromWeek()
-	if len(allEvents) == 0 {
-		if av.DebugMode {
-			av.appendDebugLog("/tmp/lazyorg_nav_debug.txt", "JumpToNextEvent: No events found in current week\n")
-		}
+	// Get all events from database instead of current week only
+	allEvents, err := av.Database.GetAllEvents()
+	if err != nil || len(allEvents) == 0 {
 		return
 	}
 
 	currentTime := av.Calendar.CurrentDay.Date
 	
-	if av.DebugMode {
-		debugInfo := fmt.Sprintf("\n=== JumpToNextEvent Called ===\n")
-		debugInfo += fmt.Sprintf("Current time: %s (TZ: %s, Unix: %d)\n", currentTime.Format("2006-01-02 15:04:05"), currentTime.Location().String(), currentTime.Unix())
-		debugInfo += fmt.Sprintf("Current time (Local): %s\n", currentTime.In(time.Local).Format("2006-01-02 15:04:05"))
-		debugInfo += fmt.Sprintf("Current view: %s\n", av.Name)
-		debugInfo += fmt.Sprintf("Total events in week: %d\n", len(allEvents))
-		
-		for i, event := range allEvents {
-			debugInfo += fmt.Sprintf("Event %d: %s at %s (Unix: %d)\n", i, event.Name, event.Time.Format("2006-01-02 15:04:05"), event.Time.Unix())
-		}
-		
-		// FORCE call to getAllEventsFromWeek to see if sorting happens
-		debugInfo += fmt.Sprintf("\n=== FORCE CALLING getAllEventsFromWeek() ===\n")
-		testEvents := av.getAllEventsFromWeek()
-		debugInfo += fmt.Sprintf("getAllEventsFromWeek returned %d events\n", len(testEvents))
-		
-		av.appendDebugLog("/tmp/lazyorg_nav_debug.txt", debugInfo)
-	}
-	
 	// Find the next event after current time
-	for i, event := range allEvents {
+	for _, event := range allEvents {
 		// Normalize both times to local timezone for consistent comparison
 		var eventTime time.Time
 		// TEMPORARY FIX: ALL events stored in UTC are wrong - use original time instead of converting
@@ -268,27 +236,11 @@ func (av *AppView) JumpToNextEvent() {
 			eventTime = event.Time.In(time.Local)
 		}
 		currentTimeLocal := currentTime.In(time.Local)
-		isAfter := eventTime.After(currentTimeLocal)
 		
-		if av.DebugMode {
-			debugInfo := fmt.Sprintf("Checking event %d: %s - After current? %t\n", i, event.Name, isAfter)
-			debugInfo += fmt.Sprintf("  Event time (local): %s\n", eventTime.Format("2006-01-02 15:04:05"))
-			debugInfo += fmt.Sprintf("  Current time (local): %s\n", currentTimeLocal.Format("2006-01-02 15:04:05"))
-			av.appendDebugLog("/tmp/lazyorg_nav_debug.txt", debugInfo)
-		}
-		if isAfter {
-			if av.DebugMode {
-				debugInfo := fmt.Sprintf("Found next event: %s at %s\n", event.Name, event.Time.Format("2006-01-02 15:04:05"))
-				debugInfo += fmt.Sprintf("Using normalized time: %s\n", eventTime.Format("2006-01-02 15:04:05"))
-				av.appendDebugLog("/tmp/lazyorg_nav_debug.txt", debugInfo)
-			}
+		if eventTime.After(currentTimeLocal) {
 			// Use the normalized time for consistent navigation
 			av.Calendar.CurrentDay.Date = eventTime
 			av.Calendar.UpdateWeek()
-			if av.DebugMode {
-				debugInfo := fmt.Sprintf("Calendar updated. New current day: %s\n", av.Calendar.CurrentDay.Date.Format("2006-01-02 15:04:05"))
-				av.appendDebugLog("/tmp/lazyorg_nav_debug.txt", debugInfo)
-			}
 			return
 		}
 	}
@@ -302,42 +254,19 @@ func (av *AppView) JumpToNextEvent() {
 		} else {
 			firstEventTime = allEvents[0].Time.In(time.Local)
 		}
-		if av.DebugMode {
-			debugInfo := fmt.Sprintf("No future events found, wrapping to first event: %s at %s\n", allEvents[0].Name, allEvents[0].Time.Format("2006-01-02 15:04:05"))
-			debugInfo += fmt.Sprintf("Using normalized time: %s\n", firstEventTime.Format("2006-01-02 15:04:05"))
-			av.appendDebugLog("/tmp/lazyorg_nav_debug.txt", debugInfo)
-		}
 		av.Calendar.CurrentDay.Date = firstEventTime
 		av.Calendar.UpdateWeek()
-		if av.DebugMode {
-			debugInfo := fmt.Sprintf("Calendar updated. New current day: %s\n", av.Calendar.CurrentDay.Date.Format("2006-01-02 15:04:05"))
-			av.appendDebugLog("/tmp/lazyorg_nav_debug.txt", debugInfo)
-		}
 	}
 }
 
 func (av *AppView) JumpToPrevEvent() {
-	allEvents := av.getAllEventsFromWeek()
-	if len(allEvents) == 0 {
-		if av.DebugMode {
-			av.appendDebugLog("/tmp/lazyorg_nav_debug.txt", "JumpToPrevEvent: No events found in current week\n")
-		}
+	// Get all events from database instead of current week only
+	allEvents, err := av.Database.GetAllEvents()
+	if err != nil || len(allEvents) == 0 {
 		return
 	}
 
 	currentTime := av.Calendar.CurrentDay.Date
-	
-	if av.DebugMode {
-		debugInfo := fmt.Sprintf("\n=== JumpToPrevEvent Called ===\n")
-		debugInfo += fmt.Sprintf("Current time: %s (Unix: %d)\n", currentTime.Format("2006-01-02 15:04:05"), currentTime.Unix())
-		debugInfo += fmt.Sprintf("Current view: %s\n", av.Name)
-		debugInfo += fmt.Sprintf("Total events in week: %d\n", len(allEvents))
-		
-		for i, event := range allEvents {
-			debugInfo += fmt.Sprintf("Event %d: %s at %s (Unix: %d)\n", i, event.Name, event.Time.Format("2006-01-02 15:04:05"), event.Time.Unix())
-		}
-		av.appendDebugLog("/tmp/lazyorg_nav_debug.txt", debugInfo)
-	}
 	
 	// Find the previous event before current time (iterate backwards)
 	for i := len(allEvents) - 1; i >= 0; i-- {
@@ -351,27 +280,11 @@ func (av *AppView) JumpToPrevEvent() {
 			eventTime = event.Time.In(time.Local)
 		}
 		currentTimeLocal := currentTime.In(time.Local)
-		isBefore := eventTime.Before(currentTimeLocal)
 		
-		if av.DebugMode {
-			debugInfo := fmt.Sprintf("Checking event %d (backwards): %s - Before current? %t\n", i, event.Name, isBefore)
-			debugInfo += fmt.Sprintf("  Event time (local): %s\n", eventTime.Format("2006-01-02 15:04:05"))
-			debugInfo += fmt.Sprintf("  Current time (local): %s\n", currentTimeLocal.Format("2006-01-02 15:04:05"))
-			av.appendDebugLog("/tmp/lazyorg_nav_debug.txt", debugInfo)
-		}
-		if isBefore {
-			if av.DebugMode {
-				debugInfo := fmt.Sprintf("Found previous event: %s at %s\n", event.Name, event.Time.Format("2006-01-02 15:04:05"))
-				debugInfo += fmt.Sprintf("Using normalized time: %s\n", eventTime.Format("2006-01-02 15:04:05"))
-				av.appendDebugLog("/tmp/lazyorg_nav_debug.txt", debugInfo)
-			}
+		if eventTime.Before(currentTimeLocal) {
 			// Use the normalized time for consistent navigation
 			av.Calendar.CurrentDay.Date = eventTime
 			av.Calendar.UpdateWeek()
-			if av.DebugMode {
-				debugInfo := fmt.Sprintf("Calendar updated. New current day: %s\n", av.Calendar.CurrentDay.Date.Format("2006-01-02 15:04:05"))
-				av.appendDebugLog("/tmp/lazyorg_nav_debug.txt", debugInfo)
-			}
 			return
 		}
 	}
@@ -386,17 +299,8 @@ func (av *AppView) JumpToPrevEvent() {
 		} else {
 			lastEventTime = lastEvent.Time.In(time.Local)
 		}
-		if av.DebugMode {
-			debugInfo := fmt.Sprintf("No previous events found, wrapping to last event: %s at %s\n", lastEvent.Name, lastEvent.Time.Format("2006-01-02 15:04:05"))
-			debugInfo += fmt.Sprintf("Using normalized time: %s\n", lastEventTime.Format("2006-01-02 15:04:05"))
-			av.appendDebugLog("/tmp/lazyorg_nav_debug.txt", debugInfo)
-		}
 		av.Calendar.CurrentDay.Date = lastEventTime
 		av.Calendar.UpdateWeek()
-		if av.DebugMode {
-			debugInfo := fmt.Sprintf("Calendar updated. New current day: %s\n", av.Calendar.CurrentDay.Date.Format("2006-01-02 15:04:05"))
-			av.appendDebugLog("/tmp/lazyorg_nav_debug.txt", debugInfo)
-		}
 	}
 }
 
@@ -493,7 +397,16 @@ func (av *AppView) executeSearchQuery(query string) error {
 	if len(av.searchMatches) > 0 {
 		// Jump to first match
 		firstMatch := av.searchMatches[0]
-		av.Calendar.CurrentDay.Date = firstMatch.Time
+		
+		// Normalize time for consistent navigation
+		var eventTime time.Time
+		if firstMatch.Time.Location().String() == "UTC" {
+			eventTime = time.Date(firstMatch.Time.Year(), firstMatch.Time.Month(), firstMatch.Time.Day(), firstMatch.Time.Hour(), firstMatch.Time.Minute(), firstMatch.Time.Second(), firstMatch.Time.Nanosecond(), time.Local)
+		} else {
+			eventTime = firstMatch.Time.In(time.Local)
+		}
+		
+		av.Calendar.CurrentDay.Date = eventTime
 		av.Calendar.UpdateWeek()
 	}
 	
@@ -501,17 +414,10 @@ func (av *AppView) executeSearchQuery(query string) error {
 }
 
 func (av *AppView) findMatches(query string) []*calendar.Event {
-	var matches []*calendar.Event
-	allEvents := av.getAllEventsFromWeek()
-	
-	query = strings.ToLower(query)
-	
-	for _, event := range allEvents {
-		if strings.Contains(strings.ToLower(event.Name), query) ||
-		   strings.Contains(strings.ToLower(event.Description), query) ||
-		   strings.Contains(strings.ToLower(event.Location), query) {
-			matches = append(matches, event)
-		}
+	// Use database search instead of current week only
+	matches, err := av.Database.SearchEvents(query)
+	if err != nil {
+		return []*calendar.Event{}
 	}
 	
 	return matches
@@ -524,7 +430,16 @@ func (av *AppView) GoToNextMatch() error {
 	
 	av.currentMatchIndex = (av.currentMatchIndex + 1) % len(av.searchMatches)
 	match := av.searchMatches[av.currentMatchIndex]
-	av.Calendar.CurrentDay.Date = match.Time
+	
+	// Normalize time for consistent navigation
+	var eventTime time.Time
+	if match.Time.Location().String() == "UTC" {
+		eventTime = time.Date(match.Time.Year(), match.Time.Month(), match.Time.Day(), match.Time.Hour(), match.Time.Minute(), match.Time.Second(), match.Time.Nanosecond(), time.Local)
+	} else {
+		eventTime = match.Time.In(time.Local)
+	}
+	
+	av.Calendar.CurrentDay.Date = eventTime
 	av.Calendar.UpdateWeek()
 	
 	return nil
@@ -537,7 +452,16 @@ func (av *AppView) GoToPrevMatch() error {
 	
 	av.currentMatchIndex = (av.currentMatchIndex - 1 + len(av.searchMatches)) % len(av.searchMatches)
 	match := av.searchMatches[av.currentMatchIndex]
-	av.Calendar.CurrentDay.Date = match.Time
+	
+	// Normalize time for consistent navigation
+	var eventTime time.Time
+	if match.Time.Location().String() == "UTC" {
+		eventTime = time.Date(match.Time.Year(), match.Time.Month(), match.Time.Day(), match.Time.Hour(), match.Time.Minute(), match.Time.Second(), match.Time.Nanosecond(), time.Local)
+	} else {
+		eventTime = match.Time.In(time.Local)
+	}
+	
+	av.Calendar.CurrentDay.Date = eventTime
 	av.Calendar.UpdateWeek()
 	
 	return nil
