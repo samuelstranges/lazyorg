@@ -226,11 +226,20 @@ func (av *AppView) ShowKeybinds(g *gocui.Gui) error {
 			}
 
 			keybindsView.IsVisible = true
+			
+			// Calculate dynamic height based on content, with maximum of available space
+			requiredHeight := keybindsView.GetRequiredHeight()
+			maxHeight := av.H - 4 // Leave some margin
+			height := requiredHeight
+			if height > maxHeight {
+				height = maxHeight
+			}
+			
 			keybindsView.SetProperties(
 				av.X+(av.W-KeybindsWidth)/2,
-				av.Y+(av.H-KeybindsHeight)/2,
+				av.Y+(av.H-height)/2,
 				KeybindsWidth,
-				KeybindsHeight,
+				height,
 			)
 
 			return keybindsView.Update(g)
