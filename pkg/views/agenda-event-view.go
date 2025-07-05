@@ -2,6 +2,7 @@ package views
 
 import (
 	"fmt"
+	"os"
 	"time"
 
 	"github.com/samuelstranges/chronos/internal/calendar"
@@ -39,6 +40,11 @@ func (aev *AgendaEventView) Update(g *gocui.Gui) error {
 	)
 	if err != nil {
 		if err != gocui.ErrUnknownView {
+			// Debug logging for view creation errors
+			if f, err := os.OpenFile("/tmp/chronos_agenda_debug.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644); err == nil {
+				fmt.Fprintf(f, "ERROR creating view %s: %v\n", aev.Name, err)
+				f.Close()
+			}
 			return err
 		}
 	}
@@ -57,6 +63,14 @@ func (aev *AgendaEventView) Update(g *gocui.Gui) error {
 	
 	// Format the event information
 	eventText := aev.formatEventLine()
+	
+	// Debug logging
+	if f, err := os.OpenFile("/tmp/chronos_agenda_debug.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644); err == nil {
+		fmt.Fprintf(f, "AgendaEventView %s Update: text='%s', selected=%t, dims=(%d,%d,%d,%d)\n", 
+			aev.Name, eventText, aev.Selected, aev.X, aev.Y, aev.W, aev.H)
+		f.Close()
+	}
+	
 	fmt.Fprint(v, eventText)
 	
 	return nil
@@ -83,16 +97,10 @@ func (aev *AgendaEventView) formatEventLine() string {
 	
 	// Truncate fields to fit the line
 	name := aev.truncateField(event.Name, 20)
-	location := aev.truncateField(event.Location, 15)
-	description := aev.truncateField(event.Description, 25)
 	
-	// Format: "09:00-10:30 Event Name         Location       Description                1.5h"
-	return fmt.Sprintf("%-11s %-20s %-15s %-25s %s", 
-		startTime+"-"+endTimeStr, 
-		name, 
-		location, 
-		description, 
-		durationStr)
+	// Temporary simplified format for debugging
+	return fmt.Sprintf("%s-%s %s (%s)", 
+		startTime, endTimeStr, name, durationStr)
 }
 
 func (aev *AgendaEventView) truncateField(text string, maxWidth int) string {

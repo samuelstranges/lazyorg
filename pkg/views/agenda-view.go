@@ -2,11 +2,13 @@ package views
 
 import (
 	"fmt"
+	"os"
 	"sort"
 	"time"
 
 	"github.com/samuelstranges/chronos/internal/calendar"
 	"github.com/samuelstranges/chronos/internal/database"
+	"github.com/samuelstranges/chronos/internal/utils"
 	"github.com/jroimartin/gocui"
 )
 
@@ -58,6 +60,17 @@ func (av *AgendaView) Update(g *gocui.Gui) error {
 	v.Title = fmt.Sprintf(" Agenda - %s ", av.CurrentDate.Format("Monday, January 2, 2006"))
 	v.Clear()
 	
+	// Debug logging for main view
+	if f, err := os.OpenFile("/tmp/chronos_agenda_debug.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644); err == nil {
+		fmt.Fprintf(f, "AgendaView main Update: dims=(%d,%d,%d,%d), events=%d, view=%p\n", 
+			av.X, av.Y, av.W, av.H, len(av.Events), v)
+		if v != nil {
+			vw, vh := v.Size()
+			fmt.Fprintf(f, "  View size: (%d,%d)\n", vw, vh)
+		}
+		f.Close()
+	}
+	
 	// Draw header
 	av.drawHeader(v)
 	
@@ -67,40 +80,113 @@ func (av *AgendaView) Update(g *gocui.Gui) error {
 		return nil
 	}
 	
-	// Update child event views
-	if err := av.updateEventViews(g); err != nil {
-		return err
+	// Write events directly to main view with full details
+	for i, event := range av.Events {
+		startTime := utils.FormatHourFromTime(event.Time)
+		duration := time.Duration(event.DurationHour * float64(time.Hour))
+		endTime := event.Time.Add(duration)
+		endTimeStr := utils.FormatHourFromTime(endTime)
+		
+		// Format duration
+		durationStr := fmt.Sprintf("%.1fh", event.DurationHour)
+		if event.DurationHour == float64(int(event.DurationHour)) {
+			durationStr = fmt.Sprintf("%.0fh", event.DurationHour)
+		}
+		
+		// Truncate fields to fit on screen with new column sizes
+		name := av.truncateField(event.Name, 20)
+		location := av.truncateField(event.Location, 37)  // 2.5x larger (15 * 2.5 ≈ 37)
+		description := av.truncateField(event.Description, 25)
+		
+		// Apply ANSI color to the event name
+		coloredName := calendar.WrapTextWithColor(name, event.Color)
+		
+		// Format the complete event line with reordered columns: Time, Event, Duration, Location, Description
+		// Note: We need to pad the colored name manually since printf can't handle ANSI codes in width calculations
+		paddedColoredName := coloredName
+		// Add padding to reach 20 characters (visible length)
+		namePadding := 20 - len(name) // Use original name length for padding calculation
+		for j := 0; j < namePadding; j++ {
+			paddedColoredName += " "
+		}
+		
+		eventLine := fmt.Sprintf(" %-11s %s %-8s %-37s %s", 
+			fmt.Sprintf("%s-%s", startTime, endTimeStr),
+			paddedColoredName,
+			durationStr,
+			location,
+			description)
+		
+		// Add selection indicator at the front
+		if i == av.SelectedIndex {
+			eventLine = fmt.Sprintf("→%s", eventLine[1:])  // Replace first space with arrow
+		}
+		
+		fmt.Fprintln(v, eventLine)
 	}
 	
-	// Update children
-	if err := av.UpdateChildren(g); err != nil {
-		return err
+	// Debug logging
+	if f, err := os.OpenFile("/tmp/chronos_agenda_debug.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644); err == nil {
+		fmt.Fprintf(f, "TEST: Wrote %d events directly to main view\n", len(av.Events))
+		f.Close()
 	}
 	
 	return nil
 }
 
 func (av *AgendaView) drawHeader(v *gocui.View) {
+	// Debug logging
+	if f, err := os.OpenFile("/tmp/chronos_agenda_debug.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644); err == nil {
+		fmt.Fprintf(f, "drawHeader called: view=%p, width=%d\n", v, av.W)
+		f.Close()
+	}
+	
 	// Line 1: Empty for spacing
 	fmt.Fprintln(v, "")
 	
-	// Line 2: Column headers
-	fmt.Fprintf(v, "%-11s %-20s %-15s %-25s %s\n", 
-		"Time", "Event", "Location", "Description", "Duration")
+	// Line 2: Column headers - reordered: Time, Event, Duration, Location, Description
+	// Add space at start for arrow positioning
+	fmt.Fprintf(v, " %-11s %-20s %-8s %-37s %s\n", 
+		"Time", "Event", "Duration", "Location", "Description")
 	
 	// Line 3: Separator
-	separator := ""
-	for i := 0; i < av.W-2; i++ {
+	separator := " "  // Start with space for arrow positioning
+	for i := 0; i < av.W-3; i++ {
 		separator += "-"
 	}
 	fmt.Fprintln(v, separator)
+	
+	// Debug logging after header
+	if f, err := os.OpenFile("/tmp/chronos_agenda_debug.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644); err == nil {
+		fmt.Fprintf(f, "drawHeader complete: separator length=%d\n", len(separator))
+		f.Close()
+	}
 }
 
 func (av *AgendaView) loadEventsForDate() error {
+	// Debug logging
+	if f, err := os.OpenFile("/tmp/chronos_agenda_debug.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644); err == nil {
+		fmt.Fprintf(f, "loadEventsForDate called for: %s\n", av.CurrentDate.Format("2006-01-02"))
+		f.Close()
+	}
+	
 	// Get events for the current date
 	events, err := av.Database.GetEventsByDate(av.CurrentDate)
 	if err != nil {
+		if f, err := os.OpenFile("/tmp/chronos_agenda_debug.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644); err == nil {
+			fmt.Fprintf(f, "ERROR loading events: %v\n", err)
+			f.Close()
+		}
 		return err
+	}
+	
+	// Debug logging
+	if f, err := os.OpenFile("/tmp/chronos_agenda_debug.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644); err == nil {
+		fmt.Fprintf(f, "Found %d events for %s\n", len(events), av.CurrentDate.Format("2006-01-02"))
+		for i, event := range events {
+			fmt.Fprintf(f, "  Event %d: %s at %s\n", i, event.Name, event.Time.Format("15:04"))
+		}
+		f.Close()
 	}
 	
 	// Sort events by time
@@ -122,6 +208,12 @@ func (av *AgendaView) loadEventsForDate() error {
 }
 
 func (av *AgendaView) updateEventViews(g *gocui.Gui) error {
+	// Debug logging
+	if f, err := os.OpenFile("/tmp/chronos_agenda_debug.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644); err == nil {
+		fmt.Fprintf(f, "updateEventViews called: %d events to display\n", len(av.Events))
+		f.Close()
+	}
+	
 	// Clear existing event views
 	av.clearEventViews(g)
 	
@@ -129,14 +221,26 @@ func (av *AgendaView) updateEventViews(g *gocui.Gui) error {
 	for i, event := range av.Events {
 		eventViewName := fmt.Sprintf("agenda_event_%d", i)
 		
-		// Calculate position
-		x := av.X + 1
-		y := av.Y + av.HeaderHeight + i
-		w := av.W - 2
-		h := 1
+		// Calculate position relative to parent view (not screen coordinates)
+		// The event views should be positioned within the main agenda view
+		x := av.X + 1  // 1 pixel from left edge of parent
+		y := av.Y + av.HeaderHeight + i  // After header + event index
+		w := av.W - 2  // 2 pixels narrower than parent (1 pixel margin on each side)
+		h := 1         // 1 line height per event
+		
+		// Debug logging
+		if f, err := os.OpenFile("/tmp/chronos_agenda_debug.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644); err == nil {
+			fmt.Fprintf(f, "Creating event view %s at (%d,%d) size (%d,%d) for event: %s\n", 
+				eventViewName, x, y, w, h, event.Name)
+			f.Close()
+		}
 		
 		// Skip if outside view bounds
 		if y >= av.Y+av.H-1 {
+			if f, err := os.OpenFile("/tmp/chronos_agenda_debug.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644); err == nil {
+				fmt.Fprintf(f, "Skipping event %s - outside bounds: y=%d, maxY=%d\n", eventViewName, y, av.Y+av.H-1)
+				f.Close()
+			}
 			break
 		}
 		
@@ -198,8 +302,18 @@ func (av *AgendaView) SetCurrentDate(date time.Time) {
 }
 
 func (av *AgendaView) GetSelectedEventViewName() string {
-	if len(av.Events) == 0 {
-		return av.Name
+	// Since all events are displayed in the main agenda view (not as separate child views),
+	// always return the main agenda view name for focus management
+	return av.Name
+}
+
+func (av *AgendaView) truncateField(text string, maxWidth int) string {
+	if len(text) <= maxWidth {
+		return text
 	}
-	return fmt.Sprintf("agenda_event_%d", av.SelectedIndex)
+	
+	if maxWidth > 3 {
+		return text[:maxWidth-3] + "..."
+	}
+	return text[:maxWidth]
 }

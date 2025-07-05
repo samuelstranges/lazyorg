@@ -601,20 +601,37 @@ func (av *AppView) UpdateCurrentView(g *gocui.Gui) error {
 }
 
 func (av *AppView) GetHoveredOnView(g *gocui.Gui) View {
-	viewName := WeekdayNames[av.Calendar.CurrentDay.Date.Weekday()]
-	var hoveredView View
-
-	if view, ok := av.FindChildView(viewName); ok {
-		if dayView, ok := view.(*DayView); ok {
-			if eventView, ok := dayView.IsOnEvent(av.GetCursorY()); ok {
-				hoveredView = eventView
-			} else {
-				hoveredView = dayView
+	if av.IsAgendaMode() {
+		// In agenda mode, get the selected event from AgendaView
+		if mainView, ok := av.GetChild("main"); ok {
+			if mv, ok := mainView.(*MainView); ok {
+				if mv.CalendarView != nil && mv.CalendarView.AgendaView != nil {
+					if event := mv.CalendarView.AgendaView.GetSelectedEvent(); event != nil {
+						// Create an EventView for the selected event
+						eventView := NewEvenView("agenda_selected_event", event)
+						return eventView
+					}
+				}
 			}
 		}
-	}
+		return nil
+	} else {
+		// Week mode logic (and month mode for now)
+		viewName := WeekdayNames[av.Calendar.CurrentDay.Date.Weekday()]
+		var hoveredView View
 
-	return hoveredView
+		if view, ok := av.FindChildView(viewName); ok {
+			if dayView, ok := view.(*DayView); ok {
+				if eventView, ok := dayView.IsOnEvent(av.GetCursorY()); ok {
+					hoveredView = eventView
+				} else {
+					hoveredView = dayView
+				}
+			}
+		}
+
+		return hoveredView
+	}
 }
 
 func (av *AppView) GetCursorY() int {
