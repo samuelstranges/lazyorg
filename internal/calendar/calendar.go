@@ -119,3 +119,13 @@ func (c *Calendar) GetDayFromTime(time time.Time) *Day {
 	}
 	return &Day{}
 }
+
+func (c *Calendar) UpdateToNextMonth() {
+	c.CurrentDay.Date = c.CurrentDay.Date.AddDate(0, 1, 0)
+	c.UpdateWeek()
+}
+
+func (c *Calendar) UpdateToPrevMonth() {
+	c.CurrentDay.Date = c.CurrentDay.Date.AddDate(0, -1, 0)
+	c.UpdateWeek()
+}

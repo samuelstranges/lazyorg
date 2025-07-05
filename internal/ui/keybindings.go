@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"fmt"
 	"github.com/samuelstranges/chronos/pkg/views"
 	"github.com/jroimartin/gocui"
 )
@@ -49,13 +50,29 @@ func initMainKeybindings(g *gocui.Gui, av *views.AppView) error {
 		{'w', func(g *gocui.Gui, v *gocui.View) error { av.JumpToNextEvent(); av.UpdateCurrentView(g); return nil }},
 		{'b', func(g *gocui.Gui, v *gocui.View) error { av.JumpToPrevEvent(); av.UpdateCurrentView(g); return nil }},
 		{'/', func(g *gocui.Gui, v *gocui.View) error { return av.StartSearch(g) }},
-		{'n', func(g *gocui.Gui, v *gocui.View) error { av.GoToNextMatch(); av.UpdateCurrentView(g); return nil }},
-		{'N', func(g *gocui.Gui, v *gocui.View) error { av.GoToPrevMatch(); av.UpdateCurrentView(g); return nil }},
+		{'*', func(g *gocui.Gui, v *gocui.View) error { av.GoToNextMatch(); av.UpdateCurrentView(g); return nil }},
+		{'#', func(g *gocui.Gui, v *gocui.View) error { av.GoToPrevMatch(); av.UpdateCurrentView(g); return nil }},
+		{'n', func(g *gocui.Gui, v *gocui.View) error { av.UpdateToNextMonth(); return nil }},
+		{'p', func(g *gocui.Gui, v *gocui.View) error { av.UpdateToPrevMonth(); return nil }},
+		{'m', func(g *gocui.Gui, v *gocui.View) error { err := av.SwitchToMonthView(g); av.UpdateCurrentView(g); return err }},
+		{'W', func(g *gocui.Gui, v *gocui.View) error { err := av.SwitchToWeekView(g); av.UpdateCurrentView(g); return err }},
 		{gocui.KeyEsc, func(g *gocui.Gui, v *gocui.View) error { av.ClearSearch(); return nil }},
 		{'?', func(g *gocui.Gui, v *gocui.View) error { return av.ShowKeybinds(g) }},
 		{'q', func(g *gocui.Gui, v *gocui.View) error { return quit(g, v) }},
 	}
+	
+	// Set keybindings for weekday views (needed for week view)
 	for _, viewName := range views.WeekdayNames {
+		for _, kb := range mainKeybindings {
+			if err := g.SetKeybinding(viewName, kb.key, gocui.ModNone, kb.handler); err != nil {
+				return err
+			}
+		}
+	}
+	
+	// Set keybindings for month day views (needed for month view)
+	for i := 0; i < 42; i++ {
+		viewName := fmt.Sprintf("monthday_%d", i)
 		for _, kb := range mainKeybindings {
 			if err := g.SetKeybinding(viewName, kb.key, gocui.ModNone, kb.handler); err != nil {
 				return err

@@ -355,3 +355,48 @@ func (database *Database) SearchEventsWithFilters(criteria SearchCriteria) ([]*c
 
 	return events, nil
 }
+// GetEventsByMonth retrieves all events for a specific month
+func (database *Database) GetEventsByMonth(year int, month time.Month) ([]*calendar.Event, error) {
+	// Create start and end of month in local timezone
+	startOfMonth := time.Date(year, month, 1, 0, 0, 0, 0, time.Local)
+	endOfMonth := startOfMonth.AddDate(0, 1, 0)
+	
+	rows, err := database.db.Query(`
+        SELECT * FROM events WHERE time >= ? AND time < ? ORDER BY time ASC`,
+		startOfMonth.Format("2006-01-02 15:04:05"),
+		endOfMonth.Format("2006-01-02 15:04:05"),
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var events []*calendar.Event
+	for rows.Next() {
+		var event calendar.Event
+		var colorInt int
+
+		if err := rows.Scan(
+			&event.Id,
+			&event.Name,
+			&event.Description,
+			&event.Location,
+			&event.Time,
+			&event.DurationHour,
+			&event.FrequencyDay,
+			&event.Occurence,
+			&colorInt,
+		); err != nil {
+			return nil, err
+		}
+
+		if colorInt == 0 {
+			event.Color = calendar.GenerateColorFromName(event.Name)
+		} else {
+			event.Color = gocui.Attribute(colorInt)
+		}
+		events = append(events, &event)
+	}
+
+	return events, nil
+}

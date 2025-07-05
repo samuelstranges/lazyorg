@@ -1,6 +1,8 @@
 package views
 
 import (
+	"time"
+	
 	"github.com/samuelstranges/chronos/internal/calendar"
 	"github.com/samuelstranges/chronos/internal/config"
 	"github.com/samuelstranges/chronos/internal/database"
@@ -8,7 +10,6 @@ import (
 	"github.com/samuelstranges/chronos/internal/utils"
 	"github.com/jroimartin/gocui"
 	"github.com/nsf/termbox-go"
-	"time"
 )
 
 var (
@@ -55,7 +56,7 @@ func NewAppView(g *gocui.Gui, db *database.Database, cfg *config.Config) *AppVie
 
 	av.AddChild("title", NewTitleView(c))
 	av.AddChild("popup", NewEvenPopup(g, c, db, av.EventManager))
-	av.AddChild("main", NewMainView(c))
+	av.AddChild("main", NewMainView(c, db))
 	
 	// Set up error handler for EventManager after popup is created
 	av.setupErrorHandler(g)
@@ -148,6 +149,50 @@ func (av *AppView) UpdateToNextWeek() {
 
 func (av *AppView) UpdateToPrevWeek() {
 	av.Calendar.UpdateToPrevWeek()
+}
+
+func (av *AppView) UpdateToNextMonth() {
+	av.Calendar.UpdateToNextMonth()
+	
+	// Also update the month view's current month if we're in month mode
+	if mainView, ok := av.GetChild("main"); ok {
+		if mv, ok := mainView.(*MainView); ok {
+			if mv.CalendarView != nil && mv.CalendarView.ViewMode == "month" && mv.CalendarView.MonthView != nil {
+				mv.CalendarView.MonthView.UpdateToNextMonth()
+			}
+		}
+	}
+}
+
+func (av *AppView) UpdateToPrevMonth() {
+	av.Calendar.UpdateToPrevMonth()
+	
+	// Also update the month view's current month if we're in month mode
+	if mainView, ok := av.GetChild("main"); ok {
+		if mv, ok := mainView.(*MainView); ok {
+			if mv.CalendarView != nil && mv.CalendarView.ViewMode == "month" && mv.CalendarView.MonthView != nil {
+				mv.CalendarView.MonthView.UpdateToPrevMonth()
+			}
+		}
+	}
+}
+
+func (av *AppView) SwitchToWeekView(g *gocui.Gui) error {
+	if mainView, ok := av.GetChild("main"); ok {
+		if mv, ok := mainView.(*MainView); ok {
+			return mv.SwitchToWeekView(g)
+		}
+	}
+	return nil
+}
+
+func (av *AppView) SwitchToMonthView(g *gocui.Gui) error {
+	if mainView, ok := av.GetChild("main"); ok {
+		if mv, ok := mainView.(*MainView); ok {
+			return mv.SwitchToMonthView(g)
+		}
+	}
+	return nil
 }
 
 func (av *AppView) UpdateToNextDay(g *gocui.Gui) {

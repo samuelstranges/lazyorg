@@ -1,7 +1,11 @@
 package views
 
 import (
+	"fmt"
+	"os"
+	
 	"github.com/samuelstranges/chronos/internal/calendar"
+	"github.com/samuelstranges/chronos/internal/database"
 	"github.com/samuelstranges/chronos/internal/utils"
 	"github.com/jroimartin/gocui"
 )
@@ -9,18 +13,20 @@ import (
 type MainView struct {
 	*BaseView
 
-	Calendar *calendar.Calendar
+	Calendar     *calendar.Calendar
+	Database     *database.Database
+	CalendarView *CalendarView
 }
 
-func NewMainView(c *calendar.Calendar) *MainView {
+func NewMainView(c *calendar.Calendar, db *database.Database) *MainView {
 	mv := &MainView{
-		BaseView: NewBaseView("main"),
-		Calendar: c,
+		BaseView:     NewBaseView("main"),
+		Calendar:     c,
+		Database:     db,
+		CalendarView: NewCalendarView(c, db),
 	}
 
-	tv := NewTimeView()
-	mv.AddChild("time", tv)
-	mv.AddChild("week", NewWeekView(c, tv))
+	mv.AddChild("calendar", mv.CalendarView)
 
 	return mv
 }
@@ -50,26 +56,26 @@ func (mv *MainView) Update(g *gocui.Gui) error {
 }
 
 func (mv *MainView) updateChildViewProperties() {
-	if view, ok := mv.GetChild("time"); ok {
-		if timeView, ok := view.(*TimeView); ok {
-			y := utils.TimeToPosition(mv.Calendar.CurrentDay.Date, timeView.Body)
-			timeView.SetCursor(y)
-			timeView.SetProperties(
-				mv.X+1,
-				mv.Y+1,
-				TimeViewWidth,
-				mv.H-2,
-			)
-		}
+	// Debug main view properties
+	if f, err := os.OpenFile("/tmp/chronos_month_debug.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644); err == nil {
+		fmt.Fprintf(f, "MainView.updateChildViewProperties: X=%d, Y=%d, W=%d, H=%d\n", mv.X, mv.Y, mv.W, mv.H)
+		f.Close()
 	}
-
-	if weekView, ok := mv.GetChild("week"); ok {
-		weekView.SetProperties(
-			mv.X+TimeViewWidth+1,
+	
+	// Update calendar view to take full main view area
+	if mv.CalendarView != nil {
+		mv.CalendarView.SetProperties(
+			mv.X,
 			mv.Y,
-			mv.W-TimeViewWidth-1,
+			mv.W,
 			mv.H,
 		)
+	}
+
+	// Update cursor position if in week view
+	if mv.CalendarView != nil && mv.CalendarView.ViewMode == "week" && mv.CalendarView.TimeView != nil {
+		y := utils.TimeToPosition(mv.Calendar.CurrentDay.Date, mv.CalendarView.TimeView.Body)
+		mv.CalendarView.TimeView.SetCursor(y)
 	}
 
 	if titleView, ok := mv.GetChild("title"); ok {
@@ -80,4 +86,18 @@ func (mv *MainView) updateChildViewProperties() {
 			TitleViewHeight,
 		)
 	}
+}
+
+func (mv *MainView) SwitchToWeekView(g *gocui.Gui) error {
+	if mv.CalendarView != nil {
+		return mv.CalendarView.SwitchToWeekView(g)
+	}
+	return nil
+}
+
+func (mv *MainView) SwitchToMonthView(g *gocui.Gui) error {
+	if mv.CalendarView != nil {
+		return mv.CalendarView.SwitchToMonthView(g)
+	}
+	return nil
 }
