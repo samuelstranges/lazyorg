@@ -121,11 +121,17 @@ func (c *Calendar) GetDayFromTime(time time.Time) *Day {
 }
 
 func (c *Calendar) UpdateToNextMonth() {
-	c.CurrentDay.Date = c.CurrentDay.Date.AddDate(0, 1, 0)
+	// Go to the first day of the next month
+	currentDate := c.CurrentDay.Date
+	nextMonth := currentDate.AddDate(0, 1, 0)
+	c.CurrentDay.Date = time.Date(nextMonth.Year(), nextMonth.Month(), 1, currentDate.Hour(), currentDate.Minute(), 0, 0, currentDate.Location())
 	c.UpdateWeek()
 }
 
 func (c *Calendar) UpdateToPrevMonth() {
-	c.CurrentDay.Date = c.CurrentDay.Date.AddDate(0, -1, 0)
+	// Go to the first day of the previous month
+	currentDate := c.CurrentDay.Date
+	prevMonth := currentDate.AddDate(0, -1, 0)
+	c.CurrentDay.Date = time.Date(prevMonth.Year(), prevMonth.Month(), 1, currentDate.Hour(), currentDate.Minute(), 0, 0, currentDate.Location())
 	c.UpdateWeek()
 }
