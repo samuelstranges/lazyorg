@@ -123,11 +123,6 @@ func WrapTextWithColor(text string, color gocui.Attribute) string {
 	return ColorToANSI(color) + text + ANSIReset()
 }
 
-// WrapTextWithUnderline wraps text with ANSI underline formatting
-func WrapTextWithUnderline(text string) string {
-	return "\033[4m" + text + "\033[24m" // 4m = underline on, 24m = underline off
-}
-
 func (e *Event) FormatTimeAndName() string {
 	return fmt.Sprintf("%s | %s", e.FormatDurationTime(), e.Name)
 }
