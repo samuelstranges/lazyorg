@@ -63,7 +63,7 @@ func (ev *EventView) Update(g *gocui.Gui) error {
 
 			fmt.Fprint(v, ansiBlackFg)
 			fmt.Fprint(v, ansiUnderline)
-			for i := 0; i < ev.W; i++ { fmt.Fprint(v, "	") }
+			for i := 0; i < ev.W; i++ { fmt.Fprint(v, "	") } // a non 'space character'
 			fmt.Fprint(v, ansiReset)
 		} else {
 			// event is 30 mins long... must have text on same line as underline
