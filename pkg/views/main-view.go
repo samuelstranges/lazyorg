@@ -3,6 +3,7 @@ package views
 import (
 	"github.com/samuelstranges/chronos/internal/calendar"
 	"github.com/samuelstranges/chronos/internal/database"
+	"github.com/samuelstranges/chronos/internal/eventmanager"
 	"github.com/samuelstranges/chronos/internal/utils"
 	"github.com/jroimartin/gocui"
 )
@@ -15,12 +16,12 @@ type MainView struct {
 	CalendarView *CalendarView
 }
 
-func NewMainView(c *calendar.Calendar, db *database.Database) *MainView {
+func NewMainView(c *calendar.Calendar, db *database.Database, em *eventmanager.EventManager) *MainView {
 	mv := &MainView{
 		BaseView:     NewBaseView("main"),
 		Calendar:     c,
 		Database:     db,
-		CalendarView: NewCalendarView(c, db),
+		CalendarView: NewCalendarView(c, db, em),
 	}
 
 	mv.AddChild("calendar", mv.CalendarView)

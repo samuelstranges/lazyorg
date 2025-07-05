@@ -48,6 +48,20 @@ func (em *EventManager) SetErrorHandler(handler func(title, message string)) {
 	em.errorHandler = handler
 }
 
+// toUTC converts an event's time to UTC for database storage
+func (em *EventManager) toUTC(event *calendar.Event) *calendar.Event {
+	utcEvent := *event
+	utcEvent.Time = event.Time.UTC()
+	return &utcEvent
+}
+
+// toLocal converts an event's time from UTC to local time for display
+func (em *EventManager) toLocal(event *calendar.Event) *calendar.Event {
+	localEvent := *event
+	localEvent.Time = event.Time.In(time.Local)
+	return &localEvent
+}
+
 // showError displays an error using the registered error handler
 func (em *EventManager) showError(title, message string) {
 	if em.errorHandler != nil {
@@ -57,8 +71,11 @@ func (em *EventManager) showError(title, message string) {
 
 // AddEvent adds a new event and records it for undo
 func (em *EventManager) AddEvent(event calendar.Event) (*calendar.Event, bool) {
-	// Check for overlaps before adding
-	hasOverlap, err := em.database.CheckEventOverlap(event)
+	// Convert to UTC for database storage
+	utcEvent := em.toUTC(&event)
+	
+	// Check for overlaps before adding (using UTC time for consistency)
+	hasOverlap, err := em.database.CheckEventOverlap(*utcEvent)
 	if err != nil {
 		em.showError("Database Error", "Failed to check for overlapping events: "+err.Error())
 		return nil, false
@@ -68,31 +85,32 @@ func (em *EventManager) AddEvent(event calendar.Event) (*calendar.Event, bool) {
 		return nil, false
 	}
 
-	newEventId, err := em.database.AddEvent(event)
+	newEventId, err := em.database.AddEvent(*utcEvent)
 	if err != nil {
 		em.showError("Cannot Add Event", "Failed to save event: "+err.Error())
 		return nil, false
 	}
 
-	// Get the full event from database
+	// Get the full event from database and convert back to local time
 	newEvent, err := em.database.GetEventById(newEventId)
 	if err != nil {
 		em.showError("Database Error", "Failed to retrieve saved event: "+err.Error())
 		return nil, false
 	}
+	localEvent := em.toLocal(newEvent)
 
-	// Record undo action
+	// Record undo action (store in local time for consistency with UI)
 	em.pushUndoAction(UndoAction{
 		Type:       ActionAdd,
-		EventAfter: newEvent,
+		EventAfter: localEvent,
 	})
 
-	return newEvent, true
+	return localEvent, true
 }
 
 // DeleteEvent deletes an event and records it for undo
 func (em *EventManager) DeleteEvent(eventId int) error {
-	// Get the event before deleting for undo
+	// Get the event before deleting for undo (convert from UTC to local)
 	eventBefore, err := em.database.GetEventById(eventId)
 	if err != nil {
 		return err
@@ -102,16 +120,17 @@ func (em *EventManager) DeleteEvent(eventId int) error {
 	if eventBefore == nil {
 		return errors.New("event not found: cannot delete non-existent event")
 	}
+	localEventBefore := em.toLocal(eventBefore)
 
 	err = em.database.DeleteEventById(eventId)
 	if err != nil {
 		return err
 	}
 
-	// Record undo action
+	// Record undo action (store in local time for consistency with UI)
 	em.pushUndoAction(UndoAction{
 		Type:        ActionDelete,
-		EventBefore: eventBefore,
+		EventBefore: localEventBefore,
 	})
 
 	return nil
@@ -119,7 +138,7 @@ func (em *EventManager) DeleteEvent(eventId int) error {
 
 // UpdateEvent updates an event and records it for undo
 func (em *EventManager) UpdateEvent(eventId int, newEvent *calendar.Event) bool {
-	// Get the event before updating for undo
+	// Get the event before updating for undo (convert from UTC to local)
 	eventBefore, err := em.database.GetEventById(eventId)
 	if err != nil {
 		em.showError("Database Error", "Failed to retrieve original event: "+err.Error())
@@ -131,9 +150,13 @@ func (em *EventManager) UpdateEvent(eventId int, newEvent *calendar.Event) bool 
 		em.showError("Event Not Found", "Cannot update event: event does not exist")
 		return false
 	}
+	localEventBefore := em.toLocal(eventBefore)
 
-	// Check for overlaps before updating (exclude current event)
-	hasOverlap, err := em.database.CheckEventOverlap(*newEvent, eventId)
+	// Convert new event to UTC for database storage
+	utcNewEvent := em.toUTC(newEvent)
+
+	// Check for overlaps before updating (exclude current event, using UTC time)
+	hasOverlap, err := em.database.CheckEventOverlap(*utcNewEvent, eventId)
 	if err != nil {
 		em.showError("Database Error", "Failed to check for overlapping events: "+err.Error())
 		return false
@@ -143,17 +166,17 @@ func (em *EventManager) UpdateEvent(eventId int, newEvent *calendar.Event) bool 
 		return false
 	}
 
-	err = em.database.UpdateEventById(eventId, newEvent)
+	err = em.database.UpdateEventById(eventId, utcNewEvent)
 	if err != nil {
 		em.showError("Cannot Edit Event", "Failed to save changes: "+err.Error())
 		return false
 	}
 
-	// Record undo action
+	// Record undo action (store in local time for consistency with UI)
 	em.pushUndoAction(UndoAction{
 		Type:        ActionEdit,
-		EventBefore: eventBefore,
-		EventAfter:  newEvent,
+		EventBefore: localEventBefore,
+		EventAfter:  newEvent, // newEvent is already in local time from UI
 	})
 
 	return true
@@ -161,7 +184,7 @@ func (em *EventManager) UpdateEvent(eventId int, newEvent *calendar.Event) bool 
 
 // DeleteEventsByName deletes all events with the same name and records it for undo
 func (em *EventManager) DeleteEventsByName(name string) error {
-	// Get all events with this name before deleting
+	// Get all events with this name before deleting (convert from UTC to local)
 	events, err := em.database.GetEventsByName(name)
 	if err != nil {
 		return err
@@ -172,15 +195,21 @@ func (em *EventManager) DeleteEventsByName(name string) error {
 		return nil
 	}
 
+	// Convert all events to local time for undo storage
+	localEvents := make([]*calendar.Event, len(events))
+	for i, event := range events {
+		localEvents[i] = em.toLocal(event)
+	}
+
 	err = em.database.DeleteEventsByName(name)
 	if err != nil {
 		return err
 	}
 
-	// Record undo action for bulk delete with full event data
+	// Record undo action for bulk delete with full event data (in local time)
 	em.pushUndoAction(UndoAction{
 		Type:   ActionBulkDelete,
-		Events: events,
+		Events: localEvents,
 	})
 
 	return nil
@@ -211,18 +240,21 @@ func (em *EventManager) Undo() error {
 		return em.database.DeleteEventById(lastAction.EventAfter.Id)
 
 	case ActionDelete:
-		// Undo delete by re-adding the event (but don't record this add)
-		_, err := em.database.AddEvent(*lastAction.EventBefore)
+		// Undo delete by re-adding the event (convert to UTC for storage)
+		utcEvent := em.toUTC(lastAction.EventBefore)
+		_, err := em.database.AddEvent(*utcEvent)
 		return err
 
 	case ActionEdit:
-		// Undo edit by restoring the old event state (but don't record this update)
-		return em.database.UpdateEventById(lastAction.EventBefore.Id, lastAction.EventBefore)
+		// Undo edit by restoring the old event state (convert to UTC for storage)
+		utcEvent := em.toUTC(lastAction.EventBefore)
+		return em.database.UpdateEventById(lastAction.EventBefore.Id, utcEvent)
 
 	case ActionBulkDelete:
-		// Undo bulk delete by re-adding all the deleted events
+		// Undo bulk delete by re-adding all the deleted events (convert to UTC for storage)
 		for _, event := range lastAction.Events {
-			_, err := em.database.AddEvent(*event)
+			utcEvent := em.toUTC(event)
+			_, err := em.database.AddEvent(*utcEvent)
 			if err != nil {
 				return err
 			}
@@ -255,8 +287,9 @@ func (em *EventManager) Redo() error {
 	// Re-apply the action
 	switch lastAction.Type {
 	case ActionAdd:
-		// Redo add by re-adding the event (but don't record this add)
-		_, err := em.database.AddEvent(*lastAction.EventAfter)
+		// Redo add by re-adding the event (convert to UTC for storage)
+		utcEvent := em.toUTC(lastAction.EventAfter)
+		_, err := em.database.AddEvent(*utcEvent)
 		return err
 
 	case ActionDelete:
@@ -264,8 +297,9 @@ func (em *EventManager) Redo() error {
 		return em.database.DeleteEventById(lastAction.EventBefore.Id)
 
 	case ActionEdit:
-		// Redo edit by applying the new event state (but don't record this update)
-		return em.database.UpdateEventById(lastAction.EventAfter.Id, lastAction.EventAfter)
+		// Redo edit by applying the new event state (convert to UTC for storage)
+		utcEvent := em.toUTC(lastAction.EventAfter)
+		return em.database.UpdateEventById(lastAction.EventAfter.Id, utcEvent)
 
 	case ActionBulkDelete:
 		// Redo bulk delete by deleting all events with the same name again
@@ -362,4 +396,16 @@ func (em *EventManager) GetEventsByDate(date time.Time) ([]*calendar.Event, erro
 
 func (em *EventManager) GetEventsByName(name string) ([]*calendar.Event, error) {
 	return em.database.GetEventsByName(name)
+}
+
+func (em *EventManager) GetEventsByMonth(year int, month time.Month) ([]*calendar.Event, error) {
+	return em.database.GetEventsByMonth(year, month)
+}
+
+func (em *EventManager) GetAllEvents() ([]*calendar.Event, error) {
+	return em.database.GetAllEvents()
+}
+
+func (em *EventManager) SearchEventsWithFilters(criteria database.SearchCriteria) ([]*calendar.Event, error) {
+	return em.database.SearchEventsWithFilters(criteria)
 }

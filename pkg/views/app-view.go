@@ -58,7 +58,7 @@ func NewAppView(g *gocui.Gui, db *database.Database, cfg *config.Config) *AppVie
 
 	av.AddChild("title", NewTitleView(c))
 	av.AddChild("popup", NewEvenPopup(g, c, db, av.EventManager))
-	av.AddChild("main", NewMainView(c, db))
+	av.AddChild("main", NewMainView(c, db, av.EventManager))
 	
 	// Set up error handler for EventManager after popup is created
 	av.setupErrorHandler(g)
@@ -128,12 +128,20 @@ func (av *AppView) updateEventsFromDatabase() error {
 		// Don't use clear() - it affects existing day views pointing to this slice
 		// Instead, create a new slice entirely
 		var err error
-		events, err := av.Database.GetEventsByDate(v.Date)
+		events, err := av.EventManager.GetEventsByDate(v.Date)
 		if err != nil {
 			return err
 		}
 
-		v.Events = events
+		// Convert UTC events to local time for display
+		localEvents := make([]*calendar.Event, len(events))
+		for i, event := range events {
+			localEvent := *event
+			localEvent.Time = event.Time.In(time.Local)
+			localEvents[i] = &localEvent
+		}
+
+		v.Events = localEvents
 		v.SortEventsByTime()
 	}
 

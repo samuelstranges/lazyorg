@@ -5,6 +5,7 @@ import (
 
 	"github.com/samuelstranges/chronos/internal/calendar"
 	"github.com/samuelstranges/chronos/internal/database"
+	"github.com/samuelstranges/chronos/internal/eventmanager"
 	"github.com/jroimartin/gocui"
 )
 
@@ -21,7 +22,7 @@ type CalendarView struct {
 	AgendaView *AgendaView
 }
 
-func NewCalendarView(c *calendar.Calendar, db *database.Database) *CalendarView {
+func NewCalendarView(c *calendar.Calendar, db *database.Database, em *eventmanager.EventManager) *CalendarView {
 	cv := &CalendarView{
 		BaseView: NewBaseView("calendar"),
 		Calendar: c,
@@ -34,8 +35,8 @@ func NewCalendarView(c *calendar.Calendar, db *database.Database) *CalendarView 
 	
 	// Create all views but only add the active one as a child
 	cv.WeekView = NewWeekView(c, cv.TimeView)
-	cv.MonthView = NewMonthView(c, db)
-	cv.AgendaView = NewAgendaView(c, db)
+	cv.MonthView = NewMonthView(c, em)
+	cv.AgendaView = NewAgendaView(c, em)
 	
 	// Start with week view
 	cv.AddChild("time", cv.TimeView)

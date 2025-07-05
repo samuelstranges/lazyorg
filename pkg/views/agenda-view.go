@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/samuelstranges/chronos/internal/calendar"
-	"github.com/samuelstranges/chronos/internal/database"
+	"github.com/samuelstranges/chronos/internal/eventmanager"
 	"github.com/samuelstranges/chronos/internal/utils"
 	"github.com/jroimartin/gocui"
 )
@@ -16,18 +16,18 @@ type AgendaView struct {
 	*BaseView
 	
 	Calendar       *calendar.Calendar
-	Database       *database.Database
+	EventManager   *eventmanager.EventManager
 	CurrentDate    time.Time
 	Events         []*calendar.Event
 	SelectedIndex  int
 	HeaderHeight   int
 }
 
-func NewAgendaView(c *calendar.Calendar, db *database.Database) *AgendaView {
+func NewAgendaView(c *calendar.Calendar, em *eventmanager.EventManager) *AgendaView {
 	av := &AgendaView{
 		BaseView:      NewBaseView("agenda"),
 		Calendar:      c,
-		Database:      db,
+		EventManager:  em,
 		CurrentDate:   c.CurrentDay.Date,
 		Events:        make([]*calendar.Event, 0),
 		SelectedIndex: 0,
@@ -171,7 +171,7 @@ func (av *AgendaView) loadEventsForDate() error {
 	}
 	
 	// Get events for the current date
-	events, err := av.Database.GetEventsByDate(av.CurrentDate)
+	events, err := av.EventManager.GetEventsByDate(av.CurrentDate)
 	if err != nil {
 		if f, err := os.OpenFile("/tmp/chronos_agenda_debug.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644); err == nil {
 			fmt.Fprintf(f, "ERROR loading events: %v\n", err)
@@ -180,21 +180,29 @@ func (av *AgendaView) loadEventsForDate() error {
 		return err
 	}
 	
+	// Convert UTC events to local time for display
+	localEvents := make([]*calendar.Event, len(events))
+	for i, event := range events {
+		localEvent := *event
+		localEvent.Time = event.Time.In(time.Local)
+		localEvents[i] = &localEvent
+	}
+	
 	// Debug logging
 	if f, err := os.OpenFile("/tmp/chronos_agenda_debug.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644); err == nil {
-		fmt.Fprintf(f, "Found %d events for %s\n", len(events), av.CurrentDate.Format("2006-01-02"))
-		for i, event := range events {
+		fmt.Fprintf(f, "Found %d events for %s\n", len(localEvents), av.CurrentDate.Format("2006-01-02"))
+		for i, event := range localEvents {
 			fmt.Fprintf(f, "  Event %d: %s at %s\n", i, event.Name, event.Time.Format("15:04"))
 		}
 		f.Close()
 	}
 	
 	// Sort events by time
-	sort.Slice(events, func(i, j int) bool {
-		return events[i].Time.Before(events[j].Time)
+	sort.Slice(localEvents, func(i, j int) bool {
+		return localEvents[i].Time.Before(localEvents[j].Time)
 	})
 	
-	av.Events = events
+	av.Events = localEvents
 	
 	// Ensure selected index is valid
 	if av.SelectedIndex >= len(av.Events) {

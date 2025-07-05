@@ -12,16 +12,24 @@ import (
 
 // JumpToNextEvent navigates to the next event chronologically
 func (av *AppView) JumpToNextEvent() {
-	// Get all events from database instead of current week only
-	allEvents, err := av.Database.GetAllEvents()
+	// Get all events from EventManager and convert to local time
+	allEvents, err := av.EventManager.GetAllEvents()
 	if err != nil || len(allEvents) == 0 {
 		return
+	}
+
+	// Convert UTC events to local time for comparison
+	localEvents := make([]*calendar.Event, len(allEvents))
+	for i, event := range allEvents {
+		localEvent := *event
+		localEvent.Time = event.Time.In(time.Local)
+		localEvents[i] = &localEvent
 	}
 
 	currentTime := av.Calendar.CurrentDay.Date
 	
 	// Find the next event after current time
-	for _, event := range allEvents {
+	for _, event := range localEvents {
 		if event.Time.After(currentTime) {
 			av.Calendar.CurrentDay.Date = event.Time
 			av.Calendar.UpdateWeek()
@@ -30,25 +38,33 @@ func (av *AppView) JumpToNextEvent() {
 	}
 	
 	// If no event found after current time, wrap to first event
-	if len(allEvents) > 0 {
-		av.Calendar.CurrentDay.Date = allEvents[0].Time
+	if len(localEvents) > 0 {
+		av.Calendar.CurrentDay.Date = localEvents[0].Time
 		av.Calendar.UpdateWeek()
 	}
 }
 
 // JumpToPrevEvent navigates to the previous event chronologically
 func (av *AppView) JumpToPrevEvent() {
-	// Get all events from database instead of current week only
-	allEvents, err := av.Database.GetAllEvents()
+	// Get all events from EventManager and convert to local time
+	allEvents, err := av.EventManager.GetAllEvents()
 	if err != nil || len(allEvents) == 0 {
 		return
+	}
+
+	// Convert UTC events to local time for comparison
+	localEvents := make([]*calendar.Event, len(allEvents))
+	for i, event := range allEvents {
+		localEvent := *event
+		localEvent.Time = event.Time.In(time.Local)
+		localEvents[i] = &localEvent
 	}
 
 	currentTime := av.Calendar.CurrentDay.Date
 	
 	// Find the previous event before current time (iterate backwards)
-	for i := len(allEvents) - 1; i >= 0; i-- {
-		event := allEvents[i]
+	for i := len(localEvents) - 1; i >= 0; i-- {
+		event := localEvents[i]
 		if event.Time.Before(currentTime) {
 			av.Calendar.CurrentDay.Date = event.Time
 			av.Calendar.UpdateWeek()
@@ -57,8 +73,8 @@ func (av *AppView) JumpToPrevEvent() {
 	}
 	
 	// If no event found before current time, wrap to last event
-	if len(allEvents) > 0 {
-		lastEvent := allEvents[len(allEvents)-1]
+	if len(localEvents) > 0 {
+		lastEvent := localEvents[len(localEvents)-1]
 		av.Calendar.CurrentDay.Date = lastEvent.Time
 		av.Calendar.UpdateWeek()
 	}
@@ -151,13 +167,21 @@ func (av *AppView) executeSearchQuery(criteria database.SearchCriteria) error {
 
 // findMatches searches for events matching the criteria
 func (av *AppView) findMatches(criteria database.SearchCriteria) []*calendar.Event {
-	// Use enhanced database search with date/time filtering
-	matches, err := av.Database.SearchEventsWithFilters(criteria)
+	// Use enhanced EventManager search with date/time filtering
+	matches, err := av.EventManager.SearchEventsWithFilters(criteria)
 	if err != nil {
 		return []*calendar.Event{}
 	}
 	
-	return matches
+	// Convert UTC events to local time for display
+	localMatches := make([]*calendar.Event, len(matches))
+	for i, event := range matches {
+		localEvent := *event
+		localEvent.Time = event.Time.In(time.Local)
+		localMatches[i] = &localEvent
+	}
+	
+	return localMatches
 }
 
 // GoToNextMatch navigates to the next search result

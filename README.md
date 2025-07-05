@@ -7,6 +7,8 @@ basically gave Claude Code the reins...
 
 ## Features
 
+- Week view, month view and agenda (day) views
+- Intuitive vim-like functionality
 - 📅 **Smart Event Management**: Advanced event creation with automatic overlap
   prevention
 - 🔄 **Undo/Redo System**: Full operation history with `u` and `r` keys
@@ -159,7 +161,6 @@ Command line flags take precedence over config file settings.
 
 ## Future
 
-- fix timezone technical debt
 - desktop notifications
 - export to `.ics` and `.csv`, `.json` (import probably not due to limitations
   of 30 min events with no overlap)
@@ -170,6 +171,7 @@ Command line flags take precedence over config file settings.
 - birthdays toggle (using carddav)
 - tagging (and filtering by tag)
 - automated backups
+- migration to utc
 - weather integration
 - add links (and open links with 'O'): eg a google meeting link:
     - could these meeting links be dynamically created? probably out of scope

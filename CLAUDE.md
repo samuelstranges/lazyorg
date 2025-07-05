@@ -36,7 +36,8 @@ go run cmd/chronos/main.go         # Run directly from source
 - **`-db <path>`** - Specify custom database file location  
   Default: `~/.local/share/chronos/data.db`
 - **`-backup <path>`** - Backup database to specified location and exit
-- **`-debug`** - Enable debug logging to `/tmp/chronos_debug.txt` and `/tmp/chronos_getevents_debug.txt`
+- **`-debug`** - Enable debug logging to `/tmp/chronos_debug.txt` and
+  `/tmp/chronos_getevents_debug.txt`
 - **`--help`** - Show all available command-line options
 
 ### Testing
@@ -127,6 +128,7 @@ All event modifications MUST go through the EventManager to ensure:
 - Event overlap prevention is applied
 - Consistent error handling and validation
 - Proper state management
+- **Transparent UTC conversion**: Local time ↔ UTC conversion handled automatically
 
 **EventManager Methods:**
 
@@ -150,6 +152,18 @@ All event modifications MUST go through the EventManager to ensure:
 - `CheckEventOverlap(event, excludeEventId...)` validates time conflicts
 - Returns errors when operations would create overlaps
 - Applies to add, edit, and paste operations
+
+**UTC Conversion Implementation:**
+
+- **Storage Layer**: All events stored in UTC timezone in database
+- **UI Layer**: All events displayed and manipulated in local timezone
+- **Conversion Layer**: EventManager handles automatic conversion between timezones
+- **Write Operations**: Local time → UTC conversion before database storage
+- **Read Operations**: UTC → Local time conversion after database retrieval
+- **Query Operations**: Local time boundaries → UTC conversion for database queries
+- **Date Queries**: Local day/month boundaries converted to UTC before database comparison
+- **Undo/Redo**: Events stored in local time in undo stacks for UI consistency
+- **Transparent**: No changes required to UI code, forms, or display logic
 
 ### Color System Architecture
 
@@ -217,23 +231,26 @@ something in the gocui framework. This includes:
 
 ### Enhanced Search System
 
-The search functionality (`/` key) provides powerful filtering capabilities for finding events across the entire database.
+The search functionality (`/` key) provides powerful filtering capabilities for
+finding events across the entire database.
 
 **Search Form Fields:**
 
-- **Query**: Text search across event names, descriptions, and locations (case-insensitive, partial matching)
+- **Query**: Text search across event names, descriptions, and locations
+  (case-insensitive, partial matching)
 - **From Date**: Optional start date filter (YYYYMMDD format or 't' for today)
 - **To Date**: Optional end date filter (YYYYMMDD format or 't' for today)
 
 **Date Shortcut:**
 
 - Use **'t'** in either date field as a shortcut for today's date
-- Examples: `From Date: t` finds events from today onwards, `To Date: t` finds events up to today
+- Examples: `From Date: t` finds events from today onwards, `To Date: t` finds
+  events up to today
 
 **Usage Examples:**
 
 - `Query: "meeting"` → Find all events containing "meeting"
-- `From Date: t` → Find all events from today onwards  
+- `From Date: t` → Find all events from today onwards
 - `To Date: 20241231` → Find all events up to Dec 31st
 - `From Date: 20241225, To Date: 20241231` → Find events in that date range
 - `Query: "lunch", From Date: t` → Find lunch events from today onwards
@@ -249,7 +266,8 @@ The search functionality (`/` key) provides powerful filtering capabilities for 
 
 **Form Component Note:**
 
-- Field name "Query" (not "Search") to avoid naming conflict with "Search" button
+- Field name "Query" (not "Search") to avoid naming conflict with "Search"
+  button
 - Validation messages document the 't' shortcut in tooltips
 
 ### Known Issues and Technical Debt
@@ -259,7 +277,7 @@ The search functionality (`/` key) provides powerful filtering capabilities for 
 **Problem**: Historical events in the database had inconsistent timezone
 information:
 
-- Events created via **Add Event popup** (before fix): Stored in UTC timezone
+- Events created via **Add Event popup** (before fix): Stored in UTC (not UTC)
   due to `time.Parse()`
 - Events created via **paste operations**: Stored in local timezone due to
   `time.Date()` with location
@@ -268,9 +286,10 @@ information:
 
 **Resolution**:
 
-- **Database Migration Complete**: All databases have been migrated to UTC
+- **UTC Storage Implementation**: EventManager now handles transparent UTC conversion
 - **Workaround Code Removed**: All temporary timezone workaround code has been cleaned up
-- **Consistent Storage**: All events now stored consistently in UTC timezone
+- **Consistent Storage**: All events now stored consistently in UTC timezone via EventManager
+- **Transparent Conversion**: UI works in local time, database stores in UTC, conversion handled automatically
 - **Simplified Code**: Event comparison logic no longer needs timezone normalization workarounds
 
 #### Navigation Bug Due to Mixed Timezone Storage - RESOLVED
@@ -295,33 +314,44 @@ incorrect chronological sorting:
 
 **Resolution**:
 
-- **Database Migration Complete**: All databases have been migrated to UTC
+- **UTC Storage Implementation**: EventManager now handles transparent UTC conversion
 - **Workaround Code Removed**: All temporary timezone workaround code has been cleaned up from navigation functions
 - **Simplified Navigation**: Navigation functions now use direct time comparisons without timezone workarounds
+- **Transparent Conversion**: UI works in local time, database stores in UTC, conversion handled automatically
 - **Consistent Sorting**: Event chronological ordering is now reliable across all views
 
 #### Form Component Field/Button Name Conflicts
 
-**Problem**: The gocui-component form library has naming conflicts when an input field and button share the same name.
+**Problem**: The gocui-component form library has naming conflicts when an input
+field and button share the same name.
 
-**Issue**: Originally, the search form had an input field named "Search" and a button named "Search", which caused the form to render incorrectly:
+**Issue**: Originally, the search form had an input field named "Search" and a
+button named "Search", which caused the form to render incorrectly:
+
 - The "Search" button would not appear
 - The input field text would render in the button area (next to "Cancel")
 - Form layout would be completely broken
 
-**Root Cause**: The form component library internally confuses fields and buttons with identical names, causing rendering conflicts.
+**Root Cause**: The form component library internally confuses fields and
+buttons with identical names, causing rendering conflicts.
 
-**Solution**: Renamed the search input field from "Search" to "Query" to avoid the naming conflict.
+**Solution**: Renamed the search input field from "Search" to "Query" to avoid
+the naming conflict.
 
-**Prevention**: When creating forms, ensure input field names and button names are always different:
+**Prevention**: When creating forms, ensure input field names and button names
+are always different:
+
 - ✅ Good: Field "Query" + Button "Search"
-- ✅ Good: Field "Name" + Button "Add"  
+- ✅ Good: Field "Name" + Button "Add"
 - ❌ Bad: Field "Search" + Button "Search"
 - ❌ Bad: Field "Edit" + Button "Edit"
 
-**Current Status**: 
-- **Fixed**: Search form now works correctly with "Query" field and "Search" button
-- **Enhanced**: Added date filtering fields ("From Date", "To Date") for advanced search
+**Current Status**:
+
+- **Fixed**: Search form now works correctly with "Query" field and "Search"
+  button
+- **Enhanced**: Added date filtering fields ("From Date", "To Date") for
+  advanced search
 - **Tested**: All form functionality verified with comprehensive unit tests
 
 ### Debug Logging
@@ -382,9 +412,13 @@ event overlap issues:
 
 The project recently added:
 
-- **Unified Date Format**: All date fields now use YYYYMMDD format (no dashes) for consistency across goto, add/edit, and search forms
-- **Consistent 't' Usage**: Changed "Jump to today" keybinding from 'T' to 't' for consistency with 't' shortcut in date fields
-- **Symmetric Day Boundary Navigation**: Fixed time navigation to work symmetrically - going up from 00:00 now goes to 23:30 of previous day, matching the behavior of going down from 23:30 to 00:00 of next day
+- **Unified Date Format**: All date fields now use YYYYMMDD format (no dashes)
+  for consistency across goto, add/edit, and search forms
+- **Consistent 't' Usage**: Changed "Jump to today" keybinding from 'T' to 't'
+  for consistency with 't' shortcut in date fields
+- **Symmetric Day Boundary Navigation**: Fixed time navigation to work
+  symmetrically - going up from 00:00 now goes to 23:30 of previous day,
+  matching the behavior of going down from 23:30 to 00:00 of next day
 - **Event Overlap Prevention**: All event operations now prevent scheduling
   conflicts
 - **Current Time Highlighting**: Purple indicators show current half-hour in
@@ -394,7 +428,8 @@ The project recently added:
   management
 - **Automatic View Refresh**: Current time highlighting updates automatically
   after all operations
-- **Enhanced Search with Date Filtering**: Search form now supports text queries plus optional date range filtering with 't' shortcut for today
+- **Enhanced Search with Date Filtering**: Search form now supports text queries
+  plus optional date range filtering with 't' shortcut for today
 
 Previous features:
 
@@ -402,11 +437,11 @@ Previous features:
 - Undo/redo functionality (`u` and `r` keys)
 - Yank/paste system for events (`y`, `p`, `d` keys)
 - Jump navigation (`g` key)
-- Enhanced search with date filtering (`/` key) - supports text queries and date ranges with 't' shortcut
+- Enhanced search with date filtering (`/` key) - supports text queries and date
+  ranges with 't' shortcut
 - Previous/next event navigation within week (`w` and `b` keys)
 
 ## notes
 
 - shift-tab functionality cant be implemented... see:
   <https://github.com/jroimartin/gocui/issues/111>
-

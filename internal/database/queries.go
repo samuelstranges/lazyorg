@@ -50,23 +50,30 @@ func (database *Database) GetEventById(id int) (*calendar.Event, error) {
 
 // GetEventsByDate retrieves all events for a specific date
 func (database *Database) GetEventsByDate(date time.Time) ([]*calendar.Event, error) {
-	// Create start and end of day in local timezone to avoid timezone issues
+	// Create start and end of day in the input date's timezone, then convert to UTC for database comparison
+	// This ensures we find all UTC-stored events that fall within the local day
 	startOfDay := time.Date(date.Year(), date.Month(), date.Day(), 0, 0, 0, 0, date.Location())
 	endOfDay := startOfDay.AddDate(0, 0, 1)
+	
+	// Convert to UTC for database comparison since events are stored in UTC
+	startOfDayUTC := startOfDay.UTC()
+	endOfDayUTC := endOfDay.UTC()
 
 	var debugInfo string
 	if database.DebugMode {
 		// DEBUG: Log the query parameters
 		debugInfo = fmt.Sprintf("GET_EVENTS_BY_DATE DEBUG:\n")
 		debugInfo += fmt.Sprintf("  Query Date: %s\n", date.Format("2006-01-02 15:04:05"))
-		debugInfo += fmt.Sprintf("  Start of Day: %s (Unix: %d)\n", startOfDay.Format("2006-01-02 15:04:05"), startOfDay.Unix())
-		debugInfo += fmt.Sprintf("  End of Day: %s (Unix: %d)\n", endOfDay.Format("2006-01-02 15:04:05"), endOfDay.Unix())
+		debugInfo += fmt.Sprintf("  Start of Day (Local): %s (Unix: %d)\n", startOfDay.Format("2006-01-02 15:04:05"), startOfDay.Unix())
+		debugInfo += fmt.Sprintf("  End of Day (Local): %s (Unix: %d)\n", endOfDay.Format("2006-01-02 15:04:05"), endOfDay.Unix())
+		debugInfo += fmt.Sprintf("  Start of Day (UTC): %s (Unix: %d)\n", startOfDayUTC.Format("2006-01-02 15:04:05"), startOfDayUTC.Unix())
+		debugInfo += fmt.Sprintf("  End of Day (UTC): %s (Unix: %d)\n", endOfDayUTC.Format("2006-01-02 15:04:05"), endOfDayUTC.Unix())
 	}
 	
 	rows, err := database.db.Query(`
         SELECT * FROM events WHERE time >= ? AND time < ?`,
-		startOfDay.Format("2006-01-02 15:04:05"),
-		endOfDay.Format("2006-01-02 15:04:05"),
+		startOfDayUTC.Format("2006-01-02 15:04:05"),
+		endOfDayUTC.Format("2006-01-02 15:04:05"),
 	)
 	if err != nil {
 		return nil, err
@@ -357,14 +364,18 @@ func (database *Database) SearchEventsWithFilters(criteria SearchCriteria) ([]*c
 }
 // GetEventsByMonth retrieves all events for a specific month
 func (database *Database) GetEventsByMonth(year int, month time.Month) ([]*calendar.Event, error) {
-	// Create start and end of month in local timezone
+	// Create start and end of month in local timezone, then convert to UTC for database comparison
 	startOfMonth := time.Date(year, month, 1, 0, 0, 0, 0, time.Local)
 	endOfMonth := startOfMonth.AddDate(0, 1, 0)
 	
+	// Convert to UTC for database comparison since events are stored in UTC
+	startOfMonthUTC := startOfMonth.UTC()
+	endOfMonthUTC := endOfMonth.UTC()
+	
 	rows, err := database.db.Query(`
         SELECT * FROM events WHERE time >= ? AND time < ? ORDER BY time ASC`,
-		startOfMonth.Format("2006-01-02 15:04:05"),
-		endOfMonth.Format("2006-01-02 15:04:05"),
+		startOfMonthUTC.Format("2006-01-02 15:04:05"),
+		endOfMonthUTC.Format("2006-01-02 15:04:05"),
 	)
 	if err != nil {
 		return nil, err

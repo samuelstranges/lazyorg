@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/samuelstranges/chronos/internal/calendar"
-	"github.com/samuelstranges/chronos/internal/database"
+	"github.com/samuelstranges/chronos/internal/eventmanager"
 	"github.com/jroimartin/gocui"
 )
 
@@ -24,8 +24,8 @@ var MonthDayNames = []string{
 type MonthView struct {
 	*BaseView
 	
-	Calendar *calendar.Calendar
-	Database *database.Database
+	Calendar     *calendar.Calendar
+	EventManager *eventmanager.EventManager
 	
 	// Current month being displayed
 	CurrentMonth time.Time
@@ -37,11 +37,11 @@ type MonthView struct {
 	GridCols   int
 }
 
-func NewMonthView(c *calendar.Calendar, db *database.Database) *MonthView {
+func NewMonthView(c *calendar.Calendar, em *eventmanager.EventManager) *MonthView {
 	mv := &MonthView{
 		BaseView:     NewBaseView("month"),
 		Calendar:     c,
-		Database:     db,
+		EventManager: em,
 		CurrentMonth: c.CurrentDay.Date,
 		GridCols:     7, // 7 days of the week
 		GridRows:     6, // Maximum 6 rows for a month
@@ -247,9 +247,17 @@ func (mv *MonthView) refreshMonthDayViews() {
 
 func (mv *MonthView) loadEventsForMonth() error {
 	// Load events for the current month
-	events, err := mv.Database.GetEventsByMonth(mv.CurrentMonth.Year(), mv.CurrentMonth.Month())
+	events, err := mv.EventManager.GetEventsByMonth(mv.CurrentMonth.Year(), mv.CurrentMonth.Month())
 	if err != nil {
 		return err
+	}
+	
+	// Convert UTC events to local time for display
+	localEvents := make([]*calendar.Event, len(events))
+	for i, event := range events {
+		localEvent := *event
+		localEvent.Time = event.Time.In(time.Local)
+		localEvents[i] = &localEvent
 	}
 	
 	// Distribute events to appropriate day views
@@ -257,7 +265,7 @@ func (mv *MonthView) loadEventsForMonth() error {
 		dayName := fmt.Sprintf("monthday_%d", i)
 		if dayView, ok := mv.GetChild(dayName); ok {
 			if monthDayView, ok := dayView.(*MonthDayView); ok {
-				monthDayView.LoadEvents(events)
+				monthDayView.LoadEvents(localEvents)
 			}
 		}
 	}
