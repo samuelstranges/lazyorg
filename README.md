@@ -169,6 +169,8 @@ Command line flags take precedence over config file settings.
   of 30 min events with no overlap)
 - enhanced recurrence rules (eg "repeat every weekday", "first friday of the
   month")
+- show what timezone youre in
+- show what month your in in week view (top left)
 - export today's agenda flag
 - config options:
     - default 'view'
