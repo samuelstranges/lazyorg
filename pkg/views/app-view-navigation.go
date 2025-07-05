@@ -22,19 +22,8 @@ func (av *AppView) JumpToNextEvent() {
 	
 	// Find the next event after current time
 	for _, event := range allEvents {
-		// Normalize both times to local timezone for consistent comparison
-		var eventTime time.Time
-		// TEMPORARY FIX: ALL events stored in UTC are wrong - use original time instead of converting
-		if event.Time.Location().String() == "UTC" {
-			eventTime = time.Date(event.Time.Year(), event.Time.Month(), event.Time.Day(), event.Time.Hour(), event.Time.Minute(), event.Time.Second(), event.Time.Nanosecond(), time.Local)
-		} else {
-			eventTime = event.Time.In(time.Local)
-		}
-		currentTimeLocal := currentTime.In(time.Local)
-		
-		if eventTime.After(currentTimeLocal) {
-			// Use the normalized time for consistent navigation
-			av.Calendar.CurrentDay.Date = eventTime
+		if event.Time.After(currentTime) {
+			av.Calendar.CurrentDay.Date = event.Time
 			av.Calendar.UpdateWeek()
 			return
 		}
@@ -42,14 +31,7 @@ func (av *AppView) JumpToNextEvent() {
 	
 	// If no event found after current time, wrap to first event
 	if len(allEvents) > 0 {
-		var firstEventTime time.Time
-		// TEMPORARY FIX: ALL events stored in UTC are wrong - use original time instead of converting
-		if allEvents[0].Time.Location().String() == "UTC" {
-			firstEventTime = time.Date(allEvents[0].Time.Year(), allEvents[0].Time.Month(), allEvents[0].Time.Day(), allEvents[0].Time.Hour(), allEvents[0].Time.Minute(), allEvents[0].Time.Second(), allEvents[0].Time.Nanosecond(), time.Local)
-		} else {
-			firstEventTime = allEvents[0].Time.In(time.Local)
-		}
-		av.Calendar.CurrentDay.Date = firstEventTime
+		av.Calendar.CurrentDay.Date = allEvents[0].Time
 		av.Calendar.UpdateWeek()
 	}
 }
@@ -67,19 +49,8 @@ func (av *AppView) JumpToPrevEvent() {
 	// Find the previous event before current time (iterate backwards)
 	for i := len(allEvents) - 1; i >= 0; i-- {
 		event := allEvents[i]
-		// Normalize both times to local timezone for consistent comparison
-		var eventTime time.Time
-		// TEMPORARY FIX: ALL events stored in UTC are wrong - use original time instead of converting
-		if event.Time.Location().String() == "UTC" {
-			eventTime = time.Date(event.Time.Year(), event.Time.Month(), event.Time.Day(), event.Time.Hour(), event.Time.Minute(), event.Time.Second(), event.Time.Nanosecond(), time.Local)
-		} else {
-			eventTime = event.Time.In(time.Local)
-		}
-		currentTimeLocal := currentTime.In(time.Local)
-		
-		if eventTime.Before(currentTimeLocal) {
-			// Use the normalized time for consistent navigation
-			av.Calendar.CurrentDay.Date = eventTime
+		if event.Time.Before(currentTime) {
+			av.Calendar.CurrentDay.Date = event.Time
 			av.Calendar.UpdateWeek()
 			return
 		}
@@ -88,14 +59,7 @@ func (av *AppView) JumpToPrevEvent() {
 	// If no event found before current time, wrap to last event
 	if len(allEvents) > 0 {
 		lastEvent := allEvents[len(allEvents)-1]
-		var lastEventTime time.Time
-		// TEMPORARY FIX: ALL events stored in UTC are wrong - use original time instead of converting
-		if lastEvent.Time.Location().String() == "UTC" {
-			lastEventTime = time.Date(lastEvent.Time.Year(), lastEvent.Time.Month(), lastEvent.Time.Day(), lastEvent.Time.Hour(), lastEvent.Time.Minute(), lastEvent.Time.Second(), lastEvent.Time.Nanosecond(), time.Local)
-		} else {
-			lastEventTime = lastEvent.Time.In(time.Local)
-		}
-		av.Calendar.CurrentDay.Date = lastEventTime
+		av.Calendar.CurrentDay.Date = lastEvent.Time
 		av.Calendar.UpdateWeek()
 	}
 }
@@ -130,28 +94,9 @@ func (av *AppView) getAllEventsFromWeek() []*calendar.Event {
 	}
 	av.appendDebugLog("/tmp/chronos_nav_debug.txt", debugInfo)
 	
-	// Sort by time - normalize timezones to avoid mixed UTC/Local storage issues
+	// Sort by time
 	sort.Slice(allEvents, func(i, j int) bool {
-		// Fix obviously wrong timezone conversions for Morning events
-		timeI := allEvents[i].Time
-		timeJ := allEvents[j].Time
-		
-		// TEMPORARY FIX: ALL events stored in UTC are wrong - use original time instead of converting
-		if allEvents[i].Time.Location().String() == "UTC" {
-			// Events stored in UTC should actually be Local time, not converted to Local+10hours
-			timeI = time.Date(timeI.Year(), timeI.Month(), timeI.Day(), timeI.Hour(), timeI.Minute(), timeI.Second(), timeI.Nanosecond(), time.Local)
-		} else {
-			timeI = timeI.In(time.Local)
-		}
-		
-		if allEvents[j].Time.Location().String() == "UTC" {
-			// Events stored in UTC should actually be Local time, not converted to Local+10hours
-			timeJ = time.Date(timeJ.Year(), timeJ.Month(), timeJ.Day(), timeJ.Hour(), timeJ.Minute(), timeJ.Second(), timeJ.Nanosecond(), time.Local)
-		} else {
-			timeJ = timeJ.In(time.Local)
-		}
-		
-		return timeI.Before(timeJ)
+		return allEvents[i].Time.Before(allEvents[j].Time)
 	})
 	
 	debugInfo = fmt.Sprintf("Events after sorting by time:\n")
@@ -197,15 +142,7 @@ func (av *AppView) executeSearchQuery(criteria database.SearchCriteria) error {
 		// Jump to first match
 		firstMatch := av.searchMatches[0]
 		
-		// Normalize time for consistent navigation
-		var eventTime time.Time
-		if firstMatch.Time.Location().String() == "UTC" {
-			eventTime = time.Date(firstMatch.Time.Year(), firstMatch.Time.Month(), firstMatch.Time.Day(), firstMatch.Time.Hour(), firstMatch.Time.Minute(), firstMatch.Time.Second(), firstMatch.Time.Nanosecond(), time.Local)
-		} else {
-			eventTime = firstMatch.Time.In(time.Local)
-		}
-		
-		av.Calendar.CurrentDay.Date = eventTime
+		av.Calendar.CurrentDay.Date = firstMatch.Time
 		av.Calendar.UpdateWeek()
 	}
 	
@@ -232,15 +169,7 @@ func (av *AppView) GoToNextMatch() error {
 	av.currentMatchIndex = (av.currentMatchIndex + 1) % len(av.searchMatches)
 	match := av.searchMatches[av.currentMatchIndex]
 	
-	// Normalize time for consistent navigation
-	var eventTime time.Time
-	if match.Time.Location().String() == "UTC" {
-		eventTime = time.Date(match.Time.Year(), match.Time.Month(), match.Time.Day(), match.Time.Hour(), match.Time.Minute(), match.Time.Second(), match.Time.Nanosecond(), time.Local)
-	} else {
-		eventTime = match.Time.In(time.Local)
-	}
-	
-	av.Calendar.CurrentDay.Date = eventTime
+	av.Calendar.CurrentDay.Date = match.Time
 	av.Calendar.UpdateWeek()
 	
 	return nil
@@ -255,15 +184,7 @@ func (av *AppView) GoToPrevMatch() error {
 	av.currentMatchIndex = (av.currentMatchIndex - 1 + len(av.searchMatches)) % len(av.searchMatches)
 	match := av.searchMatches[av.currentMatchIndex]
 	
-	// Normalize time for consistent navigation
-	var eventTime time.Time
-	if match.Time.Location().String() == "UTC" {
-		eventTime = time.Date(match.Time.Year(), match.Time.Month(), match.Time.Day(), match.Time.Hour(), match.Time.Minute(), match.Time.Second(), match.Time.Nanosecond(), time.Local)
-	} else {
-		eventTime = match.Time.In(time.Local)
-	}
-	
-	av.Calendar.CurrentDay.Date = eventTime
+	av.Calendar.CurrentDay.Date = match.Time
 	av.Calendar.UpdateWeek()
 	
 	return nil

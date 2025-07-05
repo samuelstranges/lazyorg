@@ -254,39 +254,26 @@ The search functionality (`/` key) provides powerful filtering capabilities for 
 
 ### Known Issues and Technical Debt
 
-#### Mixed Timezone Storage in Database
+#### Mixed Timezone Storage in Database - RESOLVED
 
-**Problem**: Historical events in the database have inconsistent timezone
+**Problem**: Historical events in the database had inconsistent timezone
 information:
 
 - Events created via **Add Event popup** (before fix): Stored in UTC timezone
   due to `time.Parse()`
 - Events created via **paste operations**: Stored in local timezone due to
   `time.Date()` with location
-- This causes overlap detection failures when comparing events from different
+- This caused overlap detection failures when comparing events from different
   creation methods
 
-**Current Status**:
+**Resolution**:
 
-- **Fixed for new events**: All creation methods now use
-  `time.ParseInLocation()` with local timezone
-- **Comparison logic**: `CheckEventOverlap()` normalizes all times to same
-  timezone before comparison
-- **Database**: Still contains mixed UTC/Local timezone events (not migrated)
+- **Database Migration Complete**: All databases have been migrated to UTC
+- **Workaround Code Removed**: All temporary timezone workaround code has been cleaned up
+- **Consistent Storage**: All events now stored consistently in UTC timezone
+- **Simplified Code**: Event comparison logic no longer needs timezone normalization workarounds
 
-**Potential Future Issues**:
-
-- Time-based queries may return unexpected results across different weeks/months
-- Backup/restore operations might introduce timezone inconsistencies
-- Third-party integrations could be confused by mixed timezone data
-
-**Mitigation**: Always normalize timezones during time comparisons, never assume
-consistent timezone storage
-
-**Future Work**: Consider implementing a one-time migration script to normalize
-all historical events to local timezone
-
-#### Navigation Bug Due to Mixed Timezone Storage
+#### Navigation Bug Due to Mixed Timezone Storage - RESOLVED
 
 **Problem**: The `w` and `b` navigation keys (JumpToNextEvent/JumpToPrevEvent)
 were navigating to incorrect events due to mixed timezone storage causing
@@ -306,39 +293,12 @@ incorrect chronological sorting:
   during sorting
 - This caused chronologically incorrect event ordering for navigation algorithms
 
-**Technical Debt Impact**:
+**Resolution**:
 
-- **Event Navigation**: `w`/`b` keys jumped to wrong events, breaking user
-  workflow
-- **Sorting Logic**: Event chronological ordering was corrupted across the
-  entire week view
-- **Data Integrity**: Mixed timezone storage affects multiple system components
-  beyond just navigation
-
-**Fix Implementation** (`pkg/views/app-view.go`):
-
-```go
-// TEMPORARY FIX: ALL events stored in UTC are wrong - use original time instead of converting
-if event.Time.Location().String() == "UTC" {
-    eventTime = time.Date(event.Time.Year(), event.Time.Month(), event.Time.Day(),
-                         event.Time.Hour(), event.Time.Minute(), event.Time.Second(),
-                         event.Time.Nanosecond(), time.Local)
-} else {
-    eventTime = event.Time.In(time.Local)
-}
-```
-
-**Current Status**:
-
-- **Navigation Fixed**: `w` and `b` keys now navigate correctly in chronological
-  order
-- **Temporary Solution**: UTC events treated as Local time rather than converted
-- **Debug Logging Added**: Comprehensive navigation debugging in
-  `/tmp/lazyorg_nav_debug.txt`
-- **Database Still Corrupt**: Historical UTC events remain incorrectly stored
-
-**Future Work**: This is the SAME underlying issue as overlap detection -
-requires database migration to properly fix
+- **Database Migration Complete**: All databases have been migrated to UTC
+- **Workaround Code Removed**: All temporary timezone workaround code has been cleaned up from navigation functions
+- **Simplified Navigation**: Navigation functions now use direct time comparisons without timezone workarounds
+- **Consistent Sorting**: Event chronological ordering is now reliable across all views
 
 #### Form Component Field/Button Name Conflicts
 

@@ -59,13 +59,8 @@ func (database *Database) createTables() error {
 // CheckEventOverlap checks if a new event would overlap with any existing events
 // Returns true if there's an overlap, false if no overlap
 func (database *Database) CheckEventOverlap(newEvent calendar.Event, excludeEventId ...int) (bool, error) {
-	// Normalize new event's time to match GetEventsByDate timezone handling
-	normalizedTime := time.Date(newEvent.Time.Year(), newEvent.Time.Month(), newEvent.Time.Day(), 
-		newEvent.Time.Hour(), newEvent.Time.Minute(), newEvent.Time.Second(), 
-		newEvent.Time.Nanosecond(), newEvent.Time.Location())
-	
-	// Calculate new event's time range using normalized time
-	newStartTime := normalizedTime
+	// Calculate new event's time range
+	newStartTime := newEvent.Time
 	newEndTime := newStartTime.Add(time.Duration(newEvent.DurationHour * float64(time.Hour)))
 	
 	// Only log debug info if debug mode is enabled
@@ -83,10 +78,7 @@ func (database *Database) CheckEventOverlap(newEvent calendar.Event, excludeEven
 				continue
 			}
 			
-			// Normalize existing event times to same timezone as new event
-			existingStartTime := time.Date(existingEvent.Time.Year(), existingEvent.Time.Month(), existingEvent.Time.Day(), 
-				existingEvent.Time.Hour(), existingEvent.Time.Minute(), existingEvent.Time.Second(), 
-				existingEvent.Time.Nanosecond(), newEvent.Time.Location())
+			existingStartTime := existingEvent.Time
 			existingEndTime := existingStartTime.Add(time.Duration(existingEvent.DurationHour * float64(time.Hour)))
 			
 			// Check for overlap: events overlap if one starts before the other ends
@@ -125,10 +117,7 @@ func (database *Database) CheckEventOverlap(newEvent calendar.Event, excludeEven
 			continue
 		}
 		
-		// Normalize existing event times to same timezone as new event
-		existingStartTime := time.Date(existingEvent.Time.Year(), existingEvent.Time.Month(), existingEvent.Time.Day(), 
-			existingEvent.Time.Hour(), existingEvent.Time.Minute(), existingEvent.Time.Second(), 
-			existingEvent.Time.Nanosecond(), newEvent.Time.Location())
+		existingStartTime := existingEvent.Time
 		existingEndTime := existingStartTime.Add(time.Duration(existingEvent.DurationHour * float64(time.Hour)))
 		
 		debugInfo += fmt.Sprintf("    Existing Event: %s\n", existingEvent.Name)
