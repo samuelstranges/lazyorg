@@ -26,11 +26,11 @@ func FormatHour(hour, minute int) string {
 }
 
 func TimeToPosition(t time.Time, s string) int {
-	time := FormatHourFromTime(t)
+	timeStr := FormatHourFromTime(t)
 	lines := strings.Split(s, "\n")
 
 	for i, v := range lines {
-		if strings.Contains(v, time) {
+		if strings.Contains(v, timeStr) {
 			return i
 		}
 	}

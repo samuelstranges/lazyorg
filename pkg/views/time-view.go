@@ -45,11 +45,9 @@ func (tv *TimeView) Update(g *gocui.Gui) error {
 }
 
 func (tv *TimeView) updateBody(v *gocui.View) {
-	// Calculate starting time, but constrain to valid 24-hour range
-	initialTime := 12 - tv.H/4
-	if initialTime < 0 {
-		initialTime = 0
-	}
+	// Always start from 00:00 to ensure all events (including 00:00 events) are displayable
+	// This prevents events at 00:00 from being hidden due to TimeToPosition returning -1
+	initialTime := 0
 	
 	tv.Body = ""
 
@@ -91,3 +89,4 @@ func (tv *TimeView) updateBody(v *gocui.View) {
 func (tv *TimeView) SetCursor(y int) {
 	tv.Cursor = y
 }
+

@@ -258,6 +258,7 @@ func (dv *DayView) isEventAtCurrentTime(event *calendar.Event) bool {
 }
 
 func (dv *DayView) updateChildViewProperties(g *gocui.Gui) error {
+
 	eventViews := make(map[string]*EventView)
 	for pair := dv.children.Oldest(); pair != nil; pair = pair.Next() {
 		if eventView, ok := pair.Value.(*EventView); ok {
@@ -274,9 +275,11 @@ func (dv *DayView) updateChildViewProperties(g *gocui.Gui) error {
 	
 	for i, event := range events {
 		x := dv.X
-		y := dv.Y + utils.TimeToPosition(event.Time, dv.TimeView.Body)
+		timePosition := utils.TimeToPosition(event.Time, dv.TimeView.Body)
+		y := dv.Y + timePosition
 		w := dv.W
 		h := utils.DurationToHeight(event.DurationHour) + 1
+		
 
 		if (y + h) >= (dv.Y + dv.H) {
 			newHeight := (dv.Y + dv.H) - y
@@ -285,7 +288,7 @@ func (dv *DayView) updateChildViewProperties(g *gocui.Gui) error {
 			}
 			h = newHeight
 		}
-		if y <= dv.Y {
+		if y < dv.Y {
 			continue
 		}
 

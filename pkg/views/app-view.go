@@ -2,7 +2,6 @@ package views
 
 import (
 	"fmt"
-	"os"
 	"time"
 	
 	"github.com/samuelstranges/chronos/internal/calendar"
@@ -239,29 +238,6 @@ func (av *AppView) ToggleView(g *gocui.Gui) error {
 	}
 }
 
-// Debug logging for navigation
-func (av *AppView) debugLogNavigation(action string, g *gocui.Gui) {
-	f, err := os.OpenFile("/tmp/chronos_keybind_debug.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
-	if err != nil {
-		return
-	}
-	defer f.Close()
-	
-	currentView := "unknown"
-	if g.CurrentView() != nil {
-		currentView = g.CurrentView().Name()
-	}
-	
-	cursor := "unknown"
-	if g.CurrentView() != nil {
-		x, y := g.CurrentView().Cursor()
-		cursor = fmt.Sprintf("(%d,%d)", x, y)
-	}
-	
-	fmt.Fprintf(f, "NAVIGATION: action=%s, currentView=%s, cursor=%s, monthMode=%t, calendarDate=%s\n", 
-		action, currentView, cursor, av.IsMonthMode(), av.Calendar.CurrentDay.Date.Format("2006-01-02"))
-}
-
 // IsMonthMode returns true if currently in month view mode
 func (av *AppView) IsMonthMode() bool {
 	return av.GetViewMode() == "month"
@@ -348,7 +324,6 @@ func (av *AppView) handleMonthChange(g *gocui.Gui, oldMonth time.Month) {
 	newMonth := av.Calendar.CurrentDay.Date.Month()
 	if oldMonth != newMonth {
 		// Month has changed - refresh the month view
-		av.debugLogNavigation("MonthChanged", g)
 		if mainView, ok := av.GetChild("main"); ok {
 			if mv, ok := mainView.(*MainView); ok {
 				if mv.CalendarView != nil && mv.CalendarView.MonthView != nil {
@@ -387,7 +362,6 @@ func (av *AppView) updateAgendaDate() {
 }
 
 func (av *AppView) UpdateToNextDay(g *gocui.Gui) {
-	av.debugLogNavigation("UpdateToNextDay", g)
 	oldMonth := av.Calendar.CurrentDay.Date.Month()
 	av.Calendar.UpdateToNextDay()
 	if av.IsMonthMode() {
@@ -400,7 +374,6 @@ func (av *AppView) UpdateToNextDay(g *gocui.Gui) {
 }
 
 func (av *AppView) UpdateToPrevDay(g *gocui.Gui) {
-	av.debugLogNavigation("UpdateToPrevDay", g)
 	oldMonth := av.Calendar.CurrentDay.Date.Month()
 	av.Calendar.UpdateToPrevDay()
 	if av.IsMonthMode() {
@@ -413,7 +386,6 @@ func (av *AppView) UpdateToPrevDay(g *gocui.Gui) {
 }
 
 func (av *AppView) UpdateToNextTime(g *gocui.Gui) {
-	av.debugLogNavigation("UpdateToNextTime", g)
 	
 	if av.IsMonthMode() {
 		// In month mode, j/down should move down one week (7 days)
@@ -441,7 +413,6 @@ func (av *AppView) UpdateToNextTime(g *gocui.Gui) {
 }
 
 func (av *AppView) UpdateToPrevTime(g *gocui.Gui) {
-	av.debugLogNavigation("UpdateToPrevTime", g)
 	
 	if av.IsMonthMode() {
 		// In month mode, k/up should move up one week (7 days)
@@ -583,7 +554,6 @@ func (av *AppView) UpdateCurrentView(g *gocui.Gui) error {
 	if av.IsMonthMode() {
 		// In month mode, focus on the appropriate month day view
 		currentViewName := av.calculateMonthDayViewName()
-		av.debugLogNavigation("UpdateCurrentView_Month", g)
 		g.SetCurrentView(currentViewName)
 		if g.CurrentView() != nil {
 			g.CurrentView().BgColor = gocui.Attribute(termbox.ColorBlack)
@@ -592,7 +562,6 @@ func (av *AppView) UpdateCurrentView(g *gocui.Gui) error {
 	} else if av.IsAgendaMode() {
 		// In agenda mode, focus on the selected event view
 		agendaViewName := av.getAgendaSelectedViewName()
-		av.debugLogNavigation("UpdateCurrentView_Agenda", g)
 		g.SetCurrentView(agendaViewName)
 		if g.CurrentView() != nil {
 			g.CurrentView().BgColor = gocui.Attribute(termbox.ColorBlack)

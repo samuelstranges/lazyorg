@@ -161,17 +161,20 @@ Command line flags take precedence over config file settings.
 
 ## Future
 
+- [x] migration to utc
+- [x] additional views: daily view, monthly view, agenda view
+- [ ] fix wraparound bug
 - desktop notifications
 - export to `.ics` and `.csv`, `.json` (import probably not due to limitations
   of 30 min events with no overlap)
 - enhanced recurrence rules (eg "repeat every weekday", "first friday of the
   month")
-- additional views: daily view, monthly view, agenda view
 - export today's agenda flag
+- config options:
+    - default 'view'
 - birthdays toggle (using carddav)
 - tagging (and filtering by tag)
 - automated backups
-- migration to utc
 - weather integration
 - add links (and open links with 'O'): eg a google meeting link:
     - could these meeting links be dynamically created? probably out of scope
@@ -179,8 +182,8 @@ Command line flags take precedence over config file settings.
 - encrypt database (gpg integration?): probably shouldn't use claude code for
   this feature...
 - commandline flags:
-    - next event
-    - current event
+    - return next event
+    - return current event
 
 ## Not planned
 
