@@ -91,6 +91,38 @@ func ColorAttributeToName(color gocui.Attribute) string {
 	return "Default"
 }
 
+// ColorToANSI converts gocui color attributes to ANSI escape codes
+func ColorToANSI(color gocui.Attribute) string {
+	switch color {
+	case gocui.ColorRed:
+		return "\033[31m"
+	case gocui.ColorGreen:
+		return "\033[32m"
+	case gocui.ColorYellow:
+		return "\033[33m"
+	case gocui.ColorBlue:
+		return "\033[34m"
+	case gocui.ColorMagenta:
+		return "\033[35m"
+	case gocui.ColorCyan:
+		return "\033[36m"
+	case gocui.ColorWhite:
+		return "\033[37m"
+	default:
+		return "\033[0m" // Reset/default
+	}
+}
+
+// ANSIReset returns the ANSI reset code
+func ANSIReset() string {
+	return "\033[0m"
+}
+
+// WrapTextWithColor wraps text with ANSI color codes
+func WrapTextWithColor(text string, color gocui.Attribute) string {
+	return ColorToANSI(color) + text + ANSIReset()
+}
+
 func (e *Event) FormatTimeAndName() string {
 	return fmt.Sprintf("%s | %s", e.FormatDurationTime(), e.Name)
 }

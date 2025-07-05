@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/samuelstranges/chronos/internal/calendar"
+	"github.com/samuelstranges/chronos/internal/utils"
 	"github.com/jroimartin/gocui"
 	"github.com/nsf/termbox-go"
 )
@@ -81,7 +82,16 @@ func (mdv *MonthDayView) Update(g *gocui.Gui) error {
 	}
 	
 	for _, event := range eventsToShow {
-		eventLine := fmt.Sprintf("• %s", mdv.truncateEventName(event.Name))
+		// Use ANSI color codes for the event text
+		eventColor := event.Color
+		if eventColor == gocui.ColorDefault || eventColor == gocui.ColorBlack {
+			// Fallback to a visible color if somehow the event has no color
+			eventColor = gocui.ColorBlue
+		}
+		
+		eventTime := utils.FormatHourFromTime(event.Time)
+		coloredEventName := calendar.WrapTextWithColor(mdv.truncateEventName(event.Name), eventColor)
+		eventLine := fmt.Sprintf("%s %s", eventTime, coloredEventName)
 		fmt.Fprintf(v, "%s\n", eventLine)
 	}
 	
@@ -111,7 +121,7 @@ func (mdv *MonthDayView) updateColors(v *gocui.View) {
 }
 
 func (mdv *MonthDayView) truncateEventName(name string) string {
-	maxWidth := mdv.W - 3 // Leave space for bullet and borders
+	maxWidth := mdv.W - 8 // Leave space for time (5 chars) and borders (3 chars)
 	if maxWidth < 1 {
 		return ""
 	}
