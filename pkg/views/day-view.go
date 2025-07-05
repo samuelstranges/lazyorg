@@ -289,17 +289,24 @@ func (dv *DayView) updateChildViewProperties(g *gocui.Gui) error {
 			continue
 		}
 
-		// Check if this event should have a bottom border
-		showBottomBorder := false
-		if i < len(events)-1 {
-			nextEvent := events[i+1]
-			eventEndTime := event.Time.Add(time.Duration(event.DurationHour * float64(time.Hour)))
+		// Check if this event should have a top border (underline from previous event)
+		showTopBorder := false
+		if i > 0 {
+			prevEvent := events[i-1]
+			prevEventEndTime := prevEvent.Time.Add(time.Duration(prevEvent.DurationHour * float64(time.Hour)))
 			
-			// Check if next event starts immediately after this one and has same color
+			// Check if previous event ended immediately before this one and has same color
 			// Use a small tolerance for time comparison to handle minor precision differences
-			timeDiff := nextEvent.Time.Sub(eventEndTime)
-			if timeDiff >= 0 && timeDiff < time.Minute && nextEvent.Color == event.Color {
-				showBottomBorder = true
+			timeDiff := event.Time.Sub(prevEventEndTime)
+			if timeDiff >= 0 && timeDiff < time.Minute && prevEvent.Color == event.Color {
+				showTopBorder = true
+				
+				// Debug logging
+				if f, err := os.OpenFile("/tmp/chronos_underline_debug.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644); err == nil {
+					fmt.Fprintf(f, "UNDERLINE: Event '%s' (starts %s) connects from '%s' (ends %s), same color=%v\n", 
+						event.Name, event.Time.Format("15:04"), prevEvent.Name, prevEventEndTime.Format("15:04"), prevEvent.Color == event.Color)
+					f.Close()
+				}
 			}
 		}
 
@@ -309,13 +316,13 @@ func (dv *DayView) updateChildViewProperties(g *gocui.Gui) error {
 		if existingView, exists := eventViews[viewName]; exists {
 			existingView.X, existingView.Y, existingView.W, existingView.H = x, y, w, h
 			existingView.Event = event
-			existingView.ShowBottomBorder = showBottomBorder
+			existingView.ShowTopBorder = showTopBorder
 			existingView.IsCurrentTimeEvent = isCurrentTimeEvent
 			delete(eventViews, viewName)
 		} else {
 			ev := NewEvenView(viewName, event)
 			ev.X, ev.Y, ev.W, ev.H = x, y, w, h
-			ev.ShowBottomBorder = showBottomBorder
+			ev.ShowTopBorder = showTopBorder
 			ev.IsCurrentTimeEvent = isCurrentTimeEvent
 			dv.AddChild(viewName, ev)
 		}
@@ -341,12 +348,17 @@ func (dv *DayView) IsOnEvent(y int) (*EventView, bool) {
 	absoluteY := dv.Y + y
 	for pair := dv.children.Newest(); pair != nil; pair = pair.Prev() {
 		if eventView, ok := pair.Value.(*EventView); ok {
-			// Subtract 1 from height to exclude the bottom padding/underline row from cursor detection
-			detectableHeight := eventView.H - 1
+			// Exclude the first line if it has ShowTopBorder (underlined spaces)
+			startY := eventView.Y
+			detectableHeight := eventView.H
+			if eventView.ShowTopBorder && eventView.H > 1 {
+				startY = eventView.Y + 1 // Exclude the underlined top line
+				detectableHeight = eventView.H - 1
+			}
 			if detectableHeight < 1 {
 				detectableHeight = 1 // Ensure at least 1 row is detectable
 			}
-			if absoluteY >= eventView.Y && absoluteY < (eventView.Y+detectableHeight) {
+			if absoluteY >= startY && absoluteY < (startY+detectableHeight) {
 				return eventView, true
 			}
 		}
