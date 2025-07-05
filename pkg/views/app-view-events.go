@@ -11,22 +11,32 @@ import (
 
 // DeleteEvent deletes a single event at the cursor position
 func (av *AppView) DeleteEvent(g *gocui.Gui) {
-	hoveredView := av.GetHoveredOnView(g)
-	if eventView, ok := hoveredView.(*EventView); ok {
-		// Copy event to yank buffer before deleting (vim-like behavior)
-		copiedEvent := *eventView.Event
-		av.copiedEvent = &copiedEvent
-		
-		// Delete the event
-		av.EventManager.DeleteEvent(eventView.Event.Id)
+	_, y := g.CurrentView().Cursor()
+
+	if view, ok := av.FindChildView(WeekdayNames[av.Calendar.CurrentDay.Date.Weekday()]); ok {
+		if dayView, ok := view.(*DayView); ok {
+			if eventView, ok := dayView.IsOnEvent(y); ok {
+				// Copy event to yank buffer before deleting (vim-like behavior)
+				copiedEvent := *eventView.Event
+				av.copiedEvent = &copiedEvent
+				
+				// Delete the event
+				av.EventManager.DeleteEvent(eventView.Event.Id)
+			}
+		}
 	}
 }
 
 // DeleteEvents deletes all events with the same name as the event at cursor position
 func (av *AppView) DeleteEvents(g *gocui.Gui) {
-	hoveredView := av.GetHoveredOnView(g)
-	if eventView, ok := hoveredView.(*EventView); ok {
-		av.EventManager.DeleteEventsByName(eventView.Event.Name)
+	_, y := g.CurrentView().Cursor()
+
+	if view, ok := av.FindChildView(WeekdayNames[av.Calendar.CurrentDay.Date.Weekday()]); ok {
+		if dayView, ok := view.(*DayView); ok {
+			if eventView, ok := dayView.IsOnEvent(y); ok {
+				av.EventManager.DeleteEventsByName(eventView.Event.Name)
+			}
+		}
 	}
 }
 
