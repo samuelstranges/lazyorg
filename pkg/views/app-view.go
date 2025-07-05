@@ -1,6 +1,8 @@
 package views
 
 import (
+	"fmt"
+	"os"
 	"time"
 	
 	"github.com/samuelstranges/chronos/internal/calendar"
@@ -122,17 +124,35 @@ func (av *AppView) Update(g *gocui.Gui) error {
 }
 
 func (av *AppView) updateEventsFromDatabase() error {
-	for _, v := range av.Calendar.CurrentWeek.Days {
-		clear(v.Events)
-
+	if f, err := os.OpenFile("/tmp/chronos_switch_debug.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644); err == nil {
+		fmt.Fprintf(f, "updateEventsFromDatabase: Starting to load events for current week\n")
+		f.Close()
+	}
+	
+	for i, v := range av.Calendar.CurrentWeek.Days {
+		// Don't use clear() - it affects existing day views pointing to this slice
+		// Instead, create a new slice entirely
 		var err error
 		events, err := av.Database.GetEventsByDate(v.Date)
 		if err != nil {
 			return err
 		}
 
+		if f, err := os.OpenFile("/tmp/chronos_switch_debug.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644); err == nil {
+			fmt.Fprintf(f, "Day %d (%s): Found %d events (replacing %d existing)\n", i, v.Date.Format("2006-01-02"), len(events), len(v.Events))
+			for j, event := range events {
+				fmt.Fprintf(f, "  Event %d: %s at %s\n", j, event.Name, event.Time.Format("15:04"))
+			}
+			f.Close()
+		}
+
 		v.Events = events
 		v.SortEventsByTime()
+	}
+
+	if f, err := os.OpenFile("/tmp/chronos_switch_debug.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644); err == nil {
+		fmt.Fprintf(f, "updateEventsFromDatabase: Completed loading events\n")
+		f.Close()
 	}
 
 	return nil
@@ -180,7 +200,14 @@ func (av *AppView) UpdateToPrevMonth() {
 func (av *AppView) SwitchToWeekView(g *gocui.Gui) error {
 	if mainView, ok := av.GetChild("main"); ok {
 		if mv, ok := mainView.(*MainView); ok {
-			return mv.SwitchToWeekView(g)
+			// Switch the view mode - this will cause the week view to be recreated properly
+			err := mv.SwitchToWeekView(g)
+			if err != nil {
+				return err
+			}
+			
+			// Let the main Update() cycle handle event loading and day view updates
+			return av.UpdateCurrentView(g)
 		}
 	}
 	return nil

@@ -1,9 +1,6 @@
 package views
 
 import (
-	"fmt"
-	"os"
-	
 	"github.com/samuelstranges/chronos/internal/calendar"
 	"github.com/samuelstranges/chronos/internal/database"
 	"github.com/samuelstranges/chronos/internal/utils"
@@ -56,12 +53,6 @@ func (mv *MainView) Update(g *gocui.Gui) error {
 }
 
 func (mv *MainView) updateChildViewProperties() {
-	// Debug main view properties
-	if f, err := os.OpenFile("/tmp/chronos_month_debug.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644); err == nil {
-		fmt.Fprintf(f, "MainView.updateChildViewProperties: X=%d, Y=%d, W=%d, H=%d\n", mv.X, mv.Y, mv.W, mv.H)
-		f.Close()
-	}
-	
 	// Update calendar view to take full main view area
 	if mv.CalendarView != nil {
 		mv.CalendarView.SetProperties(

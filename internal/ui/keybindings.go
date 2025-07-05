@@ -53,7 +53,7 @@ func initMainKeybindings(g *gocui.Gui, av *views.AppView) error {
 		{'*', func(g *gocui.Gui, v *gocui.View) error { av.GoToNextMatch(); av.UpdateCurrentView(g); return nil }},
 		{'#', func(g *gocui.Gui, v *gocui.View) error { av.GoToPrevMatch(); av.UpdateCurrentView(g); return nil }},
 		{'n', func(g *gocui.Gui, v *gocui.View) error { av.UpdateToNextMonth(); return nil }},
-		{'p', func(g *gocui.Gui, v *gocui.View) error { av.UpdateToPrevMonth(); return nil }},
+		{'P', func(g *gocui.Gui, v *gocui.View) error { av.UpdateToPrevMonth(); return nil }},
 		{'m', func(g *gocui.Gui, v *gocui.View) error { err := av.SwitchToMonthView(g); av.UpdateCurrentView(g); return err }},
 		{'W', func(g *gocui.Gui, v *gocui.View) error { err := av.SwitchToWeekView(g); av.UpdateCurrentView(g); return err }},
 		{gocui.KeyEsc, func(g *gocui.Gui, v *gocui.View) error { av.ClearSearch(); return nil }},

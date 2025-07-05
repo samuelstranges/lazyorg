@@ -258,6 +258,14 @@ func (dv *DayView) isEventAtCurrentTime(event *calendar.Event) bool {
 }
 
 func (dv *DayView) updateChildViewProperties(g *gocui.Gui) error {
+	if f, err := os.OpenFile("/tmp/chronos_switch_debug.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644); err == nil {
+		fmt.Fprintf(f, "DayView.updateChildViewProperties: %s has %d events\n", dv.Name, len(dv.Day.Events))
+		for i, event := range dv.Day.Events {
+			fmt.Fprintf(f, "  Event %d: %s at %s\n", i, event.Name, event.Time.Format("15:04"))
+		}
+		f.Close()
+	}
+	
 	eventViews := make(map[string]*EventView)
 	for pair := dv.children.Oldest(); pair != nil; pair = pair.Next() {
 		if eventView, ok := pair.Value.(*EventView); ok {
@@ -278,14 +286,27 @@ func (dv *DayView) updateChildViewProperties(g *gocui.Gui) error {
 		w := dv.W
 		h := utils.DurationToHeight(event.DurationHour) + 1
 
+		if f, err := os.OpenFile("/tmp/chronos_switch_debug.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644); err == nil {
+			fmt.Fprintf(f, "  Processing event %s: x=%d, y=%d, w=%d, h=%d\n", event.Name, x, y, w, h)
+			f.Close()
+		}
+
 		if (y + h) >= (dv.Y + dv.H) {
 			newHeight := (dv.Y + dv.H) - y
 			if newHeight <= 0 {
+				if f, err := os.OpenFile("/tmp/chronos_switch_debug.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644); err == nil {
+					fmt.Fprintf(f, "  SKIPPED %s: newHeight <= 0 (%d)\n", event.Name, newHeight)
+					f.Close()
+				}
 				continue
 			}
 			h = newHeight
 		}
 		if y <= dv.Y {
+			if f, err := os.OpenFile("/tmp/chronos_switch_debug.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644); err == nil {
+				fmt.Fprintf(f, "  SKIPPED %s: y <= dv.Y (%d <= %d)\n", event.Name, y, dv.Y)
+				f.Close()
+			}
 			continue
 		}
 
@@ -307,12 +328,20 @@ func (dv *DayView) updateChildViewProperties(g *gocui.Gui) error {
 		isCurrentTimeEvent := dv.isEventAtCurrentTime(event)
 		
 		if existingView, exists := eventViews[viewName]; exists {
+			if f, err := os.OpenFile("/tmp/chronos_switch_debug.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644); err == nil {
+				fmt.Fprintf(f, "  UPDATED existing event view: %s\n", viewName)
+				f.Close()
+			}
 			existingView.X, existingView.Y, existingView.W, existingView.H = x, y, w, h
 			existingView.Event = event
 			existingView.ShowBottomBorder = showBottomBorder
 			existingView.IsCurrentTimeEvent = isCurrentTimeEvent
 			delete(eventViews, viewName)
 		} else {
+			if f, err := os.OpenFile("/tmp/chronos_switch_debug.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644); err == nil {
+				fmt.Fprintf(f, "  CREATED new event view: %s\n", viewName)
+				f.Close()
+			}
 			ev := NewEvenView(viewName, event)
 			ev.X, ev.Y, ev.W, ev.H = x, y, w, h
 			ev.ShowBottomBorder = showBottomBorder
