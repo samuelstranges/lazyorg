@@ -1,9 +1,6 @@
 package views
 
 import (
-	"fmt"
-	"os"
-	
 	"github.com/samuelstranges/chronos/internal/calendar"
 	"github.com/jroimartin/gocui"
 )
@@ -27,11 +24,6 @@ type WeekView struct {
 }
 
 func NewWeekView(c *calendar.Calendar, tv *TimeView) *WeekView {
-	if f, err := os.OpenFile("/tmp/chronos_switch_debug.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644); err == nil {
-		fmt.Fprintf(f, "NewWeekView: Creating new week view\n")
-		f.Close()
-	}
-	
 	wv := &WeekView{
 		BaseView: NewBaseView("week"),
 		Calendar: c,
@@ -39,21 +31,7 @@ func NewWeekView(c *calendar.Calendar, tv *TimeView) *WeekView {
 	}
 
 	for i, dayName := range WeekdayNames {
-		dayData := c.CurrentWeek.Days[i]
-		if f, err := os.OpenFile("/tmp/chronos_switch_debug.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644); err == nil {
-			fmt.Fprintf(f, "NewWeekView: Creating DayView for %s (%s) with %d events\n", 
-				dayName, dayData.Date.Format("2006-01-02"), len(dayData.Events))
-			for j, event := range dayData.Events {
-				fmt.Fprintf(f, "  Event %d: %s at %s\n", j, event.Name, event.Time.Format("15:04"))
-			}
-			f.Close()
-		}
-		wv.AddChild(dayName, NewDayView(dayName, dayData, tv))
-	}
-
-	if f, err := os.OpenFile("/tmp/chronos_switch_debug.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644); err == nil {
-		fmt.Fprintf(f, "NewWeekView: Completed creating week view\n")
-		f.Close()
+		wv.AddChild(dayName, NewDayView(dayName, c.CurrentWeek.Days[i], tv))
 	}
 
 	return wv
