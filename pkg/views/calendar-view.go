@@ -13,11 +13,12 @@ type CalendarView struct {
 	
 	Calendar *calendar.Calendar
 	Database *database.Database
-	ViewMode string // "week" or "month"
+	ViewMode string // "week", "month", or "agenda"
 	
-	TimeView  *TimeView
-	WeekView  *WeekView
-	MonthView *MonthView
+	TimeView   *TimeView
+	WeekView   *WeekView
+	MonthView  *MonthView
+	AgendaView *AgendaView
 }
 
 func NewCalendarView(c *calendar.Calendar, db *database.Database) *CalendarView {
@@ -31,9 +32,10 @@ func NewCalendarView(c *calendar.Calendar, db *database.Database) *CalendarView 
 	// Create the time view (used by week view)
 	cv.TimeView = NewTimeView()
 	
-	// Create both views but only add the active one as a child
+	// Create all views but only add the active one as a child
 	cv.WeekView = NewWeekView(c, cv.TimeView)
 	cv.MonthView = NewMonthView(c, db)
+	cv.AgendaView = NewAgendaView(c, db)
 	
 	// Start with week view
 	cv.AddChild("time", cv.TimeView)
@@ -89,6 +91,16 @@ func (cv *CalendarView) updateChildViewProperties() {
 				cv.H,
 			)
 		}
+	} else if cv.ViewMode == "agenda" {
+		// Agenda view takes the full area
+		if cv.AgendaView != nil {
+			cv.AgendaView.SetProperties(
+				cv.X,
+				cv.Y,
+				cv.W,
+				cv.H,
+			)
+		}
 	}
 }
 
@@ -97,9 +109,13 @@ func (cv *CalendarView) SwitchToWeekView(g *gocui.Gui) error {
 		return nil // Already in week view
 	}
 	
-	// Delete month view and all its children from gocui
-	if cv.MonthView != nil {
+	// Delete current view and all its children from gocui
+	if cv.ViewMode == "month" && cv.MonthView != nil {
 		if err := cv.deleteMonthViewFromGUI(g); err != nil {
+			return err
+		}
+	} else if cv.ViewMode == "agenda" && cv.AgendaView != nil {
+		if err := cv.deleteAgendaViewFromGUI(g); err != nil {
 			return err
 		}
 	}
@@ -141,6 +157,58 @@ func (cv *CalendarView) SwitchToMonthView(g *gocui.Gui) error {
 	cv.children.Delete("time")
 	cv.children.Delete("active")
 	cv.AddChild("active", cv.MonthView)
+	
+	return nil
+}
+
+func (cv *CalendarView) SwitchToAgendaView(g *gocui.Gui) error {
+	if cv.ViewMode == "agenda" {
+		return nil // Already in agenda view
+	}
+	
+	// Delete current view from gocui
+	if cv.ViewMode == "week" {
+		if cv.WeekView != nil {
+			if err := cv.deleteWeekViewFromGUI(g); err != nil {
+				return err
+			}
+		}
+		if cv.TimeView != nil {
+			if err := g.DeleteView(cv.TimeView.Name); err != nil && err != gocui.ErrUnknownView {
+				return err
+			}
+		}
+	} else if cv.ViewMode == "month" {
+		if cv.MonthView != nil {
+			if err := cv.deleteMonthViewFromGUI(g); err != nil {
+				return err
+			}
+		}
+	}
+	
+	cv.ViewMode = "agenda"
+	
+	// Update agenda view with current date
+	cv.AgendaView.SetCurrentDate(cv.Calendar.CurrentDay.Date)
+	
+	// Remove current views from children and add agenda view
+	cv.children.Delete("time")
+	cv.children.Delete("active")
+	cv.AddChild("active", cv.AgendaView)
+	
+	return nil
+}
+
+func (cv *CalendarView) deleteAgendaViewFromGUI(g *gocui.Gui) error {
+	// Delete the main agenda view
+	if err := g.DeleteView(cv.AgendaView.Name); err != nil && err != gocui.ErrUnknownView {
+		return err
+	}
+	
+	// Delete all agenda event views
+	if cv.AgendaView != nil {
+		cv.AgendaView.clearEventViews(g)
+	}
 	
 	return nil
 }

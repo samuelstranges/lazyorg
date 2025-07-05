@@ -1,6 +1,8 @@
 package views
 
 import (
+	"fmt"
+	"os"
 	"time"
 	
 	"github.com/samuelstranges/chronos/internal/calendar"
@@ -202,34 +204,258 @@ func (av *AppView) SwitchToMonthView(g *gocui.Gui) error {
 	return nil
 }
 
+func (av *AppView) SwitchToAgendaView(g *gocui.Gui) error {
+	if mainView, ok := av.GetChild("main"); ok {
+		if mv, ok := mainView.(*MainView); ok {
+			return mv.SwitchToAgendaView(g)
+		}
+	}
+	return nil
+}
+
+func (av *AppView) ToggleView(g *gocui.Gui) error {
+	currentMode := av.GetViewMode()
+	switch currentMode {
+	case "week":
+		// Week → Month
+		return av.SwitchToMonthView(g)
+	case "month":
+		// Month → Agenda
+		return av.SwitchToAgendaView(g)
+	case "agenda":
+		// Agenda → Week
+		return av.SwitchToWeekView(g)
+	default:
+		// Fallback to week view
+		return av.SwitchToWeekView(g)
+	}
+}
+
+// Debug logging for navigation
+func (av *AppView) debugLogNavigation(action string, g *gocui.Gui) {
+	f, err := os.OpenFile("/tmp/chronos_keybind_debug.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		return
+	}
+	defer f.Close()
+	
+	currentView := "unknown"
+	if g.CurrentView() != nil {
+		currentView = g.CurrentView().Name()
+	}
+	
+	cursor := "unknown"
+	if g.CurrentView() != nil {
+		x, y := g.CurrentView().Cursor()
+		cursor = fmt.Sprintf("(%d,%d)", x, y)
+	}
+	
+	fmt.Fprintf(f, "NAVIGATION: action=%s, currentView=%s, cursor=%s, monthMode=%t, calendarDate=%s\n", 
+		action, currentView, cursor, av.IsMonthMode(), av.Calendar.CurrentDay.Date.Format("2006-01-02"))
+}
+
+// IsMonthMode returns true if currently in month view mode
+func (av *AppView) IsMonthMode() bool {
+	return av.GetViewMode() == "month"
+}
+
+// IsAgendaMode returns true if currently in agenda view mode
+func (av *AppView) IsAgendaMode() bool {
+	return av.GetViewMode() == "agenda"
+}
+
+// GetViewMode returns the current view mode
+func (av *AppView) GetViewMode() string {
+	if mainView, ok := av.GetChild("main"); ok {
+		if mv, ok := mainView.(*MainView); ok {
+			return mv.CalendarView.ViewMode
+		}
+	}
+	return "week" // default
+}
+
+// GetCurrentViewName returns the name of the current active view
+func (av *AppView) GetCurrentViewName() string {
+	if av.IsMonthMode() {
+		return "month_mode"
+	}
+	return "week_mode"
+}
+
+// calculateMonthDayViewName calculates which monthday_X view should be focused
+func (av *AppView) calculateMonthDayViewName() string {
+	currentDate := av.Calendar.CurrentDay.Date
+	
+	// Get the current month being displayed in month view
+	var currentMonth time.Time
+	if mainView, ok := av.GetChild("main"); ok {
+		if mv, ok := mainView.(*MainView); ok {
+			if mv.CalendarView != nil && mv.CalendarView.MonthView != nil {
+				currentMonth = mv.CalendarView.MonthView.CurrentMonth
+			}
+		}
+	}
+	
+	// If we can't find the month view, default to current date's month
+	if currentMonth.IsZero() {
+		currentMonth = currentDate
+	}
+	
+	// Get the first day of the displayed month
+	firstDay := time.Date(currentMonth.Year(), currentMonth.Month(), 1, 0, 0, 0, 0, currentMonth.Location())
+	
+	// Find the Monday of the week containing the first day (start of month grid)
+	startOfGrid := firstDay
+	for startOfGrid.Weekday() != time.Monday {
+		startOfGrid = startOfGrid.AddDate(0, 0, -1)
+	}
+	
+	// Calculate the index (0-41) of the current date in the month grid
+	daysDiff := int(currentDate.Sub(startOfGrid).Hours() / 24)
+	
+	// Ensure the index is within bounds (0-41)
+	if daysDiff < 0 {
+		daysDiff = 0
+	} else if daysDiff > 41 {
+		daysDiff = 41
+	}
+	
+	return fmt.Sprintf("monthday_%d", daysDiff)
+}
+
+// getAgendaSelectedViewName returns the view name of the currently selected event in agenda view
+func (av *AppView) getAgendaSelectedViewName() string {
+	if mainView, ok := av.GetChild("main"); ok {
+		if mv, ok := mainView.(*MainView); ok {
+			if mv.CalendarView != nil && mv.CalendarView.AgendaView != nil {
+				return mv.CalendarView.AgendaView.GetSelectedEventViewName()
+			}
+		}
+	}
+	return "agenda" // fallback to main agenda view
+}
+
+// handleMonthChange refreshes the month view when navigation crosses month boundaries
+func (av *AppView) handleMonthChange(g *gocui.Gui, oldMonth time.Month) {
+	newMonth := av.Calendar.CurrentDay.Date.Month()
+	if oldMonth != newMonth {
+		// Month has changed - refresh the month view
+		av.debugLogNavigation("MonthChanged", g)
+		if mainView, ok := av.GetChild("main"); ok {
+			if mv, ok := mainView.(*MainView); ok {
+				if mv.CalendarView != nil && mv.CalendarView.MonthView != nil {
+					// Update the month view's current month
+					mv.CalendarView.MonthView.CurrentMonth = av.Calendar.CurrentDay.Date
+					// Recreate the month day views for the new month
+					mv.CalendarView.MonthView.createMonthDayViews()
+					// Refresh events for the new month
+					mv.CalendarView.MonthView.loadEventsForMonth()
+				}
+			}
+		}
+	}
+}
+
+// moveAgendaSelection moves the selection in agenda view
+func (av *AppView) moveAgendaSelection(direction int) {
+	if mainView, ok := av.GetChild("main"); ok {
+		if mv, ok := mainView.(*MainView); ok {
+			if mv.CalendarView != nil && mv.CalendarView.AgendaView != nil {
+				mv.CalendarView.AgendaView.MoveSelection(direction)
+			}
+		}
+	}
+}
+
+// updateAgendaDate updates the agenda view when the date changes
+func (av *AppView) updateAgendaDate() {
+	if mainView, ok := av.GetChild("main"); ok {
+		if mv, ok := mainView.(*MainView); ok {
+			if mv.CalendarView != nil && mv.CalendarView.AgendaView != nil {
+				mv.CalendarView.AgendaView.SetCurrentDate(av.Calendar.CurrentDay.Date)
+			}
+		}
+	}
+}
+
 func (av *AppView) UpdateToNextDay(g *gocui.Gui) {
+	av.debugLogNavigation("UpdateToNextDay", g)
+	oldMonth := av.Calendar.CurrentDay.Date.Month()
 	av.Calendar.UpdateToNextDay()
+	if av.IsMonthMode() {
+		av.handleMonthChange(g, oldMonth)
+	} else if av.IsAgendaMode() {
+		// Update agenda view to show new day's events
+		av.updateAgendaDate()
+	}
 	av.UpdateCurrentView(g)
 }
 
 func (av *AppView) UpdateToPrevDay(g *gocui.Gui) {
+	av.debugLogNavigation("UpdateToPrevDay", g)
+	oldMonth := av.Calendar.CurrentDay.Date.Month()
 	av.Calendar.UpdateToPrevDay()
+	if av.IsMonthMode() {
+		av.handleMonthChange(g, oldMonth)
+	} else if av.IsAgendaMode() {
+		// Update agenda view to show new day's events
+		av.updateAgendaDate()
+	}
 	av.UpdateCurrentView(g)
 }
 
 func (av *AppView) UpdateToNextTime(g *gocui.Gui) {
-	_, height := g.CurrentView().Size()
-	if _, y := g.CurrentView().Cursor(); y < height-1 {
-		av.Calendar.UpdateToNextTime()
+	av.debugLogNavigation("UpdateToNextTime", g)
+	
+	if av.IsMonthMode() {
+		// In month mode, j/down should move down one week (7 days)
+		oldMonth := av.Calendar.CurrentDay.Date.Month()
+		for i := 0; i < 7; i++ {
+			av.Calendar.UpdateToNextDay()
+		}
+		av.handleMonthChange(g, oldMonth)
+		av.UpdateCurrentView(g)
+	} else if av.IsAgendaMode() {
+		// In agenda mode, j/down should move to next event
+		av.moveAgendaSelection(1)
+		av.UpdateCurrentView(g)
 	} else {
-		// At bottom of day, move to next day at 00:00
-		av.Calendar.UpdateToNextDay()
-		av.Calendar.GotoTime(0, 0)
+		// In week mode, use original time-based logic
+		_, height := g.CurrentView().Size()
+		if _, y := g.CurrentView().Cursor(); y < height-1 {
+			av.Calendar.UpdateToNextTime()
+		} else {
+			// At bottom of day, move to next day at 00:00
+			av.Calendar.UpdateToNextDay()
+			av.Calendar.GotoTime(0, 0)
+		}
 	}
 }
 
 func (av *AppView) UpdateToPrevTime(g *gocui.Gui) {
-	if _, y := g.CurrentView().Cursor(); y > 0 {
-		av.Calendar.UpdateToPrevTime()
+	av.debugLogNavigation("UpdateToPrevTime", g)
+	
+	if av.IsMonthMode() {
+		// In month mode, k/up should move up one week (7 days)
+		oldMonth := av.Calendar.CurrentDay.Date.Month()
+		for i := 0; i < 7; i++ {
+			av.Calendar.UpdateToPrevDay()
+		}
+		av.handleMonthChange(g, oldMonth)
+		av.UpdateCurrentView(g)
+	} else if av.IsAgendaMode() {
+		// In agenda mode, k/up should move to previous event
+		av.moveAgendaSelection(-1)
+		av.UpdateCurrentView(g)
 	} else {
-		// At top of day (00:00), move to previous day at 23:30
-		av.Calendar.UpdateToPrevDay()
-		av.Calendar.GotoTime(23, 30)
+		// In week mode, use original time-based logic
+		if _, y := g.CurrentView().Cursor(); y > 0 {
+			av.Calendar.UpdateToPrevTime()
+		} else {
+			// At top of day (00:00), move to previous day at 23:30
+			av.Calendar.UpdateToPrevDay()
+			av.Calendar.GotoTime(23, 30)
+		}
 	}
 }
 
@@ -346,9 +572,30 @@ func (av *AppView) UpdateCurrentView(g *gocui.Gui) error {
 
 	g.Cursor = true
 
-	g.SetCurrentView(WeekdayNames[av.Calendar.CurrentDay.Date.Weekday()])
-	g.CurrentView().BgColor = gocui.Attribute(termbox.ColorBlack)
-	g.CurrentView().SetCursor(1, av.GetCursorY())
+	if av.IsMonthMode() {
+		// In month mode, focus on the appropriate month day view
+		currentViewName := av.calculateMonthDayViewName()
+		av.debugLogNavigation("UpdateCurrentView_Month", g)
+		g.SetCurrentView(currentViewName)
+		if g.CurrentView() != nil {
+			g.CurrentView().BgColor = gocui.Attribute(termbox.ColorBlack)
+			g.CurrentView().SetCursor(0, 1) // Position in the day cell
+		}
+	} else if av.IsAgendaMode() {
+		// In agenda mode, focus on the selected event view
+		agendaViewName := av.getAgendaSelectedViewName()
+		av.debugLogNavigation("UpdateCurrentView_Agenda", g)
+		g.SetCurrentView(agendaViewName)
+		if g.CurrentView() != nil {
+			g.CurrentView().BgColor = gocui.Attribute(termbox.ColorBlack)
+			g.CurrentView().SetCursor(0, 0)
+		}
+	} else {
+		// In week mode, use weekday names
+		g.SetCurrentView(WeekdayNames[av.Calendar.CurrentDay.Date.Weekday()])
+		g.CurrentView().BgColor = gocui.Attribute(termbox.ColorBlack)
+		g.CurrentView().SetCursor(1, av.GetCursorY())
+	}
 
 	return nil
 }

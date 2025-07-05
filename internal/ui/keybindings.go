@@ -2,6 +2,7 @@ package ui
 
 import (
 	"fmt"
+	"os"
 	"github.com/samuelstranges/chronos/pkg/views"
 	"github.com/jroimartin/gocui"
 )
@@ -9,6 +10,34 @@ import (
 type Keybind struct {
 	key     interface{}
 	handler func(*gocui.Gui, *gocui.View) error
+}
+
+// Debug logging function for keybindings
+func debugLogKeybinding(key interface{}, viewName string, av *views.AppView) {
+	f, err := os.OpenFile("/tmp/chronos_keybind_debug.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		return
+	}
+	defer f.Close()
+	
+	keyStr := fmt.Sprintf("%v", key)
+	if keyStr == "65514" { // Arrow left
+		keyStr = "ArrowLeft"
+	} else if keyStr == "65515" { // Arrow right
+		keyStr = "ArrowRight"
+	} else if keyStr == "65516" { // Arrow up
+		keyStr = "ArrowUp"
+	} else if keyStr == "65517" { // Arrow down
+		keyStr = "ArrowDown"
+	}
+	
+	currentView := "unknown"
+	if av != nil {
+		currentView = av.GetCurrentViewName()
+	}
+	
+	fmt.Fprintf(f, "KEY_PRESS: key=%s, view=%s, currentView=%s, monthMode=%t\n", 
+		keyStr, viewName, currentView, av != nil && av.IsMonthMode())
 }
 
 func InitKeybindings(g *gocui.Gui, av *views.AppView) error {
@@ -26,17 +55,17 @@ func InitKeybindings(g *gocui.Gui, av *views.AppView) error {
 
 func initMainKeybindings(g *gocui.Gui, av *views.AppView) error {
 	mainKeybindings := []Keybind{
-		{'a', func(g *gocui.Gui, v *gocui.View) error { return av.ShowNewEventPopup(g) }},
-		{'e', func(g *gocui.Gui, v *gocui.View) error { return av.ShowEditEventPopup(g) }},
-		{'c', func(g *gocui.Gui, v *gocui.View) error { return av.ShowColorPicker(g) }},
-		{'h', func(g *gocui.Gui, v *gocui.View) error { av.UpdateToPrevDay(g); return nil }},
-		{'l', func(g *gocui.Gui, v *gocui.View) error { av.UpdateToNextDay(g); return nil }},
-		{'j', func(g *gocui.Gui, v *gocui.View) error { av.UpdateToNextTime(g); return nil }},
-		{'k', func(g *gocui.Gui, v *gocui.View) error { av.UpdateToPrevTime(g); return nil }},
-		{gocui.KeyArrowLeft, func(g *gocui.Gui, v *gocui.View) error { av.UpdateToPrevDay(g); return nil }},
-		{gocui.KeyArrowRight, func(g *gocui.Gui, v *gocui.View) error { av.UpdateToNextDay(g); return nil }},
-		{gocui.KeyArrowDown, func(g *gocui.Gui, v *gocui.View) error { av.UpdateToNextTime(g); return nil }},
-		{gocui.KeyArrowUp, func(g *gocui.Gui, v *gocui.View) error { av.UpdateToPrevTime(g); return nil }},
+		{'a', func(g *gocui.Gui, v *gocui.View) error { debugLogKeybinding('a', v.Name(), av); return av.ShowNewEventPopup(g) }},
+		{'e', func(g *gocui.Gui, v *gocui.View) error { debugLogKeybinding('e', v.Name(), av); return av.ShowEditEventPopup(g) }},
+		{'c', func(g *gocui.Gui, v *gocui.View) error { debugLogKeybinding('c', v.Name(), av); return av.ShowColorPicker(g) }},
+		{'h', func(g *gocui.Gui, v *gocui.View) error { debugLogKeybinding('h', v.Name(), av); av.UpdateToPrevDay(g); return nil }},
+		{'l', func(g *gocui.Gui, v *gocui.View) error { debugLogKeybinding('l', v.Name(), av); av.UpdateToNextDay(g); return nil }},
+		{'j', func(g *gocui.Gui, v *gocui.View) error { debugLogKeybinding('j', v.Name(), av); av.UpdateToNextTime(g); return nil }},
+		{'k', func(g *gocui.Gui, v *gocui.View) error { debugLogKeybinding('k', v.Name(), av); av.UpdateToPrevTime(g); return nil }},
+		{gocui.KeyArrowLeft, func(g *gocui.Gui, v *gocui.View) error { debugLogKeybinding(gocui.KeyArrowLeft, v.Name(), av); av.UpdateToPrevDay(g); return nil }},
+		{gocui.KeyArrowRight, func(g *gocui.Gui, v *gocui.View) error { debugLogKeybinding(gocui.KeyArrowRight, v.Name(), av); av.UpdateToNextDay(g); return nil }},
+		{gocui.KeyArrowDown, func(g *gocui.Gui, v *gocui.View) error { debugLogKeybinding(gocui.KeyArrowDown, v.Name(), av); av.UpdateToNextTime(g); return nil }},
+		{gocui.KeyArrowUp, func(g *gocui.Gui, v *gocui.View) error { debugLogKeybinding(gocui.KeyArrowUp, v.Name(), av); av.UpdateToPrevTime(g); return nil }},
 		{'t', func(g *gocui.Gui, v *gocui.View) error { av.JumpToToday(); return nil }},
 		{'H', func(g *gocui.Gui, v *gocui.View) error { av.UpdateToPrevWeek(); return nil }},
 		{'L', func(g *gocui.Gui, v *gocui.View) error { av.UpdateToNextWeek(); return nil }},
@@ -54,8 +83,7 @@ func initMainKeybindings(g *gocui.Gui, av *views.AppView) error {
 		{'N', func(g *gocui.Gui, v *gocui.View) error { av.GoToPrevMatch(); av.UpdateCurrentView(g); return nil }},
 		{'m', func(g *gocui.Gui, v *gocui.View) error { av.UpdateToNextMonth(); return nil }},
 		{'M', func(g *gocui.Gui, v *gocui.View) error { av.UpdateToPrevMonth(); return nil }},
-		{'v', func(g *gocui.Gui, v *gocui.View) error { err := av.SwitchToMonthView(g); av.UpdateCurrentView(g); return err }},
-		{'V', func(g *gocui.Gui, v *gocui.View) error { err := av.SwitchToWeekView(g); av.UpdateCurrentView(g); return err }},
+		{'v', func(g *gocui.Gui, v *gocui.View) error { debugLogKeybinding('v', v.Name(), av); err := av.ToggleView(g); av.UpdateCurrentView(g); return err }},
 		{gocui.KeyEsc, func(g *gocui.Gui, v *gocui.View) error { av.ClearSearch(); return nil }},
 		{'?', func(g *gocui.Gui, v *gocui.View) error { return av.ShowKeybinds(g) }},
 		{'q', func(g *gocui.Gui, v *gocui.View) error { return quit(g, v) }},
@@ -77,6 +105,24 @@ func initMainKeybindings(g *gocui.Gui, av *views.AppView) error {
 			if err := g.SetKeybinding(viewName, kb.key, gocui.ModNone, kb.handler); err != nil {
 				return err
 			}
+		}
+	}
+	
+	// Set keybindings for agenda event views (needed for agenda view)
+	// We'll set up a large number to handle all possible events
+	for i := 0; i < 100; i++ {
+		viewName := fmt.Sprintf("agenda_event_%d", i)
+		for _, kb := range mainKeybindings {
+			if err := g.SetKeybinding(viewName, kb.key, gocui.ModNone, kb.handler); err != nil {
+				return err
+			}
+		}
+	}
+	
+	// Set keybindings for the main agenda view
+	for _, kb := range mainKeybindings {
+		if err := g.SetKeybinding("agenda", kb.key, gocui.ModNone, kb.handler); err != nil {
+			return err
 		}
 	}
 

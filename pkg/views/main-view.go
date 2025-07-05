@@ -92,3 +92,10 @@ func (mv *MainView) SwitchToMonthView(g *gocui.Gui) error {
 	}
 	return nil
 }
+
+func (mv *MainView) SwitchToAgendaView(g *gocui.Gui) error {
+	if mv.CalendarView != nil {
+		return mv.CalendarView.SwitchToAgendaView(g)
+	}
+	return nil
+}
