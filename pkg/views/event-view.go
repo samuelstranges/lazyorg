@@ -45,36 +45,43 @@ func (ev *EventView) Update(g *gocui.Gui) error {
 	}
 	v.BgColor = eventColor
 	
-	// Set text color based on whether this is current time event
-	if ev.IsCurrentTimeEvent {
-		v.FgColor = calendar.ColorCustomPurple
-	} else {
-		v.FgColor = gocui.ColorBlack
-	}
 	
 	v.Frame = false
 	v.Clear()
 	
 	if ev.ShowBottomBorder {
-		// Write event name normally
-		fmt.Fprint(v, ev.Event.Name)
+		// ANSI escape codes for underlining and resetting formatting.
+		const ansiUnderline = "\x1b[4m" // Start underline
+		const ansiBlackFg = "\x1b[30m"  // Set foreground color to black
+		const ansiReset = "\x1b[0m"    // Reset all attributes
 		
 		// If the event is tall enough, add underscores on the second-to-last row
 		if ev.H > 2 {
+			fmt.Fprint(v, ev.Event.Name)
 			// Move to the second-to-last row (account for the +1 in height calculation)
-			for i := 1; i < ev.H-1; i++ {
-				fmt.Fprint(v, "\n")
-			}
-			// Add underscores across the width
-			for i := 0; i < ev.W; i++ {
-				fmt.Fprint(v, "_")
-			}
+			for i := 1; i < ev.H-1; i++ { fmt.Fprint(v, "\n") }
+
+			fmt.Fprint(v, ansiBlackFg)
+			fmt.Fprint(v, ansiUnderline)
+			for i := 0; i < ev.W; i++ { fmt.Fprint(v, "	") }
+			fmt.Fprint(v, ansiReset)
 		} else {
-			// For short events, add underscores right after name
-			fmt.Fprint(v, " _____")
+			// event is 30 mins long... must have text on same line as underline
+			fmt.Fprint(v, ansiBlackFg)
+			fmt.Fprint(v, ansiUnderline)
+			fmt.Fprint(v, ev.Event.Name)
+			for i := 0; i < ev.W; i++ { fmt.Fprint(v, "	") }
+			fmt.Fprint(v, ansiReset)
 		}
 	} else {
 		fmt.Fprint(v, ev.Event.Name)
+	}
+
+	// Set text color based on whether this is current time event
+	if ev.IsCurrentTimeEvent {
+		v.FgColor = calendar.ColorCustomPurple
+	} else {
+		v.FgColor = gocui.ColorBlack
 	}
 
 	return nil
