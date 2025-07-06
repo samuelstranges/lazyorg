@@ -141,10 +141,16 @@ func (dv *DayView) updateCurrentTimeHighlight(g *gocui.Gui) error {
 	// Create a time for the current half-hour slot
 	currentTime := time.Date(now.Year(), now.Month(), now.Day(), currentHour, currentHalfHour, 0, 0, now.Location())
 
-	// Get the position of this time slot
-	timePosition := utils.TimeToPosition(currentTime, dv.TimeView.Body)
+	// Get the position of this time slot within the viewport
+	timePosition := utils.TimeToPositionWithViewport(currentTime, dv.TimeView.GetViewportStart())
 	if timePosition < 0 {
 		return nil // Time not in visible range
+	}
+	
+	// Check if position is within visible slots
+	visibleSlots := dv.TimeView.GetVisibleSlots()
+	if timePosition >= visibleSlots {
+		return nil // Time beyond visible range
 	}
 
 	// Find event that starts exactly at current half-hour (for text coloring)
@@ -284,22 +290,67 @@ func (dv *DayView) updateChildViewProperties(g *gocui.Gui) error {
 		return events[i].Time.Before(events[j].Time)
 	})
 	
+	// Debug logging for day view
+	if f, err := os.OpenFile("/tmp/chronos_dayview_debug.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644); err == nil {
+		fmt.Fprintf(f, "=== DayView.updateChildViewProperties START ===\n")
+		fmt.Fprintf(f, "Day: %s, Events count: %d\n", dv.Day.Date.Format("2006-01-02"), len(events))
+		fmt.Fprintf(f, "DayView position: X=%d, Y=%d, W=%d, H=%d\n", dv.X, dv.Y, dv.W, dv.H)
+		fmt.Fprintf(f, "TimeView viewport: start=%d, visible=%d\n", dv.TimeView.GetViewportStart(), dv.TimeView.GetVisibleSlots())
+		f.Close()
+	}
+
 	for i, event := range events {
 		x := dv.X
-		timePosition := utils.TimeToPosition(event.Time, dv.TimeView.Body)
+		// Use the new viewport-aware position calculation
+		timePosition := utils.TimeToPositionWithViewport(event.Time, dv.TimeView.GetViewportStart())
+		
+		// Debug logging for each event
+		if f, err := os.OpenFile("/tmp/chronos_dayview_debug.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644); err == nil {
+			fmt.Fprintf(f, "Event %d: %s at %s, timePosition=%d\n", i, event.Name, event.Time.Format("15:04"), timePosition)
+			f.Close()
+		}
+		
+		// Skip events that are outside the viewport
+		if timePosition < 0 {
+			if f, err := os.OpenFile("/tmp/chronos_dayview_debug.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644); err == nil {
+				fmt.Fprintf(f, "  -> Skipping (before viewport)\n")
+				f.Close()
+			}
+			continue
+		}
+		
+		// Check if event extends beyond the visible area
+		visibleSlots := dv.TimeView.GetVisibleSlots()
+		if timePosition >= visibleSlots {
+			if f, err := os.OpenFile("/tmp/chronos_dayview_debug.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644); err == nil {
+				fmt.Fprintf(f, "  -> Skipping (after viewport)\n")
+				f.Close()
+			}
+			continue
+		}
+		
 		y := dv.Y + timePosition
 		w := dv.W
 		h := utils.DurationToHeight(event.DurationHour) + 1
 		
-
-		if (y + h) >= (dv.Y + dv.H) {
-			newHeight := (dv.Y + dv.H) - y
-			if newHeight <= 0 {
-				continue
-			}
-			h = newHeight
+		// Truncate event height if it extends beyond visible area
+		originalH := h
+		if timePosition + h > visibleSlots {
+			h = visibleSlots - timePosition
 		}
-		if y < dv.Y {
+		
+		// Debug logging for positioning
+		if f, err := os.OpenFile("/tmp/chronos_dayview_debug.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644); err == nil {
+			fmt.Fprintf(f, "  -> Position: x=%d, y=%d, w=%d, h=%d (original h=%d)\n", x, y, w, h, originalH)
+			f.Close()
+		}
+		
+		// Ensure minimum height
+		if h <= 0 {
+			if f, err := os.OpenFile("/tmp/chronos_dayview_debug.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644); err == nil {
+				fmt.Fprintf(f, "  -> Skipping (no height)\n")
+				f.Close()
+			}
 			continue
 		}
 
@@ -345,6 +396,12 @@ func (dv *DayView) updateChildViewProperties(g *gocui.Gui) error {
 			// Ignore error if border view doesn't exist
 		}
 		dv.children.Delete(viewName)
+	}
+
+	// Debug logging end
+	if f, err := os.OpenFile("/tmp/chronos_dayview_debug.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644); err == nil {
+		fmt.Fprintf(f, "=== DayView.updateChildViewProperties END ===\n\n")
+		f.Close()
 	}
 
 	return nil

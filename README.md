@@ -26,7 +26,8 @@ basically gave Claude Code the reins...
 - ⏰ **Current Time Highlighting**: Visual indicators for current time
 - 🌤️ **Weather Integration**: 3-day weather forecast in month view with
   configurable location and units
-- 🔔 **Desktop Notifications**: Configurable event reminders (0-60 minutes before events)
+- 🔔 **Desktop Notifications**: Configurable event reminders (0-60 minutes
+  before events)
 - ⌨️ **Vim-style Keybindings**: Familiar navigation and shortcuts
 - 🔒 **Conflict Prevention**: Automatic detection and prevention of overlapping
   events
@@ -293,7 +294,8 @@ the title bar and 3-day forecasts in month view.
 
 ### Desktop Notifications
 
-Chronos supports optional desktop notifications that can remind you of upcoming events 0-60 minutes before they start.
+Chronos supports optional desktop notifications that can remind you of upcoming
+events 0-60 minutes before they start.
 
 **Configuration:** Edit `~/.config/chronos/config.json`:
 
@@ -307,6 +309,7 @@ Chronos supports optional desktop notifications that can remind you of upcoming 
 **Notification Configuration Options:**
 
 - `notifications_enabled` (boolean): Enable or disable desktop notifications
+
     - `true` - Enable desktop notifications (default: `false`)
     - `false` - Disable desktop notifications
 
@@ -320,11 +323,14 @@ Chronos supports optional desktop notifications that can remind you of upcoming 
 - **Cross-Platform**: Works on macOS and Linux desktop environments
 - **Smart Timing**: Notifications appear exactly N minutes before events start
 - **Duplicate Prevention**: Won't spam multiple notifications for the same event
-- **Timezone Aware**: Properly handles timezone conversions between local time and UTC storage
-- **Event Details**: Shows event name, time, location, and description (truncated if long)
+- **Timezone Aware**: Properly handles timezone conversions between local time
+  and UTC storage
+- **Event Details**: Shows event name, time, location, and description
+  (truncated if long)
 - **Test Function**: Use `--test-notification` flag to verify notifications work
 
 **Example Notification:**
+
 ```
 Title: "Upcoming Event"
 Message: "Team Meeting
@@ -347,7 +353,7 @@ Message: "Team Meeting
 **Technical Notes:**
 
 - Uses the `beeep` library for cross-platform desktop notifications
-- Notifications run in background every 30 seconds to check for upcoming events  
+- Notifications run in background every 30 seconds to check for upcoming events
 - Automatically starts when you launch Chronos (if enabled)
 - Events stored in UTC, notifications calculated in local timezone
 - Won't duplicate notifications for events within 1 hour window
@@ -362,7 +368,6 @@ Message: "Team Meeting
     - form colors are ugly... this might be a limitation of gocui
 - additional keybinds:
     - visually change duration shortcut (running out of keybinds...)
-- config options:
 - export flags:
     - `--ics`
     - `--json`

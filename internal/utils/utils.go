@@ -3,6 +3,7 @@ package utils
 import (
 	"fmt"
 	"math"
+	"os"
 	"regexp"
 	"strconv"
 	"strings"
@@ -36,6 +37,39 @@ func TimeToPosition(t time.Time, s string) int {
 	}
 
 	return -1
+}
+
+// TimeToPositionWithViewport calculates the position of a time within the viewport
+func TimeToPositionWithViewport(t time.Time, viewportStart int) int {
+	// Convert time to slot index (0 = 00:00, 1 = 00:30, etc.)
+	hour := t.Hour()
+	minute := t.Minute()
+	
+	// Round to nearest half hour
+	if minute >= 30 {
+		minute = 30
+	} else {
+		minute = 0
+	}
+	
+	slotIndex := hour*2 + minute/30
+	
+	// Calculate position relative to viewport
+	position := slotIndex - viewportStart
+	
+	// Debug logging
+	if f, err := os.OpenFile("/tmp/chronos_utils_debug.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644); err == nil {
+		fmt.Fprintf(f, "TimeToPositionWithViewport: time=%s, hour=%d, minute=%d, slotIndex=%d, viewportStart=%d, position=%d\n", 
+			t.Format("15:04"), hour, minute, slotIndex, viewportStart, position)
+		f.Close()
+	}
+	
+	// Return -1 if time is outside the viewport
+	if position < 0 {
+		return -1
+	}
+	
+	return position
 }
 
 func ValidateTime(value string) bool {

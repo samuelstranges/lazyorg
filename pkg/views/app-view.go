@@ -494,15 +494,21 @@ func (av *AppView) UpdateToNextTime(g *gocui.Gui) {
 		av.moveAgendaSelection(1)
 		av.UpdateCurrentView(g)
 	} else {
-		// In week mode, use original time-based logic
-		_, height := g.CurrentView().Size()
-		if _, y := g.CurrentView().Cursor(); y < height-1 {
-			av.Calendar.UpdateToNextTime()
-		} else {
+		// In week mode, use viewport-aware time logic
+		currentTime := av.Calendar.CurrentDay.Date
+		currentHour := currentTime.Hour()
+		currentMinute := currentTime.Minute()
+		
+		// Check if we're at the last time slot (23:30)
+		if currentHour == 23 && currentMinute >= 30 {
 			// At bottom of day, move to next day at 00:00
 			av.Calendar.UpdateToNextDay()
 			av.Calendar.GotoTime(0, 0)
+		} else {
+			// Move to next time slot
+			av.Calendar.UpdateToNextTime()
 		}
+		// Viewport will automatically adjust in updateChildViewProperties
 	}
 }
 
@@ -521,14 +527,21 @@ func (av *AppView) UpdateToPrevTime(g *gocui.Gui) {
 		av.moveAgendaSelection(-1)
 		av.UpdateCurrentView(g)
 	} else {
-		// In week mode, use original time-based logic
-		if _, y := g.CurrentView().Cursor(); y > 0 {
-			av.Calendar.UpdateToPrevTime()
-		} else {
-			// At top of day (00:00), move to previous day at 23:30
+		// In week mode, use viewport-aware time logic
+		currentTime := av.Calendar.CurrentDay.Date
+		currentHour := currentTime.Hour()
+		currentMinute := currentTime.Minute()
+		
+		// Check if we're at the first time slot (00:00)
+		if currentHour == 0 && currentMinute == 0 {
+			// At top of day, move to previous day at 23:30
 			av.Calendar.UpdateToPrevDay()
 			av.Calendar.GotoTime(23, 30)
+		} else {
+			// Move to previous time slot
+			av.Calendar.UpdateToPrevTime()
 		}
+		// Viewport will automatically adjust in updateChildViewProperties
 	}
 }
 
