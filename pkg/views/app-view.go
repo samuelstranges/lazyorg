@@ -256,11 +256,14 @@ func (av *AppView) SwitchToWeekView(g *gocui.Gui) error {
 				}
 			}
 			
-			// Update weather data immediately after switching to week view
-			if err = av.updateWeekViewWeather(); err != nil {
-				// Don't fail the view switch if weather fails - just log it
-				// Weather is optional functionality
-			}
+			// Update weather data asynchronously after switching to week view
+			go func() {
+				av.updateWeekViewWeather()
+				// Force a UI refresh after weather data is set
+				g.Update(func(g *gocui.Gui) error {
+					return nil // Just trigger a refresh
+				})
+			}()
 			
 			// Let the main Update() cycle handle event loading and day view updates
 			return av.UpdateCurrentView(g)
@@ -728,10 +731,11 @@ func (av *AppView) updateWeatherData() error {
 		return nil
 	}
 	
-	// Use cached weather data to avoid API calls on every keypress
-	weatherData, err := av.weatherCache.GetWeatherData(location)
-	if err != nil {
-		return fmt.Errorf("failed to get weather data: %w", err)
+	// Use cached weather data only - no API calls during regular updates
+	weatherData, exists := av.weatherCache.GetCachedWeatherData(location)
+	if !exists {
+		// No cached data available yet - skip weather display for now
+		return nil
 	}
 	
 	// Get temperature in the preferred unit
@@ -767,7 +771,8 @@ func (av *AppView) updateMonthViewWeather() error {
 	if mainView, ok := av.GetChild("main"); ok {
 		if mv, ok := mainView.(*MainView); ok {
 			if mv.CalendarView != nil && mv.CalendarView.ViewMode == "month" && mv.CalendarView.MonthView != nil {
-				return mv.CalendarView.MonthView.UpdateWeatherData(av.Config, av.weatherCache)
+				// Don't fail the UI update if weather fails - just skip weather display
+				mv.CalendarView.MonthView.UpdateWeatherData(av.Config, av.weatherCache)
 			}
 		}
 	}
@@ -809,7 +814,8 @@ func (av *AppView) updateWeekViewWeather() error {
 	if mainView, ok := av.GetChild("main"); ok {
 		if mv, ok := mainView.(*MainView); ok {
 			if mv.CalendarView != nil && mv.CalendarView.ViewMode == "week" && mv.CalendarView.WeekView != nil {
-				return mv.CalendarView.WeekView.UpdateWeatherData(av.Config, av.weatherCache)
+				// Don't fail the UI update if weather fails - just skip weather display
+				mv.CalendarView.WeekView.UpdateWeatherData(av.Config, av.weatherCache)
 			}
 		}
 	}

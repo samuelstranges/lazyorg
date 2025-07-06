@@ -1,7 +1,6 @@
 package views
 
 import (
-	"fmt"
 	"github.com/samuelstranges/chronos/internal/calendar"
 	"github.com/samuelstranges/chronos/internal/config"
 	"github.com/samuelstranges/chronos/internal/weather"
@@ -94,10 +93,11 @@ func (wv *WeekView) UpdateWeatherData(cfg *config.Config, weatherCache *weather.
 		return nil
 	}
 	
-	// Get 3-day weather forecast
-	forecast, err := weatherCache.GetWeatherForecast(location)
-	if err != nil {
-		return fmt.Errorf("failed to get weather forecast: %w", err)
+	// Get cached weather forecast only - no API calls during UI updates
+	forecast, exists := weatherCache.GetCachedWeatherForecast(location)
+	if !exists {
+		// No cached forecast data available yet - skip weather display for now
+		return nil
 	}
 	
 	// Create a map of date -> weather data for quick lookup

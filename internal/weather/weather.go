@@ -123,6 +123,23 @@ func (wc *WeatherCache) GetWeatherData(location string) (*WeatherData, error) {
 	return weatherData, nil
 }
 
+// GetCachedWeatherData returns cached weather data only, without making API calls
+func (wc *WeatherCache) GetCachedWeatherData(location string) (*WeatherData, bool) {
+	if location == "" {
+		return nil, false
+	}
+
+	cacheKey := strings.ToLower(location)
+	if lastFetch, exists := wc.lastFetch[cacheKey]; exists {
+		if time.Since(lastFetch) < wc.cacheTTL {
+			if cachedData, exists := wc.data[cacheKey]; exists {
+				return &cachedData, true
+			}
+		}
+	}
+	return nil, false
+}
+
 // GetWeatherForecast fetches 3-day weather forecast for a location with caching
 func (wc *WeatherCache) GetWeatherForecast(location string) (*WeatherForecast, error) {
 	if location == "" {
@@ -152,6 +169,23 @@ func (wc *WeatherCache) GetWeatherForecast(location string) (*WeatherForecast, e
 	return forecast, nil
 }
 
+// GetCachedWeatherForecast returns cached forecast data only, without making API calls
+func (wc *WeatherCache) GetCachedWeatherForecast(location string) (*WeatherForecast, bool) {
+	if location == "" {
+		return nil, false
+	}
+
+	cacheKey := strings.ToLower(location)
+	if lastForecast, exists := wc.lastForecast[cacheKey]; exists {
+		if time.Since(lastForecast) < wc.cacheTTL {
+			if cachedForecast, exists := wc.forecasts[cacheKey]; exists {
+				return &cachedForecast, true
+			}
+		}
+	}
+	return nil, false
+}
+
 // fetchWeatherData fetches weather data from wttr.in API
 func fetchWeatherData(location string) (*WeatherData, error) {
 	// URL encode the location
@@ -161,7 +195,7 @@ func fetchWeatherData(location string) (*WeatherData, error) {
 	url := fmt.Sprintf("https://wttr.in/%s?format=j1", encodedLocation)
 	
 	client := &http.Client{
-		Timeout: 10 * time.Second,
+		Timeout: 3 * time.Second,
 	}
 	
 	resp, err := client.Get(url)
@@ -214,7 +248,7 @@ func GetSimpleWeatherData(location string) (string, error) {
 	url := fmt.Sprintf("https://wttr.in/%s?format=3", encodedLocation)
 	
 	client := &http.Client{
-		Timeout: 10 * time.Second,
+		Timeout: 3 * time.Second,
 	}
 	
 	resp, err := client.Get(url)
@@ -279,7 +313,7 @@ func fetchWeatherForecast(location string) (*WeatherForecast, error) {
 	url := fmt.Sprintf("https://wttr.in/%s?format=j1", encodedLocation)
 	
 	client := &http.Client{
-		Timeout: 10 * time.Second,
+		Timeout: 3 * time.Second,
 	}
 	
 	resp, err := client.Get(url)
