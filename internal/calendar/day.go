@@ -20,7 +20,9 @@ func NewDay(date time.Time) *Day {
 }
 
 func (d *Day) FormatTitle() string {
-	return d.Date.Weekday().String() + "-" + strconv.Itoa(d.Date.Day())
+	// Use 3-character abbreviation for weekday
+	weekdayAbbr := d.Date.Weekday().String()[:3]
+	return weekdayAbbr + "-" + strconv.Itoa(d.Date.Day())
 }
 
 func (d *Day) FormatTimeAndHour() string {
