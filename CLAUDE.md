@@ -41,6 +41,7 @@ go run cmd/chronos/main.go         # Run directly from source
 - **`--next`** - Return next upcoming event and exit
 - **`--current`** - Return current event (if exists) and exit
 - **`--agenda [YYYYMMDD]`** - Export agenda for today or specified date and exit
+- **`--test-notification`** - Send a test desktop notification and exit
 - **`--help`** - Show all available command-line options
 
 ### CLI Query Examples
@@ -170,6 +171,19 @@ go mod download                    # Download dependencies
   - `"fahrenheit"` or `"f"` - Fahrenheit temperatures
   - Invalid values default to Celsius
 - **Example**: `{"weather_location": "Melbourne", "weather_unit": "fahrenheit"}`
+
+### Notification Configuration
+
+- **Config file**: Set `notifications_enabled` and `notification_minutes` in `~/.config/chronos/config.json`
+- **Notifications Enabled**: Boolean flag to enable/disable desktop notifications
+  - `true` - Enable desktop notifications
+  - `false` - Disable desktop notifications (default)
+- **Notification Minutes**: Integer value for minutes before event to notify (0-60)
+  - Valid range: 0-60 minutes
+  - Default: 15 minutes
+  - Values outside range default to 15 minutes
+- **Example**: `{"notifications_enabled": true, "notification_minutes": 30}`
+- **Test**: Use `./chronos --test-notification` to verify notifications work
 
 ### Testing Strategy
 

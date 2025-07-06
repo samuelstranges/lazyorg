@@ -16,6 +16,7 @@ import (
 	"github.com/samuelstranges/chronos/internal/calendar"
 	"github.com/samuelstranges/chronos/internal/config"
 	"github.com/samuelstranges/chronos/internal/database"
+	"github.com/samuelstranges/chronos/internal/notifications"
 	"github.com/samuelstranges/chronos/internal/ui"
 	"github.com/samuelstranges/chronos/pkg/views"
 	"github.com/jroimartin/gocui"
@@ -28,12 +29,14 @@ func main() {
 	var nextFlag bool
 	var currentFlag bool
 	var agendaFlag bool
+	var testNotificationFlag bool
 	flag.StringVar(&backupPath, "backup", "", "Backup database to specified location")
 	flag.BoolVar(&debugMode, "debug", false, "Enable debug logging to /tmp/chronos_debug.txt and /tmp/chronos_getevents_debug.txt")
 	flag.StringVar(&dbPath, "db", "", "Custom database file path (default: ~/.local/share/chronos/data.db)")
 	flag.BoolVar(&nextFlag, "next", false, "Return next event")
 	flag.BoolVar(&currentFlag, "current", false, "Return current event (if exists)")
 	flag.BoolVar(&agendaFlag, "agenda", false, "Export agenda for today or specified date (provide date as next argument in YYYYMMDD format)")
+	flag.BoolVar(&testNotificationFlag, "test-notification", false, "Send a test notification")
 	flag.Parse()
 
 	// Set up cursor restoration on exit
@@ -96,6 +99,11 @@ func main() {
 		handleAgenda(database, dateStr)
 		return
 	}
+	
+	if testNotificationFlag {
+		handleTestNotification(cfg)
+		return
+	}
 
 	g, err := gocui.NewGui(gocui.Output256)
 	if err != nil {
@@ -115,6 +123,12 @@ func main() {
 	if err := ui.InitKeybindings(g, av); err != nil {
 		log.Panicln(err)
 	}
+
+	// Start notification system
+	notificationManager := notifications.NewNotificationManager(cfg)
+	scheduler := notifications.NewNotificationScheduler(notificationManager, database)
+	scheduler.Start()
+	defer scheduler.Stop()
 
 	if err := g.MainLoop(); err != nil && err != gocui.ErrQuit {
 		log.Panicln(err)
@@ -229,6 +243,28 @@ func handleCurrentEvent(db *database.Database) {
 	}
 	
 	fmt.Println("No current event")
+}
+
+// handleTestNotification sends a test notification
+func handleTestNotification(cfg *config.Config) {
+	if !config.IsNotificationsEnabled(cfg) {
+		fmt.Println("Notifications are disabled in config")
+		fmt.Println("To enable notifications, add the following to ~/.config/chronos/config.json:")
+		fmt.Println(`{
+  "notifications_enabled": true,
+  "notification_minutes": 15
+}`)
+		return
+	}
+
+	notificationManager := notifications.NewNotificationManager(cfg)
+	err := notificationManager.SendTestNotification()
+	if err != nil {
+		fmt.Printf("Failed to send test notification: %v\n", err)
+		return
+	}
+	
+	fmt.Printf("Test notification sent! (Notifications: %d minutes before events)\n", config.GetNotificationMinutes(cfg))
 }
 
 // handleAgenda prints agenda for specified date or today if no date provided

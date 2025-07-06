@@ -24,7 +24,9 @@ basically gave Claude Code the reins...
 - 🎯 **Jump Navigation**: Quick navigation with `g` and event jumping with
   `w`/`b`
 - ⏰ **Current Time Highlighting**: Visual indicators for current time
-- 🌤️ **Weather Integration**: 3-day weather forecast in month view with configurable location and units
+- 🌤️ **Weather Integration**: 3-day weather forecast in month view with
+  configurable location and units
+- 🔔 **Desktop Notifications**: Configurable event reminders (0-60 minutes before events)
 - ⌨️ **Vim-style Keybindings**: Familiar navigation and shortcuts
 - 🔒 **Conflict Prevention**: Automatic detection and prevention of overlapping
   events
@@ -97,6 +99,7 @@ Create `~/.config/chronos/config.json` to customize application settings:
 - **`--next`** - Return next upcoming event
 - **`--current`** - Return current event (if exists)
 - **`--agenda [YYYYMMDD]`** - Export agenda for today or specified date
+- **`--test-notification`** - Send a test desktop notification
 
 ### CLI Query Examples
 
@@ -112,6 +115,9 @@ Create `~/.config/chronos/config.json` to customize application settings:
 
 # Get agenda for specific date (June 17, 2025)
 ./chronos --agenda 20250617
+
+# Test desktop notifications
+./chronos --test-notification
 ```
 
 ## Usage
@@ -227,7 +233,8 @@ Command line flags take precedence over config file settings.
 
 ### Weather Integration
 
-Chronos supports optional weather integration that displays current weather in the title bar and 3-day forecasts in month view.
+Chronos supports optional weather integration that displays current weather in
+the title bar and 3-day forecasts in month view.
 
 **Configuration:** Edit `~/.config/chronos/config.json`:
 
@@ -240,41 +247,110 @@ Chronos supports optional weather integration that displays current weather in t
 
 **Weather Configuration Options:**
 
-- `weather_location` (string): Location for weather data (required to enable weather)
-  - Examples: `"London"`, `"New York"`, `"Tokyo"`, `"Melbourne"`
-  - Supports cities, airports (3-letter codes), coordinates
-  - Leave empty or omit to disable weather features
+- `weather_location` (string): Location for weather data (required to enable
+  weather)
+
+    - Examples: `"London"`, `"New York"`, `"Tokyo"`, `"Melbourne"`
+    - Supports cities, airports (3-letter codes), coordinates
+    - Leave empty or omit to disable weather features
 
 - `weather_unit` (string): Temperature unit preference (optional)
-  - `"celsius"` or `"c"` - Show temperatures in Celsius (default)
-  - `"fahrenheit"` or `"f"` - Show temperatures in Fahrenheit
-  - Invalid values default to Celsius
+    - `"celsius"` or `"c"` - Show temperatures in Celsius (default)
+    - `"fahrenheit"` or `"f"` - Show temperatures in Fahrenheit
+    - Invalid values default to Celsius
 
 **Weather Display:**
 
 - **Title Bar**: Shows current weather in all views (e.g., "Melbourne: ☁️ 21°C")
-- **Month View**: Shows 3-day forecast next to day numbers (e.g., "6• 17°⛅", "7 16°☀️")
+- **Month View**: Shows 3-day forecast next to day numbers (e.g., "6• 17°⛅", "7
+  16°☀️")
 
 **Features:**
 
 - **Smart Caching**: Weather data cached for 2 hours to minimize API calls
-- **Background Loading**: Weather preloads on startup to prevent lag when switching views
+- **Background Loading**: Weather preloads on startup to prevent lag when
+  switching views
 - **Automatic Updates**: Data refreshes every 2 hours automatically
-- **Emoji Support**: Uses weather emojis (☀️, ⛅, ☁️, 🌧️, etc.) for visual indicators
+- **Emoji Support**: Uses weather emojis (☀️, ⛅, ☁️, 🌧️, etc.) for visual
+  indicators
 
 **Technical Notes:**
 
-- Weather icons appear last in day display due to emoji width rendering issues in terminals
-- Supports wttr.in service locations (IP-based, coordinates, city names, airport codes)
+- Weather icons appear last in day display due to emoji width rendering issues
+  in terminals
+- Supports wttr.in service locations (IP-based, coordinates, city names, airport
+  codes)
 - No API key required - uses the free wttr.in weather service
 - Graceful fallback - weather failures don't affect calendar functionality
 
 **Example Month View with Weather:**
+
 ```
 │ 6• 17°⛅           │ 7 16°☀️            │ 8 14°⛅            │
 │06:00 Morning       │06:00 Morning       │06:00 Morning       │
 │08:30 Pump up tyres │18:00 Meeting       │                    │
 ```
+
+### Desktop Notifications
+
+Chronos supports optional desktop notifications that can remind you of upcoming events 0-60 minutes before they start.
+
+**Configuration:** Edit `~/.config/chronos/config.json`:
+
+```json
+{
+    "notifications_enabled": true,
+    "notification_minutes": 15
+}
+```
+
+**Notification Configuration Options:**
+
+- `notifications_enabled` (boolean): Enable or disable desktop notifications
+    - `true` - Enable desktop notifications (default: `false`)
+    - `false` - Disable desktop notifications
+
+- `notification_minutes` (integer): Minutes before event to show notification
+    - Valid range: 0-60 minutes
+    - Default: 15 minutes
+    - Values outside range default to 15 minutes
+
+**Features:**
+
+- **Cross-Platform**: Works on macOS and Linux desktop environments
+- **Smart Timing**: Notifications appear exactly N minutes before events start
+- **Duplicate Prevention**: Won't spam multiple notifications for the same event
+- **Timezone Aware**: Properly handles timezone conversions between local time and UTC storage
+- **Event Details**: Shows event name, time, location, and description (truncated if long)
+- **Test Function**: Use `--test-notification` flag to verify notifications work
+
+**Example Notification:**
+```
+Title: "Upcoming Event"
+Message: "Team Meeting
+         2:30 PM - 3:30 PM
+         Location: Conference Room A
+         Weekly project sync and updates"
+```
+
+**Testing Notifications:**
+
+```bash
+# Test if notifications work
+./chronos --test-notification
+
+# If notifications are disabled, you'll see:
+# "Notifications are disabled in config"
+# "To enable notifications, add the following to ~/.config/chronos/config.json:"
+```
+
+**Technical Notes:**
+
+- Uses the `beeep` library for cross-platform desktop notifications
+- Notifications run in background every 30 seconds to check for upcoming events  
+- Automatically starts when you launch Chronos (if enabled)
+- Events stored in UTC, notifications calculated in local timezone
+- Won't duplicate notifications for events within 1 hour window
 
 ## Future
 
@@ -287,8 +363,6 @@ Chronos supports optional weather integration that displays current weather in t
 - additional keybinds:
     - visually change duration shortcut (running out of keybinds...)
 - config options:
-    - desktop notifications
-    - weather integration? see how tmux plugins do it lol
 - export flags:
     - `--ics`
     - `--json`

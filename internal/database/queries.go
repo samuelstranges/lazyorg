@@ -411,3 +411,50 @@ func (database *Database) GetEventsByMonth(year int, month time.Month) ([]*calen
 
 	return events, nil
 }
+// GetEventsByDateRange retrieves all events within a specific date range
+// The startDate and endDate should be in local timezone and will be converted to UTC for database queries
+func (database *Database) GetEventsByDateRange(startDate, endDate time.Time) ([]*calendar.Event, error) {
+	// Convert input dates to UTC for database comparison since events are stored in UTC
+	// This ensures we find all UTC-stored events that fall within the local time range
+	startDateUTC := startDate.UTC()
+	endDateUTC := endDate.UTC()
+	
+	rows, err := database.db.Query(`
+        SELECT * FROM events WHERE time >= ? AND time < ? ORDER BY time ASC`,
+		startDateUTC.Format("2006-01-02 15:04:05"),
+		endDateUTC.Format("2006-01-02 15:04:05"),
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var events []*calendar.Event
+	for rows.Next() {
+		var event calendar.Event
+		var colorInt int
+
+		if err := rows.Scan(
+			&event.Id,
+			&event.Name,
+			&event.Description,
+			&event.Location,
+			&event.Time,
+			&event.DurationHour,
+			&event.FrequencyDay,
+			&event.Occurence,
+			&colorInt,
+		); err != nil {
+			return nil, err
+		}
+
+		if colorInt == 0 {
+			event.Color = calendar.GenerateColorFromName(event.Name)
+		} else {
+			event.Color = gocui.Attribute(colorInt)
+		}
+		events = append(events, &event)
+	}
+
+	return events, nil
+}

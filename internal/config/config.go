@@ -7,18 +7,22 @@ import (
 )
 
 type Config struct {
-	DatabasePath       string `json:"database_path,omitempty"`
-	DefaultView        string `json:"default_view,omitempty"`
-	WeatherLocation    string `json:"weather_location,omitempty"`
-	WeatherUnit        string `json:"weather_unit,omitempty"`
+	DatabasePath            string `json:"database_path,omitempty"`
+	DefaultView             string `json:"default_view,omitempty"`
+	WeatherLocation         string `json:"weather_location,omitempty"`
+	WeatherUnit             string `json:"weather_unit,omitempty"`
+	NotificationsEnabled    bool   `json:"notifications_enabled,omitempty"`
+	NotificationMinutes     int    `json:"notification_minutes,omitempty"`
 }
 
 func GetDefaultConfig() *Config {
 	return &Config{
-		DatabasePath:       "", // Empty means use default path
-		DefaultView:        "week", // Default to week view
-		WeatherLocation:    "", // Empty means no weather display
-		WeatherUnit:        "celsius", // Default to celsius
+		DatabasePath:            "", // Empty means use default path
+		DefaultView:             "week", // Default to week view
+		WeatherLocation:         "", // Empty means no weather display
+		WeatherUnit:             "celsius", // Default to celsius
+		NotificationsEnabled:    false, // Default to disabled
+		NotificationMinutes:     15, // Default to 15 minutes before
 	}
 }
 
@@ -118,4 +122,18 @@ func GetWeatherUnit(config *Config) string {
 		return "fahrenheit"
 	}
 	return "celsius" // Default to celsius
+}
+
+// IsNotificationsEnabled returns true if notifications are enabled
+func IsNotificationsEnabled(config *Config) bool {
+	return config.NotificationsEnabled
+}
+
+// GetNotificationMinutes returns the configured notification minutes (0-60)
+func GetNotificationMinutes(config *Config) int {
+	minutes := config.NotificationMinutes
+	if minutes < 0 || minutes > 60 {
+		return 15 // Default to 15 minutes if invalid
+	}
+	return minutes
 }
