@@ -208,7 +208,6 @@ Command line flags take precedence over config file settings.
             - in month view: "Showing month: July"
             - in agenda view: "Showing agenda: July 6"
         - top bar shows
-    - sunday isnt first day of week in month view
 - additional keybinds:
     - visually change duration shortcut (running out of keybinds...)
 - bugfixes:
