@@ -204,9 +204,7 @@ Command line flags take precedence over config file settings.
 - visual fixes:
     - remove the redundant 'Month Year' in the month view now we have a working
       top bar
-    - top bar shouldn't show UTC time, rather show that local time is in UTC+10
-      for example
-    - form colors are ugly
+    - form colors are ugly... this might be a limitation of gocui
     - if there are more events than can fit in month view... say on last line
       and 'x more events'
 - additional keybinds:

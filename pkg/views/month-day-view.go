@@ -2,6 +2,7 @@ package views
 
 import (
 	"fmt"
+	"os"
 	"time"
 
 	"github.com/samuelstranges/chronos/internal/calendar"
@@ -71,14 +72,37 @@ func (mdv *MonthDayView) Update(g *gocui.Gui) error {
 	fmt.Fprintf(v, "%s\n", dayStr)
 	
 	// Draw events (as bullet points)
-	maxEvents := mdv.H - 1 // Leave space for day number only (no borders)
+	maxEvents := mdv.H - 2 // Leave space for day number AND potential grid line/border
 	if maxEvents < 0 {
 		maxEvents = 0
 	}
 	
-	eventsToShow := mdv.Events
-	if len(eventsToShow) > maxEvents {
-		eventsToShow = eventsToShow[:maxEvents]
+	
+	var eventsToShow []*calendar.Event
+	var hasOverflow bool
+	
+	if len(mdv.Events) > maxEvents && maxEvents > 0 {
+		// More events than can fit - reserve last line for overflow message
+		eventsToShow = mdv.Events[:maxEvents-1]
+		hasOverflow = true
+		
+		// Debug overflow logic
+		if f, err := os.OpenFile("/tmp/chronos_overflow_debug.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644); err == nil {
+			fmt.Fprintf(f, "OVERFLOW: showing %d events, hiding %d events\n", len(eventsToShow), len(mdv.Events)-len(eventsToShow))
+			f.Close()
+		}
+	} else {
+		// All events fit, or no space at all
+		eventsToShow = mdv.Events
+		hasOverflow = false
+		
+		// Debug no overflow
+		if len(mdv.Events) > 0 {
+			if f, err := os.OpenFile("/tmp/chronos_overflow_debug.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644); err == nil {
+				fmt.Fprintf(f, "NO OVERFLOW: showing all %d events\n", len(eventsToShow))
+				f.Close()
+			}
+		}
 	}
 	
 	for _, event := range eventsToShow {
@@ -96,9 +120,15 @@ func (mdv *MonthDayView) Update(g *gocui.Gui) error {
 	}
 	
 	// If there are more events than can be displayed, show count
-	if len(mdv.Events) > maxEvents {
-		remaining := len(mdv.Events) - maxEvents
-		fmt.Fprintf(v, "• +%d more\n", remaining)
+	if hasOverflow {
+		remaining := len(mdv.Events) - len(eventsToShow)
+		fmt.Fprintf(v, "& %d more", remaining)
+		
+		// Debug overflow message
+		if f, err := os.OpenFile("/tmp/chronos_overflow_debug.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644); err == nil {
+			fmt.Fprintf(f, "PRINTED OVERFLOW MESSAGE: 'and %d more'\n", remaining)
+			f.Close()
+		}
 	}
 	
 	return nil

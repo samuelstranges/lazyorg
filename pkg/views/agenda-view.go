@@ -79,8 +79,28 @@ func (av *AgendaView) Update(g *gocui.Gui) error {
 		return nil
 	}
 	
+	// Calculate available space for events
+	maxEvents := av.H - av.HeaderHeight - 1 // Leave space for header and potential bottom border
+	if maxEvents < 0 {
+		maxEvents = 0
+	}
+	
+	// Determine which events to show and if overflow message is needed
+	var eventsToShow []*calendar.Event
+	var hasOverflow bool
+	
+	if len(av.Events) > maxEvents && maxEvents > 0 {
+		// More events than can fit - reserve last line for overflow message
+		eventsToShow = av.Events[:maxEvents-1]
+		hasOverflow = true
+	} else {
+		// All events fit, or no space at all
+		eventsToShow = av.Events
+		hasOverflow = false
+	}
+	
 	// Write events directly to main view with full details
-	for i, event := range av.Events {
+	for i, event := range eventsToShow {
 		startTime := utils.FormatHourFromTime(event.Time)
 		duration := time.Duration(event.DurationHour * float64(time.Hour))
 		endTime := event.Time.Add(duration)
@@ -122,6 +142,12 @@ func (av *AgendaView) Update(g *gocui.Gui) error {
 		}
 		
 		fmt.Fprintln(v, eventLine)
+	}
+	
+	// If there are more events than can be displayed, show count
+	if hasOverflow {
+		remaining := len(av.Events) - len(eventsToShow)
+		fmt.Fprintf(v, " & %d more events", remaining)
 	}
 	
 	// Debug logging
