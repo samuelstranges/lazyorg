@@ -31,6 +31,7 @@ func (kbv *KeybindsView) getKeybindingsContent() []string {
 		" t           - Jump to today",
 		" g           - Goto date/time form",
 		" w/b         - Jump to next/prev event",
+		" e           - End of current/next event",
 		"",
 		" Views:",
 		" v           - Toggle view (Week → Month → Agenda)",

@@ -459,6 +459,7 @@ The project recently added:
   - `--current` - Get current event (if active)
   - `--agenda [YYYYMMDD]` - Get agenda for today or specified date
 - **Enhanced View System**: Improved view toggling with `v` key cycling through Week → Month → Agenda views
+- **Vim-like Navigation**: Added `e` key for end-of-event navigation (moves to end of current event, or next event if already at end)
 - **Unified Date Format**: All date fields now use YYYYMMDD format (no dashes)
   for consistency across goto, add/edit, and search forms
 - **Consistent 't' Usage**: Changed "Jump to today" keybinding from 'T' to 't'
@@ -487,6 +488,7 @@ Previous features:
 - Enhanced search with date filtering (`/` key) - supports text queries and date
   ranges with 't' shortcut
 - Previous/next event navigation within week (`w` and `b` keys)
+- End of event navigation (`e` key) - vim-like movement to end of current event, or next event if already at end
 - CLI query flags (`--next`, `--current`, `--agenda`) for command-line event access
 
 ## notes

@@ -100,6 +100,7 @@ reference below:
 - `t` - Jump to today
 - `g` - Go to specific date
 - `w/b` - Jump to next/previous event
+- `e` - Jump to end of current event, or next event if already at end
 
 ### View Modes
 
@@ -205,12 +206,8 @@ Command line flags take precedence over config file settings.
     - in month view:
         - misaligned days of week
 - additional keybinds:
+    - remap `g` goto to `T`: to
     - `g` and `G` for start and end of day (think vim)
-    - move color to `C`
-    - move edit to `c` (change: is more vim like, and allows reuse of `e`)
-    - `e` to go to end of current event/ or next event if at end of one or not
-      in one (think vim), similar to how `w` and `b` are implemented in
-      chronos...
     - visually change duration shortcut (running out of keybinds...)
 - bugfixes:
     - handle events that wraparound the end of a day into the next day

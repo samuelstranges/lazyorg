@@ -80,6 +80,62 @@ func (av *AppView) JumpToPrevEvent() {
 	}
 }
 
+// JumpToEndOfEvent navigates to end of current event, or end of next event if not in one
+func (av *AppView) JumpToEndOfEvent() {
+	// Get all events from EventManager and convert to local time
+	allEvents, err := av.EventManager.GetAllEvents()
+	if err != nil || len(allEvents) == 0 {
+		return
+	}
+
+	// Convert UTC events to local time for comparison
+	localEvents := make([]*calendar.Event, len(allEvents))
+	for i, event := range allEvents {
+		localEvent := *event
+		localEvent.Time = event.Time.In(time.Local)
+		localEvents[i] = &localEvent
+	}
+
+	currentTime := av.Calendar.CurrentDay.Date
+	
+	// Check if we're currently within an event
+	for _, event := range localEvents {
+		eventStart := event.Time
+		eventEnd := eventStart.Add(time.Duration(event.DurationHour * float64(time.Hour)))
+		// Move to the last 30-minute slot of the event, not beyond it
+		eventLastSlot := eventEnd.Add(-30 * time.Minute)
+		
+		// If current time is within this event (inclusive of start, exclusive of end)
+		// but NOT already at the end of the event
+		if (currentTime.Equal(eventStart) || currentTime.After(eventStart)) && currentTime.Before(eventEnd) && !currentTime.Equal(eventLastSlot) {
+			av.Calendar.CurrentDay.Date = eventLastSlot
+			av.Calendar.UpdateWeek()
+			return
+		}
+	}
+	
+	// If not within an event, jump to END of next event
+	for _, event := range localEvents {
+		if event.Time.After(currentTime) {
+			eventEnd := event.Time.Add(time.Duration(event.DurationHour * float64(time.Hour)))
+			// Move to the last 30-minute slot of the event, not beyond it
+			eventLastSlot := eventEnd.Add(-30 * time.Minute)
+			av.Calendar.CurrentDay.Date = eventLastSlot
+			av.Calendar.UpdateWeek()
+			return
+		}
+	}
+	
+	// If no event found after current time, wrap to END of first event
+	if len(localEvents) > 0 {
+		firstEventEnd := localEvents[0].Time.Add(time.Duration(localEvents[0].DurationHour * float64(time.Hour)))
+		// Move to the last 30-minute slot of the event, not beyond it
+		firstEventLastSlot := firstEventEnd.Add(-30 * time.Minute)
+		av.Calendar.CurrentDay.Date = firstEventLastSlot
+		av.Calendar.UpdateWeek()
+	}
+}
+
 // getAllEventsFromWeek returns all events from the current week, sorted chronologically
 func (av *AppView) getAllEventsFromWeek() []*calendar.Event {
 	var allEvents []*calendar.Event

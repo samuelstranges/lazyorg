@@ -78,6 +78,7 @@ func initMainKeybindings(g *gocui.Gui, av *views.AppView) error {
 		{'g', func(g *gocui.Gui, v *gocui.View) error { return av.ShowGotoPopup(g) }},
 		{'w', func(g *gocui.Gui, v *gocui.View) error { av.JumpToNextEvent(); av.UpdateCurrentView(g); return nil }},
 		{'b', func(g *gocui.Gui, v *gocui.View) error { av.JumpToPrevEvent(); av.UpdateCurrentView(g); return nil }},
+		{'e', func(g *gocui.Gui, v *gocui.View) error { av.JumpToEndOfEvent(); av.UpdateCurrentView(g); return nil }},
 		{'/', func(g *gocui.Gui, v *gocui.View) error { return av.StartSearch(g) }},
 		{'n', func(g *gocui.Gui, v *gocui.View) error { av.GoToNextMatch(); av.UpdateCurrentView(g); return nil }},
 		{'N', func(g *gocui.Gui, v *gocui.View) error { av.GoToPrevMatch(); av.UpdateCurrentView(g); return nil }},
