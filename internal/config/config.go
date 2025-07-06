@@ -8,11 +8,13 @@ import (
 
 type Config struct {
 	DatabasePath       string `json:"database_path,omitempty"`
+	DefaultView        string `json:"default_view,omitempty"`
 }
 
 func GetDefaultConfig() *Config {
 	return &Config{
 		DatabasePath:       "", // Empty means use default path
+		DefaultView:        "week", // Default to week view
 	}
 }
 
@@ -81,4 +83,17 @@ func GetDatabasePath(config *Config) string {
 	}
 	
 	return filepath.Join(homeDir, ".local", "share", "chronos", "data.db")
+}
+
+// GetDefaultView returns the default view mode from config, defaulting to "week" if not set
+func GetDefaultView(config *Config) string {
+	if config.DefaultView != "" {
+		switch config.DefaultView {
+		case "week", "month", "agenda":
+			return config.DefaultView
+		default:
+			return "week" // fallback to week if invalid value
+		}
+	}
+	return "week"
 }

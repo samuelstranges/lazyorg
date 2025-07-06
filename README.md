@@ -64,6 +64,30 @@ go build -o chronos cmd/chronos/main.go
   `/tmp/chronos_getevents_debug.txt`
 - **`--help`** - Show all available command-line options
 
+### Configuration File
+
+Create `~/.config/chronos/config.json` to customize application settings:
+
+```json
+{
+  "database_path": "/path/to/custom/database.db",
+  "default_view": "month"
+}
+```
+
+**Available Options:**
+- **`database_path`** - Custom database file location (overrides default)
+- **`default_view`** - Default view mode on startup: `"week"` (default), `"month"`, or `"agenda"`
+
+**Example Configurations:**
+```json
+// Start in month view
+{"default_view": "month"}
+
+// Start in agenda view with custom database
+{"default_view": "agenda", "database_path": "/home/user/my_calendar.db"}
+```
+
 ### Event Queries (CLI Mode)
 
 - **`--next`** - Return next upcoming event
@@ -200,19 +224,17 @@ Command line flags take precedence over config file settings.
 ## Future
 
 - major changes:
-    - dynamically change view based on available size in week mode
+    - dynamically change view based on available size in week mode (rather than
+      cutting things off of bottom, use the number of available seen lines to
+      shift down what user sees)
 - visual fixes:
     - remove the redundant 'Month Year' in the month view now we have a working
       top bar
     - form colors are ugly... this might be a limitation of gocui
-    - if there are more events than can fit in month view... say on last line
-      and 'x more events'
 - additional keybinds:
     - visually change duration shortcut (running out of keybinds...)
 - bugfixes:
     - handle events that wraparound the end of a day into the next day
-    - does change not respect UTC time? i can create overlapping events with
-      it...
 - config options:
     - default 'view'
     - desktop notifications

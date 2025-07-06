@@ -35,6 +35,10 @@ type AppView struct {
 	searchMatches     []*calendar.Event
 	currentMatchIndex int
 	isSearchActive    bool
+	
+	// View initialization
+	initialViewMode   string
+	viewInitialized   bool
 }
 
 
@@ -56,7 +60,8 @@ func NewAppView(g *gocui.Gui, db *database.Database, cfg *config.Config) *AppVie
 	
 
 	titleView := NewTitleView(c)
-	titleView.SetViewMode("week") // Default to week view
+	defaultView := config.GetDefaultView(cfg)
+	titleView.SetViewMode(defaultView)
 	av.AddChild("title", titleView)
 	av.AddChild("popup", NewEvenPopup(g, c, db, av.EventManager))
 	av.AddChild("main", NewMainView(c, db, av.EventManager))
@@ -64,6 +69,9 @@ func NewAppView(g *gocui.Gui, db *database.Database, cfg *config.Config) *AppVie
 	// Set up error handler for EventManager after popup is created
 	av.setupErrorHandler(g)
 	
+	// Store the default view mode for later initialization
+	// We can't switch views during NewAppView because GUI isn't fully initialized yet
+	av.initialViewMode = defaultView
 	
 	av.AddChild("keybinds", NewKeybindsView())
 
@@ -107,6 +115,12 @@ func (av *AppView) Update(g *gocui.Gui) error {
 		return err
 	}
 
+	// Initialize the view mode on first update
+	if !av.viewInitialized {
+		av.initializeViewMode(g)
+		av.viewInitialized = true
+	}
+
 	av.updateChildViewProperties()
 
 	if err = av.UpdateChildren(g); err != nil {
@@ -122,6 +136,18 @@ func (av *AppView) Update(g *gocui.Gui) error {
 	}
 
 	return nil
+}
+
+// initializeViewMode sets up the initial view mode after GUI is initialized
+func (av *AppView) initializeViewMode(g *gocui.Gui) {
+	switch av.initialViewMode {
+	case "month":
+		av.SwitchToMonthView(g)
+	case "agenda":
+		av.SwitchToAgendaView(g)
+	default:
+		// Week view is already the default, no need to switch
+	}
 }
 
 func (av *AppView) updateEventsFromDatabase() error {

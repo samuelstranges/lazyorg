@@ -150,6 +150,13 @@ go mod download                    # Download dependencies
 - **Config file**: Set `database_path` in `~/.config/chronos/config.json`
 - **Priority**: Command line flag > config file > default location
 
+### Default View Configuration
+
+- **Config file**: Set `default_view` in `~/.config/chronos/config.json`
+- **Options**: `"week"` (default), `"month"`, or `"agenda"`
+- **Example**: `{"default_view": "month"}` - Application will start in month view
+- **Validation**: Invalid values automatically fallback to week view
+
 ### Testing Strategy
 
 - Unit tests focus on EventManager functionality
