@@ -66,9 +66,9 @@ go build -o chronos cmd/chronos/main.go
 
 ### Event Queries (CLI Mode)
 
-- **`--next`** - Return next upcoming event and exit
-- **`--current`** - Return current event (if exists) and exit
-- **`--agenda [YYYYMMDD]`** - Export agenda for today or specified date and exit
+- **`--next`** - Return next upcoming event
+- **`--current`** - Return current event (if exists)
+- **`--agenda [YYYYMMDD]`** - Export agenda for today or specified date
 
 ### CLI Query Examples
 
@@ -200,14 +200,10 @@ Command line flags take precedence over config file settings.
 ## Future
 
 - visual fixes:
-    - top bar:
-        - line 1: should show current date and time (and what UTC)
-        - line 2: should contextually show information about:
-            - in week view: "Showing week: July 6 to 12"
-                - show what month your in in week view (top left)
-            - in month view: "Showing month: July"
-            - in agenda view: "Showing agenda: July 6"
-        - top bar shows
+    - remove the redundant 'Month Year' in the month view now we have a working
+      top bar
+    - top bar shouldn't show UTC time, rather show that local time is in UTC+10
+      for example
 - additional keybinds:
     - visually change duration shortcut (running out of keybinds...)
 - bugfixes:
@@ -227,6 +223,7 @@ Command line flags take precedence over config file settings.
   flexibility (undo/redo of mass change of events would be hard to sync), and
   fits well within the constraints of a TUI
 - import not planned due to limitations of 30 min events
+- shift-tab through forms: not supported by gocui
 
 ## Acknowledgments
 
