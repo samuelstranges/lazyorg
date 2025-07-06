@@ -2,7 +2,6 @@ package views
 
 import (
 	"fmt"
-	"os"
 	"sort"
 	"time"
 
@@ -58,17 +57,6 @@ func (av *AgendaView) Update(g *gocui.Gui) error {
 	
 	v.Frame = true
 	v.Clear()
-	
-	// Debug logging for main view
-	if f, err := os.OpenFile("/tmp/chronos_agenda_debug.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644); err == nil {
-		fmt.Fprintf(f, "AgendaView main Update: dims=(%d,%d,%d,%d), events=%d, view=%p\n", 
-			av.X, av.Y, av.W, av.H, len(av.Events), v)
-		if v != nil {
-			vw, vh := v.Size()
-			fmt.Fprintf(f, "  View size: (%d,%d)\n", vw, vh)
-		}
-		f.Close()
-	}
 	
 	// Draw header
 	av.drawHeader(v)
@@ -150,22 +138,10 @@ func (av *AgendaView) Update(g *gocui.Gui) error {
 		fmt.Fprintf(v, " & %d more events", remaining)
 	}
 	
-	// Debug logging
-	if f, err := os.OpenFile("/tmp/chronos_agenda_debug.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644); err == nil {
-		fmt.Fprintf(f, "TEST: Wrote %d events directly to main view\n", len(av.Events))
-		f.Close()
-	}
-	
 	return nil
 }
 
 func (av *AgendaView) drawHeader(v *gocui.View) {
-	// Debug logging
-	if f, err := os.OpenFile("/tmp/chronos_agenda_debug.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644); err == nil {
-		fmt.Fprintf(f, "drawHeader called: view=%p, width=%d\n", v, av.W)
-		f.Close()
-	}
-	
 	// Line 1: Empty for spacing
 	fmt.Fprintln(v, "")
 	
@@ -180,28 +156,12 @@ func (av *AgendaView) drawHeader(v *gocui.View) {
 		separator += "-"
 	}
 	fmt.Fprintln(v, separator)
-	
-	// Debug logging after header
-	if f, err := os.OpenFile("/tmp/chronos_agenda_debug.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644); err == nil {
-		fmt.Fprintf(f, "drawHeader complete: separator length=%d\n", len(separator))
-		f.Close()
-	}
 }
 
 func (av *AgendaView) loadEventsForDate() error {
-	// Debug logging
-	if f, err := os.OpenFile("/tmp/chronos_agenda_debug.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644); err == nil {
-		fmt.Fprintf(f, "loadEventsForDate called for: %s\n", av.CurrentDate.Format("2006-01-02"))
-		f.Close()
-	}
-	
 	// Get events for the current date
 	events, err := av.EventManager.GetEventsByDate(av.CurrentDate)
 	if err != nil {
-		if f, err := os.OpenFile("/tmp/chronos_agenda_debug.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644); err == nil {
-			fmt.Fprintf(f, "ERROR loading events: %v\n", err)
-			f.Close()
-		}
 		return err
 	}
 	
@@ -211,15 +171,6 @@ func (av *AgendaView) loadEventsForDate() error {
 		localEvent := *event
 		localEvent.Time = event.Time.In(time.Local)
 		localEvents[i] = &localEvent
-	}
-	
-	// Debug logging
-	if f, err := os.OpenFile("/tmp/chronos_agenda_debug.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644); err == nil {
-		fmt.Fprintf(f, "Found %d events for %s\n", len(localEvents), av.CurrentDate.Format("2006-01-02"))
-		for i, event := range localEvents {
-			fmt.Fprintf(f, "  Event %d: %s at %s\n", i, event.Name, event.Time.Format("15:04"))
-		}
-		f.Close()
 	}
 	
 	// Sort events by time
@@ -241,12 +192,6 @@ func (av *AgendaView) loadEventsForDate() error {
 }
 
 func (av *AgendaView) updateEventViews(g *gocui.Gui) error {
-	// Debug logging
-	if f, err := os.OpenFile("/tmp/chronos_agenda_debug.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644); err == nil {
-		fmt.Fprintf(f, "updateEventViews called: %d events to display\n", len(av.Events))
-		f.Close()
-	}
-	
 	// Clear existing event views
 	av.clearEventViews(g)
 	
@@ -261,19 +206,8 @@ func (av *AgendaView) updateEventViews(g *gocui.Gui) error {
 		w := av.W - 2  // 2 pixels narrower than parent (1 pixel margin on each side)
 		h := 1         // 1 line height per event
 		
-		// Debug logging
-		if f, err := os.OpenFile("/tmp/chronos_agenda_debug.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644); err == nil {
-			fmt.Fprintf(f, "Creating event view %s at (%d,%d) size (%d,%d) for event: %s\n", 
-				eventViewName, x, y, w, h, event.Name)
-			f.Close()
-		}
-		
 		// Skip if outside view bounds
 		if y >= av.Y+av.H-1 {
-			if f, err := os.OpenFile("/tmp/chronos_agenda_debug.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644); err == nil {
-				fmt.Fprintf(f, "Skipping event %s - outside bounds: y=%d, maxY=%d\n", eventViewName, y, av.Y+av.H-1)
-				f.Close()
-			}
 			break
 		}
 		
