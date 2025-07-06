@@ -31,6 +31,8 @@ basically gave Claude Code the reins...
 - ⌨️ **Vim-style Keybindings**: Familiar navigation and shortcuts
 - 🔒 **Conflict Prevention**: Automatic detection and prevention of overlapping
   events
+- 📱 **Responsive Design**: Dynamic viewport adjustment for different terminal
+  sizes
 
 ## Installation
 
@@ -142,6 +144,9 @@ reference below:
 
 - `v` - Toggle between Week View, Month View, and Agenda View
     - **Week View**: 7-day calendar with half-hour time slots (default)
+      - **Responsive Design**: Automatically adjusts to terminal size
+      - **Smart Scrolling**: Viewport centers around cursor position
+      - **Border-Aware**: Ensures all time slots are visible (including 23:30)
     - **Month View**: Monthly calendar grid overview
     - **Agenda View**: Daily event list with detailed information
 
@@ -358,14 +363,41 @@ Message: "Team Meeting
 - Events stored in UTC, notifications calculated in local timezone
 - Won't duplicate notifications for events within 1 hour window
 
+## Responsive Design
+
+### Week View Viewport System
+
+The week view features a sophisticated responsive viewport system that automatically adjusts to your terminal size, providing a seamless experience similar to responsive web applications.
+
+**Key Features:**
+
+- **Automatic Terminal Adaptation**: The viewport dynamically calculates how many time slots can fit in your terminal height
+- **Intelligent Scrolling**: Always keeps the cursor-selected time visible by automatically centering the viewport
+- **Border-Aware Calculations**: Properly accounts for view borders to ensure complete visibility of time slots
+- **23:30 Visibility**: Special handling ensures the last time slot (23:30) is never hidden at the bottom edge
+
+**How It Works:**
+
+- **Small Terminals**: Shows fewer time slots and automatically scrolls as you navigate
+- **Large Terminals**: Can display the entire day (all 48 half-hour slots) if terminal is tall enough
+- **Window Resize**: Instantly adapts when you resize your terminal window
+- **Smart Centering**: Viewport automatically follows your cursor to maintain optimal visibility
+
+**Technical Implementation:**
+
+The system uses a viewport-based approach where:
+- **Viewport Start**: Tracks which time slot appears at the top (0=00:00, 47=23:30)
+- **Visible Slots**: Calculates `terminal_height - 1` to reserve space for borders
+- **Event Positioning**: All events are positioned relative to the current viewport
+- **Automatic Adjustment**: Triggered on every UI update and navigation
+
+This ensures that whether you're using a small terminal or a large monitor, Chronos adapts to provide the best possible experience without cutting off content or requiring manual scrolling.
+
 ## Future
 
-- major changes:
-    - dynamically change view based on available size in week mode (rather than
-      cutting things off of bottom, use the number of available seen lines to
-      shift down what user sees)
 - visual fixes:
     - form colors are ugly... this might be a limitation of gocui
+    - second line of event shows event location (if enough space in event)
 - additional keybinds:
     - visually change duration shortcut (running out of keybinds...)
 - export flags:

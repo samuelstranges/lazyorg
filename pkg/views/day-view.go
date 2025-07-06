@@ -2,7 +2,6 @@ package views
 
 import (
 	"fmt"
-	"os"
 	"sort"
 	"strings"
 	"time"
@@ -91,7 +90,6 @@ func (dv *DayView) updateCurrentTimeHighlight(g *gocui.Gui) error {
 		now               = time.Now()
 		v                 *gocui.View
 		err               error
-		f                 *os.File
 	)
 	
 	// Check if any popup/form views exist - if so, don't create time highlighting
@@ -109,16 +107,6 @@ func (dv *DayView) updateCurrentTimeHighlight(g *gocui.Gui) error {
 		}
 	}
 
-	// Debug logging
-	if f, err = os.OpenFile("/tmp/chronos_currenttime_debug.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644); err == nil {
-		fmt.Fprintf(f, "updateCurrentTimeHighlight: ViewDate=%s, Now=%s, SameYear=%t, SameMonth=%t, SameDay=%t\n",
-			dv.Day.Date.Format("2006-01-02"),
-			now.Format("2006-01-02"),
-			dv.Day.Date.Year() == now.Year(),
-			dv.Day.Date.Month() == now.Month(),
-			dv.Day.Date.Day() == now.Day())
-		f.Close()
-	}
 
 	// If this is not today's date, ensure the highlight view is removed
 	if dv.Day.Date.Year() != now.Year() || dv.Day.Date.Month() != now.Month() || dv.Day.Date.Day() != now.Day() {
@@ -290,42 +278,21 @@ func (dv *DayView) updateChildViewProperties(g *gocui.Gui) error {
 		return events[i].Time.Before(events[j].Time)
 	})
 	
-	// Debug logging for day view
-	if f, err := os.OpenFile("/tmp/chronos_dayview_debug.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644); err == nil {
-		fmt.Fprintf(f, "=== DayView.updateChildViewProperties START ===\n")
-		fmt.Fprintf(f, "Day: %s, Events count: %d\n", dv.Day.Date.Format("2006-01-02"), len(events))
-		fmt.Fprintf(f, "DayView position: X=%d, Y=%d, W=%d, H=%d\n", dv.X, dv.Y, dv.W, dv.H)
-		fmt.Fprintf(f, "TimeView viewport: start=%d, visible=%d\n", dv.TimeView.GetViewportStart(), dv.TimeView.GetVisibleSlots())
-		f.Close()
-	}
 
 	for i, event := range events {
 		x := dv.X
 		// Use the new viewport-aware position calculation
 		timePosition := utils.TimeToPositionWithViewport(event.Time, dv.TimeView.GetViewportStart())
 		
-		// Debug logging for each event
-		if f, err := os.OpenFile("/tmp/chronos_dayview_debug.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644); err == nil {
-			fmt.Fprintf(f, "Event %d: %s at %s, timePosition=%d\n", i, event.Name, event.Time.Format("15:04"), timePosition)
-			f.Close()
-		}
 		
 		// Skip events that are outside the viewport
 		if timePosition < 0 {
-			if f, err := os.OpenFile("/tmp/chronos_dayview_debug.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644); err == nil {
-				fmt.Fprintf(f, "  -> Skipping (before viewport)\n")
-				f.Close()
-			}
 			continue
 		}
 		
 		// Check if event extends beyond the visible area
 		visibleSlots := dv.TimeView.GetVisibleSlots()
 		if timePosition >= visibleSlots {
-			if f, err := os.OpenFile("/tmp/chronos_dayview_debug.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644); err == nil {
-				fmt.Fprintf(f, "  -> Skipping (after viewport)\n")
-				f.Close()
-			}
 			continue
 		}
 		
@@ -334,23 +301,13 @@ func (dv *DayView) updateChildViewProperties(g *gocui.Gui) error {
 		h := utils.DurationToHeight(event.DurationHour) + 1
 		
 		// Truncate event height if it extends beyond visible area
-		originalH := h
 		if timePosition + h > visibleSlots {
 			h = visibleSlots - timePosition
 		}
 		
-		// Debug logging for positioning
-		if f, err := os.OpenFile("/tmp/chronos_dayview_debug.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644); err == nil {
-			fmt.Fprintf(f, "  -> Position: x=%d, y=%d, w=%d, h=%d (original h=%d)\n", x, y, w, h, originalH)
-			f.Close()
-		}
 		
 		// Ensure minimum height
 		if h <= 0 {
-			if f, err := os.OpenFile("/tmp/chronos_dayview_debug.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644); err == nil {
-				fmt.Fprintf(f, "  -> Skipping (no height)\n")
-				f.Close()
-			}
 			continue
 		}
 
@@ -398,11 +355,6 @@ func (dv *DayView) updateChildViewProperties(g *gocui.Gui) error {
 		dv.children.Delete(viewName)
 	}
 
-	// Debug logging end
-	if f, err := os.OpenFile("/tmp/chronos_dayview_debug.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644); err == nil {
-		fmt.Fprintf(f, "=== DayView.updateChildViewProperties END ===\n\n")
-		f.Close()
-	}
 
 	return nil
 }

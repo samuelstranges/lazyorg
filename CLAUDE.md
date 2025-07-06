@@ -347,6 +347,51 @@ finding events across the entire database.
   button
 - Validation messages document the 't' shortcut in tooltips
 
+### Responsive Viewport System
+
+The week view implements a responsive viewport system that automatically adjusts to terminal size, providing a web-app-like responsive experience.
+
+**Core Features:**
+
+- **Dynamic View Adjustment**: Automatically calculates visible time slots based on terminal height
+- **Intelligent Scrolling**: Centers viewport around cursor position to prevent content cutoff
+- **Border-Aware Calculations**: Accounts for view borders to ensure all time slots are properly visible
+- **23:30 Special Handling**: Ensures the last time slot (23:30) is comfortably visible, not hidden at bottom edge
+
+**Implementation Architecture:**
+
+- **TimeView Viewport Management**: 
+  - `ViewportStart`: Starting time slot for visible area (0-47, representing 00:00-23:30)
+  - `MaxTimeSlots`: Total available time slots (48 for 24-hour day)
+  - `AutoAdjustViewport()`: Automatically centers viewport based on cursor position
+  - `GetVisibleSlots()`: Calculates visible slots as `terminal_height - 1` (reserves border space)
+
+- **Event Positioning**: 
+  - `TimeToPositionWithViewport()`: Calculates viewport-relative positions for events
+  - Events outside viewport are automatically skipped during rendering
+  - Event heights are truncated if they extend beyond visible area
+
+**Key Functions:**
+
+- `AutoAdjustViewport(calendarTime)` - Centers viewport around specified time
+- `GetViewportStart()` - Returns current viewport starting position
+- `GetVisibleSlots()` - Returns number of visible time slots
+- `AdjustViewportForCursor()` - Centers viewport around cursor position
+
+**Responsive Behavior:**
+
+- **Small Terminals**: Shows fewer time slots, automatically scrolls to keep cursor visible
+- **Large Terminals**: Shows more/all time slots, may show entire day if terminal is tall enough
+- **Window Resize**: Viewport automatically readjusts on terminal size changes
+- **Navigation**: Viewport follows cursor movement to maintain visibility
+
+**Technical Details:**
+
+- Viewport calculations use `tv.H - 1` to reserve space for view borders
+- Special logic for 23:30 positioning prevents it from being hidden at bottom edge
+- Events are positioned using `utils.TimeToPositionWithViewport()` for viewport awareness
+- MainView coordinates viewport adjustment during UI updates
+
 ### Known Issues and Technical Debt
 
 #### Mixed Timezone Storage in Database - RESOLVED
