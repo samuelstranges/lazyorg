@@ -102,6 +102,7 @@ Create `~/.config/chronos/config.json` to customize application settings:
 - **`--next`** - Return next upcoming event
 - **`--current`** - Return current event (if exists)
 - **`--agenda [YYYYMMDD]`** - Export agenda for today or specified date
+- **`--ics <path>`** - Export all events to iCalendar (.ics) file (experimental)
 - **`--test-notification`** - Send a test desktop notification
 
 ### CLI Query Examples
@@ -118,6 +119,9 @@ Create `~/.config/chronos/config.json` to customize application settings:
 
 # Get agenda for specific date (June 17, 2025)
 ./chronos --agenda 20250617
+
+# Export all events to iCalendar file
+./chronos --ics ~/my_calendar.ics
 
 # Test desktop notifications
 ./chronos --test-notification
@@ -393,6 +397,70 @@ The system uses a viewport-based approach where:
 
 This ensures that whether you're using a small terminal or a large monitor, Chronos adapts to provide the best possible experience without cutting off content or requiring manual scrolling.
 
+## Calendar Export
+
+### iCalendar (.ics) Export (Experimental)
+
+Chronos supports exporting all your events to iCalendar (.ics) format for importing into other calendar applications like Google Calendar, Apple Calendar, Outlook, and more.
+
+> **⚠️ Experimental Feature**: The ICS export functionality is currently experimental. While it follows RFC 5545 standards and has been tested with major calendar applications, you may encounter compatibility issues with some calendar software. Please test imports with a small subset of events first.
+
+```bash
+# Export all events to an iCalendar file
+./chronos --ics ~/my_calendar.ics
+./chronos --ics /path/to/export/calendar.ics
+```
+
+**Features:**
+
+- **RFC 5545 Compliant**: Full compliance with the iCalendar standard
+- **Smart Recurring Events**: Automatically consolidates recurring event instances into proper RRULE definitions
+- **Cross-Platform Compatible**: Works with all major calendar applications (Google Calendar, Apple Calendar, Outlook, etc.)
+- **Complete Event Data**: Exports event names, descriptions, locations, start/end times, and recurrence patterns
+- **Timezone Handling**: Proper UTC timezone conversion for maximum compatibility
+
+**What Gets Exported:**
+
+- All event titles, descriptions, and locations
+- Accurate start and end times (converted to UTC)
+- Recurring events as single entries with RRULE patterns instead of hundreds of duplicates
+- Event creation timestamps and unique identifiers
+
+**Supported Calendar Applications:**
+
+- **macOS Calendar**: Native import support
+- **Google Calendar**: Import via "Import & Export" settings
+- **Microsoft Outlook**: Import via "File > Import" menu
+- **Mozilla Thunderbird**: Lightning calendar add-on
+- **Any RFC 5545 compatible calendar application**
+
+**Example Output Structure:**
+
+```ics
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//Chronos//Chronos Calendar Application//EN
+CALSCALE:GREGORIAN
+METHOD:PUBLISH
+BEGIN:VEVENT
+UID:chronos-event-1@chronos.local
+DTSTART:20250706T060000Z
+DTEND:20250706T070000Z
+SUMMARY:Morning Routine
+RRULE:FREQ=DAILY;INTERVAL=1;COUNT=365
+END:VEVENT
+END:VCALENDAR
+```
+
+**Performance Benefits:**
+
+Instead of exporting hundreds of individual recurring event instances, Chronos intelligently exports:
+- 1 "Morning" event with `RRULE:FREQ=DAILY;INTERVAL=1;COUNT=365` (daily for a year)
+- 1 "Weekly Meeting" event with `RRULE:FREQ=DAILY;INTERVAL=7;COUNT=52` (weekly for a year)
+- Individual non-recurring events as separate entries
+
+This approach prevents calendar application overload and creates clean, manageable imports.
+
 ## Future
 
 - visual fixes:
@@ -400,8 +468,7 @@ This ensures that whether you're using a small terminal or a large monitor, Chro
     - second line of event shows event location (if enough space in event)
 - additional keybinds:
     - visually change duration shortcut (running out of keybinds...)
-- export flags:
-    - `--ics`
+- additional export formats:
     - `--json`
     - `--csv`
 

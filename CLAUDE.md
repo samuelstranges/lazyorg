@@ -41,6 +41,7 @@ go run cmd/chronos/main.go         # Run directly from source
 - **`--next`** - Return next upcoming event and exit
 - **`--current`** - Return current event (if exists) and exit
 - **`--agenda [YYYYMMDD]`** - Export agenda for today or specified date and exit
+- **`--ics <path>`** - Export all events to iCalendar (.ics) file and exit
 - **`--test-notification`** - Send a test desktop notification and exit
 - **`--help`** - Show all available command-line options
 
@@ -58,6 +59,9 @@ go run cmd/chronos/main.go         # Run directly from source
 
 # Get agenda for specific date
 ./chronos --agenda 20250617
+
+# Export all events to iCalendar file
+./chronos --ics ~/my_calendar.ics
 ```
 
 ### Testing

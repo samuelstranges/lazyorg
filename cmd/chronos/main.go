@@ -16,6 +16,7 @@ import (
 	"github.com/samuelstranges/chronos/internal/calendar"
 	"github.com/samuelstranges/chronos/internal/config"
 	"github.com/samuelstranges/chronos/internal/database"
+	"github.com/samuelstranges/chronos/internal/ics"
 	"github.com/samuelstranges/chronos/internal/notifications"
 	"github.com/samuelstranges/chronos/internal/ui"
 	"github.com/samuelstranges/chronos/pkg/views"
@@ -30,6 +31,7 @@ func main() {
 	var currentFlag bool
 	var agendaFlag bool
 	var testNotificationFlag bool
+	var icsFlag string
 	flag.StringVar(&backupPath, "backup", "", "Backup database to specified location")
 	flag.BoolVar(&debugMode, "debug", false, "Enable debug logging to /tmp/chronos_debug.txt and /tmp/chronos_getevents_debug.txt")
 	flag.StringVar(&dbPath, "db", "", "Custom database file path (default: ~/.local/share/chronos/data.db)")
@@ -37,6 +39,7 @@ func main() {
 	flag.BoolVar(&currentFlag, "current", false, "Return current event (if exists)")
 	flag.BoolVar(&agendaFlag, "agenda", false, "Export agenda for today or specified date (provide date as next argument in YYYYMMDD format)")
 	flag.BoolVar(&testNotificationFlag, "test-notification", false, "Send a test notification")
+	flag.StringVar(&icsFlag, "ics", "", "Export all events to iCalendar (.ics) file at specified path")
 	flag.Parse()
 
 	// Set up cursor restoration on exit
@@ -102,6 +105,11 @@ func main() {
 	
 	if testNotificationFlag {
 		handleTestNotification(cfg)
+		return
+	}
+	
+	if icsFlag != "" {
+		handleICSExport(database, icsFlag)
 		return
 	}
 
@@ -322,4 +330,25 @@ func handleAgenda(db *database.Database, dateStr string) {
 			fmt.Printf("  Description: %s\n", event.Description)
 		}
 	}
+}
+
+// handleICSExport exports all events to an iCalendar (.ics) file
+func handleICSExport(db *database.Database, filePath string) {
+	events, err := db.GetAllEvents()
+	if err != nil {
+		log.Fatal("Error getting events:", err)
+	}
+
+	if len(events) == 0 {
+		fmt.Println("No events to export")
+		return
+	}
+
+	exporter := ics.NewICSExporter()
+	err = exporter.ExportToFile(events, filePath)
+	if err != nil {
+		log.Fatal("Error exporting to ICS file:", err)
+	}
+
+	fmt.Printf("Exported %d events to %s\n", len(events), filePath)
 }
