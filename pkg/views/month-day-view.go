@@ -123,12 +123,6 @@ func (mdv *MonthDayView) Update(g *gocui.Gui) error {
 	if hasOverflow {
 		remaining := len(mdv.Events) - len(eventsToShow)
 		fmt.Fprintf(v, "& %d more", remaining)
-		
-		// Debug overflow message
-		if f, err := os.OpenFile("/tmp/chronos_overflow_debug.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644); err == nil {
-			fmt.Fprintf(f, "PRINTED OVERFLOW MESSAGE: 'and %d more'\n", remaining)
-			f.Close()
-		}
 	}
 	
 	return nil
