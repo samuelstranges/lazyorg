@@ -22,6 +22,8 @@ type MonthDayView struct {
 	IsCurrentMonth bool
 	IsToday        bool
 	IsSelected     bool
+	WeatherIcon    string
+	WeatherMaxTemp string
 }
 
 func NewMonthDayView(name string, date time.Time, currentMonth time.Time) *MonthDayView {
@@ -63,11 +65,18 @@ func (mdv *MonthDayView) Update(g *gocui.Gui) error {
 	// Clear and draw content
 	v.Clear()
 	
-	// Draw day number
+	// Draw day number with weather icon
 	dayNum := mdv.Date.Day()
 	dayStr := fmt.Sprintf("%2d", dayNum)
 	if mdv.IsToday {
 		dayStr += "•" // Add dot for today
+	}
+	if mdv.WeatherIcon != "" {
+		if mdv.WeatherMaxTemp != "" {
+			// Put temperature before emoji to avoid truncation issues
+			dayStr += " " + mdv.WeatherMaxTemp + "°"
+		}
+		dayStr += mdv.WeatherIcon
 	}
 	fmt.Fprintf(v, "%s\n", dayStr)
 	
@@ -184,3 +193,15 @@ func isSameDay(date1, date2 time.Time) bool {
 		   date1.Month() == date2.Month() && 
 		   date1.Day() == date2.Day()
 }
+
+// SetWeatherIcon sets the weather icon for this day
+func (mdv *MonthDayView) SetWeatherIcon(icon string) {
+	mdv.WeatherIcon = icon
+}
+
+// SetWeatherData sets both the weather icon and max temperature for this day
+func (mdv *MonthDayView) SetWeatherData(icon, maxTemp string) {
+	mdv.WeatherIcon = icon
+	mdv.WeatherMaxTemp = maxTemp
+}
+

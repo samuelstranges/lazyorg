@@ -15,6 +15,7 @@ type TitleView struct {
 	Calendar *calendar.Calendar
 	ViewMode string
 	CurrentDate time.Time
+	WeatherData string
 }
 
 func NewTitleView(c *calendar.Calendar) *TitleView {
@@ -52,7 +53,7 @@ func (tv *TitleView) updateBody(v *gocui.View) {
 	tzAbbr, offset := now.Zone()
 	offsetHours := offset / 3600
 
-	// Line 1: Current date and time with timezone offset
+	// Line 1: Current date and time with timezone offset and weather
 	line1 := fmt.Sprintf("Current date/time: %s %d, %d - %s (%s, UTC%+d)",
 		now.Month().String(),
 		now.Day(),
@@ -60,6 +61,11 @@ func (tv *TitleView) updateBody(v *gocui.View) {
 		utils.FormatHourFromTime(now),
 		tzAbbr,
 		offsetHours)
+	
+	// Add weather data to line 1 if available
+	if tv.WeatherData != "" {
+		line1 += " | " + tv.WeatherData
+	}
 	
 	// Line 2: View context information (will be updated by AppView)
 	line2 := tv.getContextualInfo()
@@ -87,4 +93,9 @@ func (tv *TitleView) getContextualInfo() string {
 // SetViewMode sets the current view mode for contextual display
 func (tv *TitleView) SetViewMode(mode string) {
 	tv.ViewMode = mode
+}
+
+// SetWeatherData sets the weather data to display in the title
+func (tv *TitleView) SetWeatherData(weatherData string) {
+	tv.WeatherData = weatherData
 }

@@ -95,6 +95,7 @@ go mod download                    # Download dependencies
 - `internal/eventmanager/eventmanager.go` - Event management with undo/redo
   functionality
 - `internal/calendar/` - Calendar domain models (Event, Day, Week, Calendar)
+- `internal/weather/weather.go` - Weather data fetching, caching, and forecast management
 
 **UI Layer:**
 
@@ -106,6 +107,7 @@ go mod download                    # Download dependencies
 ### Key Features
 
 - **Multiple View Modes**: Week View, Month View, and Agenda View (toggle with `v`)
+- **Weather Integration**: Optional 3-day weather forecast display with configurable location and temperature units
 - **Undo/Redo System**: Full undo/redo support for event operations (add,
   delete, edit, bulk delete)
 - **Event Management**: Create, edit, delete events with recurrence support
@@ -156,6 +158,18 @@ go mod download                    # Download dependencies
 - **Options**: `"week"` (default), `"month"`, or `"agenda"`
 - **Example**: `{"default_view": "month"}` - Application will start in month view
 - **Validation**: Invalid values automatically fallback to week view
+
+### Weather Configuration
+
+- **Config file**: Set `weather_location` and `weather_unit` in `~/.config/chronos/config.json`
+- **Weather Location**: Required to enable weather features
+  - Examples: `"Melbourne"`, `"London"`, `"NYC"`, `"LAX"` (airport codes), coordinates
+  - Empty or omitted disables weather entirely
+- **Weather Unit**: Optional temperature unit preference
+  - `"celsius"` or `"c"` - Celsius temperatures (default)
+  - `"fahrenheit"` or `"f"` - Fahrenheit temperatures
+  - Invalid values default to Celsius
+- **Example**: `{"weather_location": "Melbourne", "weather_unit": "fahrenheit"}`
 
 ### Testing Strategy
 
@@ -499,6 +513,105 @@ Previous features:
 - Previous/next event navigation within week (`w` and `b` keys)
 - End of event navigation (`e` key) - vim-like movement to end of current event, or next event if already at end
 - CLI query flags (`--next`, `--current`, `--agenda`) for command-line event access
+- **Weather Integration**: Optional 3-day forecast display with background preloading and smart caching
+
+## Weather Integration Architecture
+
+### Overview
+
+Weather integration is optional and only enabled when `weather_location` is configured. The system provides:
+- Current weather in title bar (all views)
+- 3-day forecast in month view day cells
+- Background preloading to prevent UI lag
+- Smart caching to minimize API calls
+
+### Core Components
+
+**Weather Package** (`internal/weather/weather.go`):
+- `WeatherCache`: 2-hour TTL caching for both current weather and forecasts
+- `WeatherData`: Current weather information (temp, condition, icon, etc.)
+- `WeatherForecast`: Multi-day forecast with `DayForecast` entries
+- `fetchWeatherData()`: Gets current weather from wttr.in JSON API
+- `fetchWeatherForecast()`: Gets 3-day forecast from wttr.in JSON API
+
+**Configuration** (`internal/config/config.go`):
+- `GetWeatherLocation()`: Returns configured location or empty string
+- `GetWeatherUnit()`: Returns "celsius" or "fahrenheit" with validation
+- `IsWeatherEnabled()`: Checks if weather_location is set
+
+**UI Integration**:
+- `AppView.preloadWeatherData()`: Background goroutine preloads on startup
+- `AppView.updateWeatherData()`: Updates title bar weather (called on every UI update)
+- `AppView.updateMonthViewWeather()`: Updates month view forecast (when in month mode)
+- `MonthView.UpdateWeatherData()`: Sets weather icons/temps on day views
+- `MonthDayView.SetWeatherData()`: Sets icon and temperature for display
+
+### Data Flow
+
+1. **Startup**: `preloadWeatherData()` runs in background goroutine
+2. **UI Updates**: `updateWeatherData()` uses cached data for title bar
+3. **Month View**: `updateMonthViewWeather()` updates day cells when in month mode
+4. **Caching**: 2-hour TTL prevents API calls on every UI update
+5. **API Source**: wttr.in provides free weather data (no API key required)
+
+### Display Logic
+
+**Month Day Format**: `[day][today_indicator] [temp]°[weather_icon]`
+- Example: `6• 17°⛅` (day 6, today, 17°C, partly cloudy)
+- Example: `7 16°☀️` (day 7, 16°C, sunny)
+
+**Title Bar Format**: `[location]: [icon] [temp]`
+- Example: `Melbourne: ☁️ 21°C`
+
+### Technical Implementation Details
+
+**Weather Icon Positioning**:
+- Icons must appear LAST in display string due to emoji width rendering issues
+- Some weather emojis (☀️, ☁️) are 2 Unicode runes, others (⛅) are 1 rune
+- Terminal display width varies by emoji and font, causing text truncation
+- Solution: Place temperature before icon, icon gets truncated if necessary
+
+**Temperature Units**:
+- API returns both Celsius and Fahrenheit
+- `DayForecast` stores both `MaxTempC` and `MaxTempF`
+- Display chooses appropriate unit based on config
+- Graceful fallback to Celsius for invalid config values
+
+**Caching Strategy**:
+- Separate caches for current weather (`data`) and forecasts (`forecasts`)
+- Separate TTL tracking (`lastFetch`, `lastForecast`)
+- 2-hour cache prevents API abuse while keeping data reasonably fresh
+- Cache key normalization (lowercase location names)
+
+**Error Handling**:
+- Weather failures never crash the application
+- Missing weather data results in empty display (no weather shown)
+- Network timeouts set to 10 seconds
+- Graceful degradation when weather service unavailable
+
+**Performance Optimizations**:
+- Background preloading prevents view switch lag
+- Cached responses for 2 hours (720 API calls/month maximum per location)
+- Month view only updates weather when actually in month mode
+- UI updates use cached data, never trigger API calls directly
+
+### Known Issues and Workarounds
+
+**Emoji Width Problems**:
+- Different terminals render emojis with different display widths
+- Some emojis appear as 1 character, others as 2 characters wide
+- Text truncation occurs when cell width calculations don't account for emoji width
+- Workaround: Always place weather icons at the end of display strings
+
+**Month View Cell Width**:
+- Month view cells have limited width (typically 17-19 characters)
+- Weather string `6• 17°⛅` can exceed cell width with wide emoji rendering
+- Solution: Compact format with temperature before emoji for better truncation behavior
+
+**API Rate Limiting**:
+- wttr.in has no official rate limits but good practice suggests reasonable usage
+- 2-hour caching provides good balance of freshness vs API usage
+- Approximately 12 API calls per day per location (very reasonable)
 
 ## notes
 

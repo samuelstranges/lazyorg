@@ -18,6 +18,8 @@ type DayView struct {
 
 	Day      *calendar.Day
 	TimeView *TimeView
+	WeatherIcon string
+	WeatherMaxTemp string
 }
 
 func NewDayView(name string, d *calendar.Day, tv *TimeView) *DayView {
@@ -46,7 +48,16 @@ func (dv *DayView) Update(g *gocui.Gui) error {
 
 	dv.updateBgColor(v)
 
-	v.Title = dv.Day.FormatTitle()
+	// Create title with weather if available
+	title := dv.Day.FormatTitle()
+	if dv.WeatherIcon != "" {
+		if dv.WeatherMaxTemp != "" {
+			title += " " + dv.WeatherMaxTemp + "°" + dv.WeatherIcon
+		} else {
+			title += " " + dv.WeatherIcon
+		}
+	}
+	v.Title = title
 
 	// Update current time highlighting (add or remove)
 	if err = dv.updateCurrentTimeHighlight(g); err != nil {
@@ -355,4 +366,10 @@ func (dv *DayView) IsOnEvent(y int) (*EventView, bool) {
 		}
 	}
 	return nil, false
+}
+
+// SetWeatherData sets weather information for this day view
+func (dv *DayView) SetWeatherData(icon, maxTemp string) {
+	dv.WeatherIcon = icon
+	dv.WeatherMaxTemp = maxTemp
 }

@@ -24,6 +24,7 @@ basically gave Claude Code the reins...
 - 🎯 **Jump Navigation**: Quick navigation with `g` and event jumping with
   `w`/`b`
 - ⏰ **Current Time Highlighting**: Visual indicators for current time
+- 🌤️ **Weather Integration**: 3-day weather forecast in month view with configurable location and units
 - ⌨️ **Vim-style Keybindings**: Familiar navigation and shortcuts
 - 🔒 **Conflict Prevention**: Automatic detection and prevention of overlapping
   events
@@ -224,6 +225,57 @@ specify a custom location:
 
 Command line flags take precedence over config file settings.
 
+### Weather Integration
+
+Chronos supports optional weather integration that displays current weather in the title bar and 3-day forecasts in month view.
+
+**Configuration:** Edit `~/.config/chronos/config.json`:
+
+```json
+{
+    "weather_location": "Melbourne",
+    "weather_unit": "celsius"
+}
+```
+
+**Weather Configuration Options:**
+
+- `weather_location` (string): Location for weather data (required to enable weather)
+  - Examples: `"London"`, `"New York"`, `"Tokyo"`, `"Melbourne"`
+  - Supports cities, airports (3-letter codes), coordinates
+  - Leave empty or omit to disable weather features
+
+- `weather_unit` (string): Temperature unit preference (optional)
+  - `"celsius"` or `"c"` - Show temperatures in Celsius (default)
+  - `"fahrenheit"` or `"f"` - Show temperatures in Fahrenheit
+  - Invalid values default to Celsius
+
+**Weather Display:**
+
+- **Title Bar**: Shows current weather in all views (e.g., "Melbourne: ☁️ 21°C")
+- **Month View**: Shows 3-day forecast next to day numbers (e.g., "6• 17°⛅", "7 16°☀️")
+
+**Features:**
+
+- **Smart Caching**: Weather data cached for 2 hours to minimize API calls
+- **Background Loading**: Weather preloads on startup to prevent lag when switching views
+- **Automatic Updates**: Data refreshes every 2 hours automatically
+- **Emoji Support**: Uses weather emojis (☀️, ⛅, ☁️, 🌧️, etc.) for visual indicators
+
+**Technical Notes:**
+
+- Weather icons appear last in day display due to emoji width rendering issues in terminals
+- Supports wttr.in service locations (IP-based, coordinates, city names, airport codes)
+- No API key required - uses the free wttr.in weather service
+- Graceful fallback - weather failures don't affect calendar functionality
+
+**Example Month View with Weather:**
+```
+│ 6• 17°⛅           │ 7 16°☀️            │ 8 14°⛅            │
+│06:00 Morning       │06:00 Morning       │06:00 Morning       │
+│08:30 Pump up tyres │18:00 Meeting       │                    │
+```
+
 ## Future
 
 - major changes:
@@ -231,13 +283,9 @@ Command line flags take precedence over config file settings.
       cutting things off of bottom, use the number of available seen lines to
       shift down what user sees)
 - visual fixes:
-    - remove the redundant 'Month Year' in the month view now we have a working
-      top bar
     - form colors are ugly... this might be a limitation of gocui
 - additional keybinds:
     - visually change duration shortcut (running out of keybinds...)
-- bugfixes:
-    - handle events that wraparound the end of a day into the next day
 - config options:
     - desktop notifications
     - weather integration? see how tmux plugins do it lol
@@ -253,6 +301,8 @@ Command line flags take precedence over config file settings.
   fits well within the constraints of a TUI
 - import not planned due to limitations of 30 min events
 - shift-tab through forms: not supported by gocui
+- handle events that wraparound the end of a day into the next day (i cant
+  imaging handling multi multi day events... )
 
 ## Acknowledgments
 

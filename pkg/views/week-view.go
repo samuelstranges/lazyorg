@@ -1,7 +1,10 @@
 package views
 
 import (
+	"fmt"
 	"github.com/samuelstranges/chronos/internal/calendar"
+	"github.com/samuelstranges/chronos/internal/config"
+	"github.com/samuelstranges/chronos/internal/weather"
 	"github.com/jroimartin/gocui"
 )
 
@@ -78,4 +81,57 @@ func (wv *WeekView) updateChildViewProperties() {
 
 		x += w + Padding
 	}
+}
+
+// UpdateWeatherData updates weather information for all day columns in week view
+func (wv *WeekView) UpdateWeatherData(cfg *config.Config, weatherCache *weather.WeatherCache) error {
+	if !config.IsWeatherEnabled(cfg) {
+		return nil
+	}
+	
+	location := config.GetWeatherLocation(cfg)
+	if location == "" {
+		return nil
+	}
+	
+	// Get 3-day weather forecast
+	forecast, err := weatherCache.GetWeatherForecast(location)
+	if err != nil {
+		return fmt.Errorf("failed to get weather forecast: %w", err)
+	}
+	
+	// Create a map of date -> weather data for quick lookup
+	weatherMap := make(map[string]struct{icon, maxTemp string})
+	unit := config.GetWeatherUnit(cfg)
+	
+	for _, day := range forecast.Days {
+		dateStr := day.Date.Format("2006-01-02")
+		
+		// Choose temperature based on unit preference
+		maxTemp := day.MaxTempC
+		if unit == "fahrenheit" {
+			maxTemp = day.MaxTempF
+		}
+		
+		weatherMap[dateStr] = struct{icon, maxTemp string}{
+			icon: day.Icon, 
+			maxTemp: maxTemp,
+		}
+	}
+	
+	// Update weather data for all day views in the week
+	for _, weekday := range WeekdayNames {
+		if dayViewInterface, ok := wv.GetChild(weekday); ok {
+			if dayView, ok := dayViewInterface.(*DayView); ok {
+				dateStr := dayView.Day.Date.Format("2006-01-02")
+				if weatherData, exists := weatherMap[dateStr]; exists {
+					dayView.SetWeatherData(weatherData.icon, weatherData.maxTemp)
+				} else {
+					dayView.SetWeatherData("", "") // Clear weather data if none available
+				}
+			}
+		}
+	}
+	
+	return nil
 }

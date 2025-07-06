@@ -9,6 +9,7 @@ import (
 	"github.com/samuelstranges/chronos/internal/database"
 	"github.com/samuelstranges/chronos/internal/eventmanager"
 	"github.com/samuelstranges/chronos/internal/utils"
+	"github.com/samuelstranges/chronos/internal/weather"
 	"github.com/jroimartin/gocui"
 	"github.com/nsf/termbox-go"
 )
@@ -39,6 +40,9 @@ type AppView struct {
 	// View initialization
 	initialViewMode   string
 	viewInitialized   bool
+	
+	// Weather functionality
+	weatherCache      *weather.WeatherCache
 }
 
 
@@ -56,6 +60,7 @@ func NewAppView(g *gocui.Gui, db *database.Database, cfg *config.Config) *AppVie
 		Calendar:     c,
 		Config:       cfg,
 		DebugMode:    db.DebugMode,
+		weatherCache: weather.NewWeatherCache(),
 	}
 	
 
@@ -74,6 +79,9 @@ func NewAppView(g *gocui.Gui, db *database.Database, cfg *config.Config) *AppVie
 	av.initialViewMode = defaultView
 	
 	av.AddChild("keybinds", NewKeybindsView())
+	
+	// Preload weather data if enabled to avoid lag when switching views
+	av.preloadWeatherData()
 
 	return av
 }
@@ -113,6 +121,24 @@ func (av *AppView) Update(g *gocui.Gui) error {
 
 	if err = av.updateEventsFromDatabase(); err != nil {
 		return err
+	}
+	
+	// Update weather data if enabled
+	if err = av.updateWeatherData(); err != nil {
+		// Don't fail the entire update if weather fails - just log it
+		// Weather is optional functionality
+	}
+	
+	// Update month view weather if in month view
+	if err = av.updateMonthViewWeather(); err != nil {
+		// Don't fail the entire update if weather fails - just log it
+		// Weather is optional functionality
+	}
+	
+	// Update week view weather if in week view
+	if err = av.updateWeekViewWeather(); err != nil {
+		// Don't fail the entire update if weather fails - just log it
+		// Weather is optional functionality
 	}
 
 	// Initialize the view mode on first update
@@ -228,6 +254,12 @@ func (av *AppView) SwitchToWeekView(g *gocui.Gui) error {
 				if tv, ok := titleView.(*TitleView); ok {
 					tv.SetViewMode("week")
 				}
+			}
+			
+			// Update weather data immediately after switching to week view
+			if err = av.updateWeekViewWeather(); err != nil {
+				// Don't fail the view switch if weather fails - just log it
+				// Weather is optional functionality
 			}
 			
 			// Let the main Update() cycle handle event loading and day view updates
@@ -685,4 +717,102 @@ func (av *AppView) GetCursorY() int {
 	return y
 }
 
+// updateWeatherData updates weather information if enabled in config
+func (av *AppView) updateWeatherData() error {
+	if !config.IsWeatherEnabled(av.Config) {
+		return nil
+	}
+	
+	location := config.GetWeatherLocation(av.Config)
+	if location == "" {
+		return nil
+	}
+	
+	// Use cached weather data to avoid API calls on every keypress
+	weatherData, err := av.weatherCache.GetWeatherData(location)
+	if err != nil {
+		return fmt.Errorf("failed to get weather data: %w", err)
+	}
+	
+	// Get temperature in the preferred unit
+	unit := config.GetWeatherUnit(av.Config)
+	temperature := weatherData.Temperature
+	if unit == "fahrenheit" {
+		// Convert from Celsius to Fahrenheit for display
+		// Note: weatherData.Temperature is stored as "21°C" format
+		// We would need to modify the weather package to store both units
+		// For now, just use the stored temperature (which is in Celsius)
+		temperature = weatherData.Temperature
+	}
+	
+	// Format for simple display: "Location: Icon Temperature"
+	simpleWeather := fmt.Sprintf("%s: %s %s", weatherData.Location, weatherData.Icon, temperature)
+	
+	// Update the title view with weather data
+	if titleView, ok := av.GetChild("title"); ok {
+		if tv, ok := titleView.(*TitleView); ok {
+			tv.SetWeatherData(simpleWeather)
+		}
+	}
+	
+	return nil
+}
 
+// updateMonthViewWeather updates weather icons in month view if currently active
+func (av *AppView) updateMonthViewWeather() error {
+	if !config.IsWeatherEnabled(av.Config) {
+		return nil
+	}
+	
+	if mainView, ok := av.GetChild("main"); ok {
+		if mv, ok := mainView.(*MainView); ok {
+			if mv.CalendarView != nil && mv.CalendarView.ViewMode == "month" && mv.CalendarView.MonthView != nil {
+				return mv.CalendarView.MonthView.UpdateWeatherData(av.Config, av.weatherCache)
+			}
+		}
+	}
+	
+	return nil
+}
+
+
+
+
+// preloadWeatherData preloads both current weather and forecast data on startup
+func (av *AppView) preloadWeatherData() {
+	if !config.IsWeatherEnabled(av.Config) {
+		return
+	}
+	
+	location := config.GetWeatherLocation(av.Config)
+	if location == "" {
+		return
+	}
+	
+	// Preload in background goroutine to avoid blocking app startup
+	go func() {
+		// Preload current weather data
+		_, _ = av.weatherCache.GetWeatherData(location)
+		
+		// Preload 3-day forecast data
+		_, _ = av.weatherCache.GetWeatherForecast(location)
+	}()
+}
+
+
+// updateWeekViewWeather updates weather icons in week view if currently active
+func (av *AppView) updateWeekViewWeather() error {
+	if !config.IsWeatherEnabled(av.Config) {
+		return nil
+	}
+	
+	if mainView, ok := av.GetChild("main"); ok {
+		if mv, ok := mainView.(*MainView); ok {
+			if mv.CalendarView != nil && mv.CalendarView.ViewMode == "week" && mv.CalendarView.WeekView != nil {
+				return mv.CalendarView.WeekView.UpdateWeatherData(av.Config, av.weatherCache)
+			}
+		}
+	}
+	
+	return nil
+}

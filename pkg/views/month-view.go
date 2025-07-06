@@ -7,7 +7,9 @@ import (
 	"time"
 
 	"github.com/samuelstranges/chronos/internal/calendar"
+	"github.com/samuelstranges/chronos/internal/config"
 	"github.com/samuelstranges/chronos/internal/eventmanager"
+	"github.com/samuelstranges/chronos/internal/weather"
 	"github.com/jroimartin/gocui"
 )
 
@@ -20,6 +22,8 @@ var MonthDayNames = []string{
 	"Friday",
 	"Saturday",
 }
+
+const dayHeaderHeight = 2
 
 type MonthView struct {
 	*BaseView
@@ -35,6 +39,10 @@ type MonthView struct {
 	CellHeight int
 	GridRows   int
 	GridCols   int
+	
+	// Weather support
+	Config       *config.Config
+	WeatherCache *weather.WeatherCache
 }
 
 func NewMonthView(c *calendar.Calendar, em *eventmanager.EventManager) *MonthView {
@@ -45,6 +53,8 @@ func NewMonthView(c *calendar.Calendar, em *eventmanager.EventManager) *MonthVie
 		CurrentMonth: c.CurrentDay.Date,
 		GridCols:     7, // 7 days of the week
 		GridRows:     6, // Maximum 6 rows for a month
+		Config:       nil, // Will be set by UpdateWeatherData
+		WeatherCache: nil, // Will be set by UpdateWeatherData
 	}
 	
 	// Initialize month day views
@@ -313,4 +323,61 @@ func min(a, b int) int {
 		return a
 	}
 	return b
+}
+
+// UpdateWeatherData updates weather icons for all visible days in the month view
+func (mv *MonthView) UpdateWeatherData(cfg *config.Config, weatherCache *weather.WeatherCache) error {
+	mv.Config = cfg
+	mv.WeatherCache = weatherCache
+	
+	if !config.IsWeatherEnabled(cfg) {
+		return nil
+	}
+	
+	location := config.GetWeatherLocation(cfg)
+	if location == "" {
+		return nil
+	}
+	
+	// Get 3-day weather forecast
+	forecast, err := weatherCache.GetWeatherForecast(location)
+	if err != nil {
+		return fmt.Errorf("failed to get weather forecast: %w", err)
+	}
+	
+	// Create a map of date -> weather data for quick lookup
+	weatherMap := make(map[string]struct{icon, maxTemp string})
+	unit := config.GetWeatherUnit(cfg)
+	
+	for _, day := range forecast.Days {
+		dateStr := day.Date.Format("2006-01-02")
+		
+		// Choose temperature based on unit preference
+		maxTemp := day.MaxTempC
+		if unit == "fahrenheit" {
+			maxTemp = day.MaxTempF
+		}
+		
+		weatherMap[dateStr] = struct{icon, maxTemp string}{
+			icon: day.Icon, 
+			maxTemp: maxTemp,
+		}
+	}
+	
+	// Update weather data for all day views
+	for i := 0; i < 42; i++ {
+		dayName := fmt.Sprintf("monthday_%d", i)
+		if dayViewInterface, ok := mv.GetChild(dayName); ok {
+			if dayView, ok := dayViewInterface.(*MonthDayView); ok {
+				dateStr := dayView.Date.Format("2006-01-02")
+				if weatherData, exists := weatherMap[dateStr]; exists {
+					dayView.SetWeatherData(weatherData.icon, weatherData.maxTemp)
+				} else {
+					dayView.SetWeatherData("", "") // Clear weather data if none available
+				}
+			}
+		}
+	}
+	
+	return nil
 }

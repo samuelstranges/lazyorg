@@ -9,12 +9,16 @@ import (
 type Config struct {
 	DatabasePath       string `json:"database_path,omitempty"`
 	DefaultView        string `json:"default_view,omitempty"`
+	WeatherLocation    string `json:"weather_location,omitempty"`
+	WeatherUnit        string `json:"weather_unit,omitempty"`
 }
 
 func GetDefaultConfig() *Config {
 	return &Config{
 		DatabasePath:       "", // Empty means use default path
 		DefaultView:        "week", // Default to week view
+		WeatherLocation:    "", // Empty means no weather display
+		WeatherUnit:        "celsius", // Default to celsius
 	}
 }
 
@@ -96,4 +100,22 @@ func GetDefaultView(config *Config) string {
 		}
 	}
 	return "week"
+}
+
+// IsWeatherEnabled returns true if weather location is configured
+func IsWeatherEnabled(config *Config) bool {
+	return config.WeatherLocation != ""
+}
+
+// GetWeatherLocation returns the configured weather location
+func GetWeatherLocation(config *Config) string {
+	return config.WeatherLocation
+}
+
+// GetWeatherUnit returns the configured temperature unit (celsius or fahrenheit)
+func GetWeatherUnit(config *Config) string {
+	if config.WeatherUnit == "fahrenheit" || config.WeatherUnit == "f" {
+		return "fahrenheit"
+	}
+	return "celsius" // Default to celsius
 }
