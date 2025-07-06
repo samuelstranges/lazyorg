@@ -98,9 +98,10 @@ reference below:
 - `m/M` - Previous/Next month (in month view)
 - `j/k` or `↑/↓` - Move time cursor up/down
 - `t` - Jump to today
-- `g` - Go to specific date
+- `T` - To specific date
 - `w/b` - Jump to next/previous event
 - `e` - Jump to end of current event, or next event if already at end
+- `g/G` - Jump to start/end of day (00:00/23:30)
 
 ### View Modes
 
@@ -206,8 +207,6 @@ Command line flags take precedence over config file settings.
     - in month view:
         - misaligned days of week
 - additional keybinds:
-    - remap `g` goto to `T`: to
-    - `g` and `G` for start and end of day (think vim)
     - visually change duration shortcut (running out of keybinds...)
 - bugfixes:
     - handle events that wraparound the end of a day into the next day
@@ -231,5 +230,4 @@ Command line flags take precedence over config file settings.
 ## Acknowledgments
 
 - Forked from [HubertBel/lazyorg](https://github.com/HubertBel/lazyorg)
-- Inspired by [lazygit](https://github.com/jesseduffield/lazygit)
 - Built with [gocui](https://github.com/jroimartin/gocui) TUI framework

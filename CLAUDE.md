@@ -460,6 +460,8 @@ The project recently added:
   - `--agenda [YYYYMMDD]` - Get agenda for today or specified date
 - **Enhanced View System**: Improved view toggling with `v` key cycling through Week → Month → Agenda views
 - **Vim-like Navigation**: Added `e` key for end-of-event navigation (moves to end of current event, or next event if already at end)
+- **Keybinding Reorganization**: Moved goto functionality from `g` to `T` (To specific date/time)
+- **Start/End of Day Navigation**: Added `g`/`G` keys for vim-like start (00:00) and end (23:30) of day navigation
 - **Unified Date Format**: All date fields now use YYYYMMDD format (no dashes)
   for consistency across goto, add/edit, and search forms
 - **Consistent 't' Usage**: Changed "Jump to today" keybinding from 'T' to 't'
@@ -484,7 +486,7 @@ Previous features:
 - Colored events with color picker (`C` key)
 - Undo/redo functionality (`u` and `r` keys)
 - Yank/paste system for events (`y`, `p`, `d` keys)
-- Jump navigation (`g` key)
+- Jump navigation (`T` key for 'To' specific date/time, `g`/`G` for start/end of day)
 - Enhanced search with date filtering (`/` key) - supports text queries and date
   ranges with 't' shortcut
 - Previous/next event navigation within week (`w` and `b` keys)

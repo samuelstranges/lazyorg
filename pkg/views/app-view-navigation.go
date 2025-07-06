@@ -322,6 +322,22 @@ func (av *AppView) showSearchStatus(g *gocui.Gui) error {
 	return nil
 }
 
+// JumpToStartOfDay moves the cursor to 00:00 of the current day
+func (av *AppView) JumpToStartOfDay() {
+	currentDate := av.Calendar.CurrentDay.Date
+	startOfDay := time.Date(currentDate.Year(), currentDate.Month(), currentDate.Day(), 0, 0, 0, 0, currentDate.Location())
+	av.Calendar.CurrentDay.Date = startOfDay
+	av.Calendar.UpdateWeek()
+}
+
+// JumpToEndOfDay moves the cursor to 23:30 of the current day
+func (av *AppView) JumpToEndOfDay() {
+	currentDate := av.Calendar.CurrentDay.Date
+	endOfDay := time.Date(currentDate.Year(), currentDate.Month(), currentDate.Day(), 23, 30, 0, 0, currentDate.Location())
+	av.Calendar.CurrentDay.Date = endOfDay
+	av.Calendar.UpdateWeek()
+}
+
 // ShowGotoPopup displays the goto date/time popup
 func (av *AppView) ShowGotoPopup(g *gocui.Gui) error {
 	if popup, ok := av.FindChildView("popup"); ok {
