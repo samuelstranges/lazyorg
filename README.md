@@ -7,17 +7,20 @@ basically gave Claude Code the reins...
 
 ## Features
 
-- **Multiple View Modes**: Week view, month view and agenda (day) views (toggle with `v`)
-- **CLI Query Interface**: Get event information from command line without launching GUI
+- **Multiple View Modes**: Week view, month view and agenda (day) views (toggle
+  with `v`)
+- **CLI Query Interface**: Get event information from command line without
+  launching GUI
 - **Intuitive vim-like functionality**
 - 📅 **Smart Event Management**: Advanced event creation with automatic overlap
   prevention
 - 🔄 **Undo/Redo System**: Full operation history with `u` and `r` keys
 - 🎨 **Colored Events**: Automatic color assignment or manual color selection
-  with `c`
+  with `C`
 - 📋 **Yank/Paste Events**: Copy events with `y`, paste with `p`, delete with
   `d`
-- 🔍 **Smart Search**: Search events across all dates with `/` (supports text and date filtering)
+- 🔍 **Smart Search**: Search events across all dates with `/` (supports text
+  and date filtering)
 - 🎯 **Jump Navigation**: Quick navigation with `g` and event jumping with
   `w`/`b`
 - ⏰ **Current Time Highlighting**: Visual indicators for current time
@@ -53,6 +56,7 @@ go build -o chronos cmd/chronos/main.go
 ## Command-Line Options
 
 ### Database and Configuration
+
 - **`-db <path>`** - Specify custom database file location  
   Default: `~/.local/share/chronos/data.db`
 - **`-backup <path>`** - Backup database to specified location and exit
@@ -61,8 +65,9 @@ go build -o chronos cmd/chronos/main.go
 - **`--help`** - Show all available command-line options
 
 ### Event Queries (CLI Mode)
+
 - **`--next`** - Return next upcoming event and exit
-- **`--current`** - Return current event (if exists) and exit  
+- **`--current`** - Return current event (if exists) and exit
 - **`--agenda [YYYYMMDD]`** - Export agenda for today or specified date and exit
 
 ### CLI Query Examples
@@ -89,7 +94,7 @@ reference below:
 ### Navigation
 
 - `h/l` or `←/→` - Previous/Next day
-- `H/L` - Previous/Next week  
+- `H/L` - Previous/Next week
 - `m/M` - Previous/Next month (in month view)
 - `j/k` or `↑/↓` - Move time cursor up/down
 - `t` - Jump to today
@@ -99,19 +104,19 @@ reference below:
 ### View Modes
 
 - `v` - Toggle between Week View, Month View, and Agenda View
-  - **Week View**: 7-day calendar with half-hour time slots (default)
-  - **Month View**: Monthly calendar grid overview  
-  - **Agenda View**: Daily event list with detailed information
+    - **Week View**: 7-day calendar with half-hour time slots (default)
+    - **Month View**: Monthly calendar grid overview
+    - **Agenda View**: Daily event list with detailed information
 
 ### Events
 
 - `a` - Add new event
-- `e` - Edit current event
+- `c` - Change current event
 - `d` - Delete current event (also copies to clipboard)
 - `D` - Delete all events with same name
 - `y` - Copy/yank current event
 - `p` - Paste copied event
-- `c` - Change event color
+- `C` - Change event color
 
 ### Search
 
@@ -192,8 +197,6 @@ Command line flags take precedence over config file settings.
 
 ## Future
 
-- [x] migration to utc
-- [x] additional views: daily view, monthly view, agenda view
 - visual fixes:
     - in week view
         - show what timezone youre in
@@ -213,7 +216,6 @@ Command line flags take precedence over config file settings.
     - handle events that wraparound the end of a day into the next day
 - config options:
     - default 'view'
-    - custom 'add event' template
 - nice to haves:
     - desktop notifications
     - weather integration? see how tmux plugins do it lol

@@ -480,7 +480,7 @@ The project recently added:
 
 Previous features:
 
-- Colored events with color picker (`c` key)
+- Colored events with color picker (`C` key)
 - Undo/redo functionality (`u` and `r` keys)
 - Yank/paste system for events (`y`, `p`, `d` keys)
 - Jump navigation (`g` key)

@@ -80,7 +80,7 @@ func (epv *EventPopupView) ShowEditEventPopup(g *gocui.Gui, eventView *EventView
 	eventTime := event.Time.Format("15:04")
 	
 	epv.Form = epv.EditEventForm(g,
-		"Edit Event",
+		"Change Event",
 		event.Name,
 		eventDate,
 		eventTime,
@@ -96,7 +96,7 @@ func (epv *EventPopupView) ShowEditEventPopup(g *gocui.Gui, eventView *EventView
 	epv.addKeybind(gocui.KeyEsc, epv.Close)
 	epv.addKeybind(gocui.KeyEnter, editHandler)
 
-	epv.Form.AddButton("Edit", editHandler)
+	epv.Form.AddButton("Change", editHandler)
 	epv.Form.AddButton("Cancel", epv.Close)
 
 	epv.Form.SetCurrentItem(0)
