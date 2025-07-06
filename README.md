@@ -203,9 +203,10 @@ Command line flags take precedence over config file settings.
     - in week view
         - show what timezone youre in
         - show what month your in in week view (top left)
-        - 3 char day of week (`Sun` rather than `Sunday`)
     - in month view:
         - misaligned days of week
+        - sunday should be first day
+        - smaller borders
 - additional keybinds:
     - visually change duration shortcut (running out of keybinds...)
 - bugfixes:

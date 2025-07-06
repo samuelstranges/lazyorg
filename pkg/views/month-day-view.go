@@ -55,8 +55,8 @@ func (mdv *MonthDayView) Update(g *gocui.Gui) error {
 		}
 	}
 	
-	// Set frame and colors
-	v.Frame = true
+	// No individual frames - use shared grid
+	v.Frame = false
 	mdv.updateColors(v)
 	
 	// Clear and draw content
@@ -71,7 +71,7 @@ func (mdv *MonthDayView) Update(g *gocui.Gui) error {
 	fmt.Fprintf(v, "%s\n", dayStr)
 	
 	// Draw events (as bullet points)
-	maxEvents := mdv.H - 2 // Leave space for day number and borders
+	maxEvents := mdv.H - 1 // Leave space for day number only (no borders)
 	if maxEvents < 0 {
 		maxEvents = 0
 	}
@@ -121,7 +121,7 @@ func (mdv *MonthDayView) updateColors(v *gocui.View) {
 }
 
 func (mdv *MonthDayView) truncateEventName(name string) string {
-	maxWidth := mdv.W - 8 // Leave space for time (5 chars) and borders (3 chars)
+	maxWidth := mdv.W - 6 // Leave space for time (5 chars) and padding (1 char)
 	if maxWidth < 1 {
 		return ""
 	}

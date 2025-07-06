@@ -139,20 +139,8 @@ func (mv *MonthView) Update(g *gocui.Gui) error {
 	headerLine := fmt.Sprintf("%*s", (mv.W+len(monthHeader))/2, monthHeader)
 	fmt.Fprintf(v, "%s\n", headerLine)
 	
-	// Draw day headers
-	dayHeaders := ""
-	for i, dayName := range MonthDayNames {
-		paddedName := fmt.Sprintf("%-*s", mv.CellWidth-1, dayName[:min(len(dayName), mv.CellWidth-1)])
-		dayHeaders += paddedName
-		if i < len(MonthDayNames)-1 {
-			dayHeaders += "│"
-		}
-	}
-	fmt.Fprintf(v, "%s\n", dayHeaders)
-	
-	// Draw separator line
-	separator := strings.Repeat("─", mv.W-1)
-	fmt.Fprintf(v, "%s\n", separator)
+	// Draw compact grid with shared borders
+	mv.drawCompactGrid(v)
 	
 	mv.updateChildViewProperties()
 	
@@ -176,11 +164,11 @@ func (mv *MonthView) updateChildViewProperties() {
 			row := i / mv.GridCols
 			col := i % mv.GridCols
 			
-			// Calculate position with proper spacing for borders
-			x := mv.X + col*(mv.CellWidth+1)
+			// Calculate position for compact grid layout (no individual borders)
+			x := mv.X + col*mv.CellWidth
 			y := mv.Y + 3 + row*mv.CellHeight
-			w := mv.CellWidth - 1
-			h := mv.CellHeight - 1
+			w := mv.CellWidth
+			h := mv.CellHeight
 			
 			// Ensure we don't exceed bounds and have positive dimensions
 			if x+w >= mv.X+mv.W {
@@ -271,6 +259,62 @@ func (mv *MonthView) loadEventsForMonth() error {
 	}
 	
 	return nil
+}
+
+func (mv *MonthView) drawCompactGrid(v *gocui.View) {
+	// Draw day headers with pipe separators
+	dayHeaders := ""
+	for i, dayName := range MonthDayNames {
+		// Use 3-character abbreviation for day names
+		dayAbbr := dayName[:3]
+		paddedName := fmt.Sprintf("%-*s", mv.CellWidth-1, dayAbbr)
+		dayHeaders += paddedName
+		if i < len(MonthDayNames)-1 {
+			dayHeaders += "│"
+		}
+	}
+	fmt.Fprintf(v, "%s\n", dayHeaders)
+	
+	// Draw grid lines for each row
+	for row := 0; row < mv.GridRows; row++ {
+		// Draw horizontal separator line
+		if row == 0 {
+			// Top border
+			separator := ""
+			for col := 0; col < mv.GridCols; col++ {
+				separator += strings.Repeat("─", mv.CellWidth-1)
+				if col < mv.GridCols-1 {
+					separator += "┬"
+				}
+			}
+			fmt.Fprintf(v, "%s\n", separator)
+		}
+		
+		// Draw the row content (will be filled by MonthDayView children)
+		for line := 0; line < mv.CellHeight-1; line++ {
+			rowLine := ""
+			for col := 0; col < mv.GridCols; col++ {
+				// Leave space for content (filled by child views)
+				rowLine += strings.Repeat(" ", mv.CellWidth-1)
+				if col < mv.GridCols-1 {
+					rowLine += "│"
+				}
+			}
+			fmt.Fprintf(v, "%s\n", rowLine)
+		}
+		
+		// Draw horizontal separator (except for last row)
+		if row < mv.GridRows-1 {
+			separator := ""
+			for col := 0; col < mv.GridCols; col++ {
+				separator += strings.Repeat("─", mv.CellWidth-1)
+				if col < mv.GridCols-1 {
+					separator += "┼"
+				}
+			}
+			fmt.Fprintf(v, "%s\n", separator)
+		}
+	}
 }
 
 func min(a, b int) int {
