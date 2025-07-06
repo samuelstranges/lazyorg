@@ -38,7 +38,26 @@ go run cmd/chronos/main.go         # Run directly from source
 - **`-backup <path>`** - Backup database to specified location and exit
 - **`-debug`** - Enable debug logging to `/tmp/chronos_debug.txt` and
   `/tmp/chronos_getevents_debug.txt`
+- **`--next`** - Return next upcoming event and exit
+- **`--current`** - Return current event (if exists) and exit
+- **`--agenda [YYYYMMDD]`** - Export agenda for today or specified date and exit
 - **`--help`** - Show all available command-line options
+
+### CLI Query Examples
+
+```bash
+# Get next upcoming event
+./chronos --next
+
+# Get current event (if any)
+./chronos --current
+
+# Get today's agenda
+./chronos --agenda
+
+# Get agenda for specific date
+./chronos --agenda 20250617
+```
 
 ### Testing
 
@@ -79,19 +98,42 @@ go mod download                    # Download dependencies
 
 **UI Layer:**
 
-- `pkg/views/` - All UI view components (day-view, week-view, event-view, etc.)
+- `pkg/views/` - All UI view components (day-view, week-view, month-view, agenda-view, event-view, etc.)
 - Uses `gocui` TUI framework for terminal interface
 - Vim-style keybindings throughout
+- Multiple view modes: Week View (default), Month View, and Agenda View
 
 ### Key Features
 
+- **Multiple View Modes**: Week View, Month View, and Agenda View (toggle with `v`)
 - **Undo/Redo System**: Full undo/redo support for event operations (add,
   delete, edit, bulk delete)
 - **Event Management**: Create, edit, delete events with recurrence support
-- **Search**: Search events within current week with `/`
+- **Search**: Search events across all dates with `/` (supports text and date filtering)
 - **Yank/Paste**: Copy events with `y` and paste with `p`
 - **Color Coding**: Events are automatically colored or manually assigned colors
 - **Notepad**: Integrated note-taking functionality
+- **CLI Query Interface**: Query events from command line without launching GUI
+
+### View Modes
+
+**Week View (Default):**
+- Shows 7-day week layout with half-hour time slots
+- Current day highlighted with distinct formatting
+- Current time indicator (purple highlighting)
+- Primary view for event management and navigation
+
+**Month View (`v` key to switch):**
+- Calendar grid showing entire month
+- Events displayed as abbreviated text within date cells
+- Navigate between months with `m`/`M` keys
+- Useful for overview and long-term planning
+
+**Agenda View (`v` key to cycle):**
+- Day-focused vertical list of events
+- Shows events for current day in chronological order
+- Detailed event information display
+- Ideal for focused daily planning
 
 ### Database Schema
 
@@ -412,6 +454,11 @@ event overlap issues:
 
 The project recently added:
 
+- **CLI Query Interface**: New command-line flags for event queries:
+  - `--next` - Get next upcoming event
+  - `--current` - Get current event (if active)
+  - `--agenda [YYYYMMDD]` - Get agenda for today or specified date
+- **Enhanced View System**: Improved view toggling with `v` key cycling through Week → Month → Agenda views
 - **Unified Date Format**: All date fields now use YYYYMMDD format (no dashes)
   for consistency across goto, add/edit, and search forms
 - **Consistent 't' Usage**: Changed "Jump to today" keybinding from 'T' to 't'
@@ -440,6 +487,7 @@ Previous features:
 - Enhanced search with date filtering (`/` key) - supports text queries and date
   ranges with 't' shortcut
 - Previous/next event navigation within week (`w` and `b` keys)
+- CLI query flags (`--next`, `--current`, `--agenda`) for command-line event access
 
 ## notes
 

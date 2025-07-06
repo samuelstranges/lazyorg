@@ -7,8 +7,9 @@ basically gave Claude Code the reins...
 
 ## Features
 
-- Week view, month view and agenda (day) views
-- Intuitive vim-like functionality
+- **Multiple View Modes**: Week view, month view and agenda (day) views (toggle with `v`)
+- **CLI Query Interface**: Get event information from command line without launching GUI
+- **Intuitive vim-like functionality**
 - 📅 **Smart Event Management**: Advanced event creation with automatic overlap
   prevention
 - 🔄 **Undo/Redo System**: Full operation history with `u` and `r` keys
@@ -16,7 +17,7 @@ basically gave Claude Code the reins...
   with `c`
 - 📋 **Yank/Paste Events**: Copy events with `y`, paste with `p`, delete with
   `d`
-- 🔍 **Smart Search**: Search events within current week with `/`
+- 🔍 **Smart Search**: Search events across all dates with `/` (supports text and date filtering)
 - 🎯 **Jump Navigation**: Quick navigation with `g` and event jumping with
   `w`/`b`
 - ⏰ **Current Time Highlighting**: Visual indicators for current time
@@ -51,12 +52,34 @@ go build -o chronos cmd/chronos/main.go
 
 ## Command-Line Options
 
+### Database and Configuration
 - **`-db <path>`** - Specify custom database file location  
   Default: `~/.local/share/chronos/data.db`
 - **`-backup <path>`** - Backup database to specified location and exit
 - **`-debug`** - Enable debug logging to `/tmp/chronos_debug.txt` and
   `/tmp/chronos_getevents_debug.txt`
 - **`--help`** - Show all available command-line options
+
+### Event Queries (CLI Mode)
+- **`--next`** - Return next upcoming event and exit
+- **`--current`** - Return current event (if exists) and exit  
+- **`--agenda [YYYYMMDD]`** - Export agenda for today or specified date and exit
+
+### CLI Query Examples
+
+```bash
+# Get next upcoming event
+./chronos --next
+
+# Get current event (if any)
+./chronos --current
+
+# Get today's agenda
+./chronos --agenda
+
+# Get agenda for specific date (June 17, 2025)
+./chronos --agenda 20250617
+```
 
 ## Usage
 
@@ -66,11 +89,19 @@ reference below:
 ### Navigation
 
 - `h/l` or `←/→` - Previous/Next day
-- `H/L` - Previous/Next week
+- `H/L` - Previous/Next week  
+- `m/M` - Previous/Next month (in month view)
 - `j/k` or `↑/↓` - Move time cursor up/down
 - `t` - Jump to today
 - `g` - Go to specific date
 - `w/b` - Jump to next/previous event
+
+### View Modes
+
+- `v` - Toggle between Week View, Month View, and Agenda View
+  - **Week View**: 7-day calendar with half-hour time slots (default)
+  - **Month View**: Monthly calendar grid overview  
+  - **Agenda View**: Daily event list with detailed information
 
 ### Events
 
@@ -163,35 +194,40 @@ Command line flags take precedence over config file settings.
 
 - [x] migration to utc
 - [x] additional views: daily view, monthly view, agenda view
-- [ ] fix wraparound bug
-- desktop notifications
-- export to `.ics` and `.csv`, `.json` (import probably not due to limitations
-  of 30 min events with no overlap)
-- enhanced recurrence rules (eg "repeat every weekday", "first friday of the
-  month")
-- show what timezone youre in
-- show what month your in in week view (top left)
-- export today's agenda flag
+- visual fixes:
+    - in week view
+        - show what timezone youre in
+        - show what month your in in week view (top left)
+        - 3 char day of week (`Sun` rather than `Sunday`)
+    - in month view:
+        - misaligned days of week
+- additional keybinds:
+    - `g` and `G` for start and end of day (think vim)
+    - move color to `C`
+    - move edit to `c` (change: is more vim like, and allows reuse of `e`)
+    - `e` to go to end of current event/ or next event if at end of one or not
+      in one (think vim), similar to how `w` and `b` are implemented in
+      chronos...
+    - visually change duration shortcut (running out of keybinds...)
+- bugfixes:
+    - handle events that wraparound the end of a day into the next day
 - config options:
     - default 'view'
-- birthdays toggle (using carddav)
-- tagging (and filtering by tag)
-- automated backups
-- weather integration
-- add links (and open links with 'O'): eg a google meeting link:
-    - could these meeting links be dynamically created? probably out of scope
-- custom event template in config file
-- encrypt database (gpg integration?): probably shouldn't use claude code for
-  this feature...
-- commandline flags:
-    - return next event
-    - return current event
+    - custom 'add event' template
+- nice to haves:
+    - desktop notifications
+    - weather integration? see how tmux plugins do it lol
+- export flags:
+    - `--ics`
+    - `--json`
+    - `--csv`
 
 ## Not planned
 
 - syncing: using a local database as a single source of truth improves speed and
   flexibility (undo/redo of mass change of events would be hard to sync), and
   fits well within the constraints of a TUI
+- import not planned due to limitations of 30 min events
 
 ## Acknowledgments
 
