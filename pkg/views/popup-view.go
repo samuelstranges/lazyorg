@@ -198,7 +198,7 @@ func (epv *EventPopupView) ShowGotoPopup(g *gocui.Gui) error {
 		return nil
 	}
 
-	epv.Form = epv.GotoForm(g, "Goto Date/Time")
+	epv.Form = epv.GotoForm(g, "To Date/Time")
 
 	epv.addKeybind(gocui.KeyEsc, epv.Close)
 	epv.addKeybind(gocui.KeyEnter, epv.Goto)

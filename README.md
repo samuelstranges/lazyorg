@@ -199,15 +199,22 @@ Command line flags take precedence over config file settings.
 
 ## Future
 
+- major changes:
+    - dynamically change view based on available size in week mode
 - visual fixes:
     - remove the redundant 'Month Year' in the month view now we have a working
       top bar
     - top bar shouldn't show UTC time, rather show that local time is in UTC+10
       for example
+    - form colors are ugly
+    - if there are more events than can fit in month view... say on last line
+      and 'x more events'
 - additional keybinds:
     - visually change duration shortcut (running out of keybinds...)
 - bugfixes:
     - handle events that wraparound the end of a day into the next day
+    - does change not respect UTC time? i can create overlapping events with
+      it...
 - config options:
     - default 'view'
     - desktop notifications
