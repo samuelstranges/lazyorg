@@ -1,5 +1,5 @@
 *.db
-lazyorg
+main
 chronos
 
 dist/
