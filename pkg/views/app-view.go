@@ -55,7 +55,9 @@ func NewAppView(g *gocui.Gui, db *database.Database, cfg *config.Config) *AppVie
 	}
 	
 
-	av.AddChild("title", NewTitleView(c))
+	titleView := NewTitleView(c)
+	titleView.SetViewMode("week") // Default to week view
+	av.AddChild("title", titleView)
 	av.AddChild("popup", NewEvenPopup(g, c, db, av.EventManager))
 	av.AddChild("main", NewMainView(c, db, av.EventManager))
 	
@@ -195,6 +197,13 @@ func (av *AppView) SwitchToWeekView(g *gocui.Gui) error {
 				return err
 			}
 			
+			// Update title view mode
+			if titleView, ok := av.GetChild("title"); ok {
+				if tv, ok := titleView.(*TitleView); ok {
+					tv.SetViewMode("week")
+				}
+			}
+			
 			// Let the main Update() cycle handle event loading and day view updates
 			return av.UpdateCurrentView(g)
 		}
@@ -205,7 +214,19 @@ func (av *AppView) SwitchToWeekView(g *gocui.Gui) error {
 func (av *AppView) SwitchToMonthView(g *gocui.Gui) error {
 	if mainView, ok := av.GetChild("main"); ok {
 		if mv, ok := mainView.(*MainView); ok {
-			return mv.SwitchToMonthView(g)
+			err := mv.SwitchToMonthView(g)
+			if err != nil {
+				return err
+			}
+			
+			// Update title view mode
+			if titleView, ok := av.GetChild("title"); ok {
+				if tv, ok := titleView.(*TitleView); ok {
+					tv.SetViewMode("month")
+				}
+			}
+			
+			return nil
 		}
 	}
 	return nil
@@ -214,7 +235,19 @@ func (av *AppView) SwitchToMonthView(g *gocui.Gui) error {
 func (av *AppView) SwitchToAgendaView(g *gocui.Gui) error {
 	if mainView, ok := av.GetChild("main"); ok {
 		if mv, ok := mainView.(*MainView); ok {
-			return mv.SwitchToAgendaView(g)
+			err := mv.SwitchToAgendaView(g)
+			if err != nil {
+				return err
+			}
+			
+			// Update title view mode
+			if titleView, ok := av.GetChild("title"); ok {
+				if tv, ok := titleView.(*TitleView); ok {
+					tv.SetViewMode("agenda")
+				}
+			}
+			
+			return nil
 		}
 	}
 	return nil
