@@ -213,7 +213,6 @@ Command line flags take precedence over config file settings.
     - handle events that wraparound the end of a day into the next day
 - config options:
     - default 'view'
-- nice to haves:
     - desktop notifications
     - weather integration? see how tmux plugins do it lol
 - export flags:
