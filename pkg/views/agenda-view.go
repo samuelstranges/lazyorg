@@ -57,7 +57,6 @@ func (av *AgendaView) Update(g *gocui.Gui) error {
 	}
 	
 	v.Frame = true
-	v.Title = fmt.Sprintf(" Agenda - %s ", av.CurrentDate.Format("Monday, January 2, 2006"))
 	v.Clear()
 	
 	// Debug logging for main view
