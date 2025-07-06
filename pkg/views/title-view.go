@@ -49,15 +49,17 @@ func (tv *TitleView) Update(g *gocui.Gui) error {
 
 func (tv *TitleView) updateBody(v *gocui.View) {
 	now := time.Now()
-	nowUTC := now.UTC()
-	
-	// Line 1: Current date and time with UTC
-	line1 := fmt.Sprintf("Current date/time: %s %d, %d - %s (local), %s (UTC)", 
-		now.Month().String(), 
-		now.Day(), 
+	tzAbbr, offset := now.Zone()
+	offsetHours := offset / 3600
+
+	// Line 1: Current date and time with timezone offset
+	line1 := fmt.Sprintf("Current date/time: %s %d, %d - %s (%s, UTC%+d)",
+		now.Month().String(),
+		now.Day(),
 		now.Year(),
 		utils.FormatHourFromTime(now),
-		utils.FormatHourFromTime(nowUTC))
+		tzAbbr,
+		offsetHours)
 	
 	// Line 2: View context information (will be updated by AppView)
 	line2 := tv.getContextualInfo()
