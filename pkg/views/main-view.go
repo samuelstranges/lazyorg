@@ -1,9 +1,6 @@
 package views
 
 import (
-	"fmt"
-	"os"
-	
 	"github.com/samuelstranges/chronos/internal/calendar"
 	"github.com/samuelstranges/chronos/internal/database"
 	"github.com/samuelstranges/chronos/internal/eventmanager"
@@ -69,40 +66,14 @@ func (mv *MainView) updateChildViewProperties() {
 
 	// Auto-adjust viewport for responsive behavior in week view
 	if mv.CalendarView != nil && mv.CalendarView.ViewMode == "week" && mv.CalendarView.TimeView != nil {
-		// Debug logging
-		if f, err := os.OpenFile("/tmp/chronos_mainview_debug.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644); err == nil {
-			fmt.Fprintf(f, "=== MainView.updateChildViewProperties (Week Mode) ===\n")
-			fmt.Fprintf(f, "MainView dimensions: X=%d, Y=%d, W=%d, H=%d\n", mv.X, mv.Y, mv.W, mv.H)
-			fmt.Fprintf(f, "Current day time: %s\n", mv.Calendar.CurrentDay.Date.Format("2006-01-02 15:04"))
-			f.Close()
-		}
-		
 		// First, auto-adjust the viewport based on calendar cursor time and available space
 		mv.CalendarView.TimeView.AutoAdjustViewport(mv.Calendar.CurrentDay.Date)
 		
 		// Then calculate and set cursor position within the adjusted viewport
 		y := utils.TimeToPositionWithViewport(mv.Calendar.CurrentDay.Date, mv.CalendarView.TimeView.GetViewportStart())
 		
-		// Debug logging
-		if f, err := os.OpenFile("/tmp/chronos_mainview_debug.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644); err == nil {
-			fmt.Fprintf(f, "Calculated cursor position: y=%d (ViewportStart=%d, visibleSlots=%d)\n", y, mv.CalendarView.TimeView.GetViewportStart(), mv.CalendarView.TimeView.GetVisibleSlots())
-			if y >= mv.CalendarView.TimeView.GetVisibleSlots() {
-				fmt.Fprintf(f, "WARNING: Cursor position %d is beyond visible slots %d!\n", y, mv.CalendarView.TimeView.GetVisibleSlots())
-			}
-			if y < 0 {
-				fmt.Fprintf(f, "WARNING: Cursor position %d is negative!\n", y)
-			}
-			f.Close()
-		}
-		
 		// Since we centered the viewport around the calendar time, cursor should always be visible
 		mv.CalendarView.TimeView.SetCursor(y)
-		
-		// Debug logging end
-		if f, err := os.OpenFile("/tmp/chronos_mainview_debug.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644); err == nil {
-			fmt.Fprintf(f, "=== MainView.updateChildViewProperties END ===\n\n")
-			f.Close()
-		}
 	}
 
 	if titleView, ok := mv.GetChild("title"); ok {

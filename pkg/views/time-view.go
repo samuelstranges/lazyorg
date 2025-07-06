@@ -2,7 +2,6 @@ package views
 
 import (
 	"fmt"
-	"os"
 	"time"
 
 	"github.com/samuelstranges/chronos/internal/utils"
@@ -52,13 +51,6 @@ func (tv *TimeView) Update(g *gocui.Gui) error {
 }
 
 func (tv *TimeView) updateBody(v *gocui.View) {
-	// Debug logging
-	if f, err := os.OpenFile("/tmp/chronos_viewport_debug.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644); err == nil {
-		fmt.Fprintf(f, "=== TimeView.updateBody START ===\n")
-		fmt.Fprintf(f, "ViewportStart: %d, MaxTimeSlots: %d, Height: %d\n", tv.ViewportStart, tv.MaxTimeSlots, tv.H)
-		f.Close()
-	}
-
 	tv.Body = ""
 
 	// Calculate which time slots to show based on viewport
@@ -77,12 +69,6 @@ func (tv *TimeView) updateBody(v *gocui.View) {
 	}
 	if tv.ViewportStart < 0 {
 		tv.ViewportStart = 0
-	}
-
-	// Debug logging after adjustment
-	if f, err := os.OpenFile("/tmp/chronos_viewport_debug.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644); err == nil {
-		fmt.Fprintf(f, "After adjustment - ViewportStart: %d, visibleSlots: %d\n", tv.ViewportStart, visibleSlots)
-		f.Close()
 	}
 
 	for i := 0; i < visibleSlots; i++ {
@@ -115,12 +101,6 @@ func (tv *TimeView) updateBody(v *gocui.View) {
 
 	v.Clear()
 	fmt.Fprintln(v, tv.Body)
-
-	// Debug logging end
-	if f, err := os.OpenFile("/tmp/chronos_viewport_debug.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644); err == nil {
-		fmt.Fprintf(f, "=== TimeView.updateBody END ===\n\n")
-		f.Close()
-	}
 }
 
 func (tv *TimeView) SetCursor(y int) {
@@ -131,21 +111,9 @@ func (tv *TimeView) SetCursor(y int) {
 func (tv *TimeView) AutoAdjustViewport(calendarTime time.Time) {
 	visibleSlots := tv.GetVisibleSlots()
 	
-	// Debug logging
-	if f, err := os.OpenFile("/tmp/chronos_viewport_debug.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644); err == nil {
-		fmt.Fprintf(f, "=== AutoAdjustViewport START ===\n")
-		fmt.Fprintf(f, "visibleSlots: %d, MaxTimeSlots: %d, current ViewportStart: %d\n", visibleSlots, tv.MaxTimeSlots, tv.ViewportStart)
-		fmt.Fprintf(f, "calendarTime: %s\n", calendarTime.Format("15:04"))
-		f.Close()
-	}
-	
 	// If we can show all time slots, start from the beginning
 	if visibleSlots >= tv.MaxTimeSlots {
 		tv.ViewportStart = 0
-		if f, err := os.OpenFile("/tmp/chronos_viewport_debug.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644); err == nil {
-			fmt.Fprintf(f, "Can show all slots, setting ViewportStart to 0\n")
-			f.Close()
-		}
 		return
 	}
 	
@@ -154,8 +122,6 @@ func (tv *TimeView) AutoAdjustViewport(calendarTime time.Time) {
 	if calendarTime.Minute() >= 30 {
 		currentSlot++
 	}
-	
-	oldViewportStart := tv.ViewportStart
 	
 	// Special handling for the last time slot (23:30) - do this FIRST
 	// Position 23:30 comfortably visible, not at the bottom edge
@@ -181,14 +147,6 @@ func (tv *TimeView) AutoAdjustViewport(calendarTime time.Time) {
 		if tv.ViewportStart > maxViewportStart {
 			tv.ViewportStart = maxViewportStart
 		}
-		
-		// Debug logging for special case
-		if f, err := os.OpenFile("/tmp/chronos_viewport_debug.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644); err == nil {
-			fmt.Fprintf(f, "SPECIAL 23:30 HANDLING: currentSlot=%d, slotsFromBottom=%d, targetPosition=%d\n", currentSlot, slotsFromBottom, targetPosition)
-			fmt.Fprintf(f, "Calculated ViewportStart=%d, maxAllowed=%d, final ViewportStart=%d\n", currentSlot - targetPosition, maxViewportStart, tv.ViewportStart)
-			fmt.Fprintf(f, "Expected cursor position after adjustment: %d (target was %d slots from bottom)\n", currentSlot - tv.ViewportStart, slotsFromBottom)
-			f.Close()
-		}
 	} else {
 		// Normal centering logic for all other times
 		tv.ViewportStart = currentSlot - visibleSlots/2
@@ -200,21 +158,6 @@ func (tv *TimeView) AutoAdjustViewport(calendarTime time.Time) {
 		if tv.ViewportStart+visibleSlots > tv.MaxTimeSlots {
 			tv.ViewportStart = tv.MaxTimeSlots - visibleSlots
 		}
-		
-		// Debug logging for normal case
-		if f, err := os.OpenFile("/tmp/chronos_viewport_debug.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644); err == nil {
-			fmt.Fprintf(f, "NORMAL CENTERING: currentSlot=%d, visibleSlots=%d, center position=%d\n", currentSlot, visibleSlots, visibleSlots/2)
-			fmt.Fprintf(f, "Expected cursor position after adjustment: %d (should be around center)\n", currentSlot - tv.ViewportStart)
-			f.Close()
-		}
-	}
-
-	// Debug logging
-	if f, err := os.OpenFile("/tmp/chronos_viewport_debug.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644); err == nil {
-		fmt.Fprintf(f, "currentSlot: %d\n", currentSlot)
-		fmt.Fprintf(f, "oldViewportStart: %d, newViewportStart: %d\n", oldViewportStart, tv.ViewportStart)
-		fmt.Fprintf(f, "=== AutoAdjustViewport END ===\n\n")
-		f.Close()
 	}
 }
 
