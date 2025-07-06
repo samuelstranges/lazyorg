@@ -70,16 +70,19 @@ Create `~/.config/chronos/config.json` to customize application settings:
 
 ```json
 {
-  "database_path": "/path/to/custom/database.db",
-  "default_view": "month"
+    "database_path": "/path/to/custom/database.db",
+    "default_view": "month"
 }
 ```
 
 **Available Options:**
+
 - **`database_path`** - Custom database file location (overrides default)
-- **`default_view`** - Default view mode on startup: `"week"` (default), `"month"`, or `"agenda"`
+- **`default_view`** - Default view mode on startup: `"week"` (default),
+  `"month"`, or `"agenda"`
 
 **Example Configurations:**
+
 ```json
 // Start in month view
 {"default_view": "month"}
@@ -236,7 +239,6 @@ Command line flags take precedence over config file settings.
 - bugfixes:
     - handle events that wraparound the end of a day into the next day
 - config options:
-    - default 'view'
     - desktop notifications
     - weather integration? see how tmux plugins do it lol
 - export flags:

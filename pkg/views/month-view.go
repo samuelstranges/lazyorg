@@ -110,11 +110,12 @@ func (mv *MonthView) Update(g *gocui.Gui) error {
 	}
 	
 	// Calculate cell dimensions based on available space
+	dayHeaderHeight := 2 // Space for day names and separator line
 	mv.CellWidth = mv.W / mv.GridCols
 	if mv.CellWidth < 1 {
 		mv.CellWidth = 1
 	}
-	mv.CellHeight = (mv.H - 3) / mv.GridRows // Leave space for header
+	mv.CellHeight = (mv.H - dayHeaderHeight) / mv.GridRows // Leave space for day headers
 	if mv.CellHeight < 1 {
 		mv.CellHeight = 1
 	}
@@ -126,18 +127,8 @@ func (mv *MonthView) Update(g *gocui.Gui) error {
 		f.Close()
 	}
 	
-	// Draw month header
+	// Clear view for drawing
 	v.Clear()
-	monthHeader := fmt.Sprintf("%s %d", mv.CurrentMonth.Month().String(), mv.CurrentMonth.Year())
-	
-	// Debug the header being drawn
-	if f, err := os.OpenFile("/tmp/chronos_month_debug.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644); err == nil {
-		fmt.Fprintf(f, "Drawing month header: %s\n", monthHeader)
-		f.Close()
-	}
-	
-	headerLine := fmt.Sprintf("%*s", (mv.W+len(monthHeader))/2, monthHeader)
-	fmt.Fprintf(v, "%s\n", headerLine)
 	
 	// Draw compact grid with shared borders
 	mv.drawCompactGrid(v)
@@ -166,7 +157,7 @@ func (mv *MonthView) updateChildViewProperties() {
 			
 			// Calculate position for compact grid layout (no individual borders)
 			x := mv.X + col*mv.CellWidth
-			y := mv.Y + 3 + row*mv.CellHeight
+			y := mv.Y + dayHeaderHeight + row*mv.CellHeight
 			w := mv.CellWidth
 			h := mv.CellHeight
 			
