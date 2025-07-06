@@ -200,13 +200,15 @@ Command line flags take precedence over config file settings.
 ## Future
 
 - visual fixes:
-    - in week view
-        - show what timezone youre in
-        - show what month your in in week view (top left)
-    - in month view:
-        - misaligned days of week
-        - sunday should be first day
-        - smaller borders
+    - top bar:
+        - line 1: should show current date and time (and what UTC)
+        - line 2: should contextually show information about:
+            - in week view: "Showing week: July 6 to 12"
+                - show what month your in in week view (top left)
+            - in month view: "Showing month: July"
+            - in agenda view: "Showing agenda: July 6"
+        - top bar shows
+    - sunday isnt first day of week in month view
 - additional keybinds:
     - visually change duration shortcut (running out of keybinds...)
 - bugfixes:

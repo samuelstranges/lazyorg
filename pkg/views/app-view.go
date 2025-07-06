@@ -288,9 +288,9 @@ func (av *AppView) calculateMonthDayViewName() string {
 	// Get the first day of the displayed month
 	firstDay := time.Date(currentMonth.Year(), currentMonth.Month(), 1, 0, 0, 0, 0, currentMonth.Location())
 	
-	// Find the Monday of the week containing the first day (start of month grid)
+	// Find the Sunday of the week containing the first day (start of month grid)
 	startOfGrid := firstDay
-	for startOfGrid.Weekday() != time.Monday {
+	for startOfGrid.Weekday() != time.Sunday {
 		startOfGrid = startOfGrid.AddDate(0, 0, -1)
 	}
 	

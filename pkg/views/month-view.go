@@ -12,13 +12,13 @@ import (
 )
 
 var MonthDayNames = []string{
+	"Sunday",
 	"Monday",
 	"Tuesday", 
 	"Wednesday",
 	"Thursday",
 	"Friday",
 	"Saturday",
-	"Sunday",
 }
 
 type MonthView struct {
@@ -57,9 +57,9 @@ func (mv *MonthView) createMonthDayViews() {
 	// Get the first day of the month
 	firstDay := time.Date(mv.CurrentMonth.Year(), mv.CurrentMonth.Month(), 1, 0, 0, 0, 0, mv.CurrentMonth.Location())
 	
-	// Find the Monday of the week containing the first day
+	// Find the Sunday of the week containing the first day
 	startOfWeek := firstDay
-	for startOfWeek.Weekday() != time.Monday {
+	for startOfWeek.Weekday() != time.Sunday {
 		startOfWeek = startOfWeek.AddDate(0, 0, -1)
 	}
 	
