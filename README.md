@@ -285,45 +285,6 @@ chronos -backup ~/backup.db
 chronos -debug
 ```
 
-## 📋 Examples
-
-### Daily Workflow
-
-```bash
-# Morning: Check today's agenda
-chronos --agenda
-
-# Add a quick meeting
-chronos
-# Press 'a', fill in details, press Tab to save
-
-# Afternoon: Check next event
-chronos --next
-```
-
-### Weekly Planning
-
-```bash
-# Open in month view for overview
-chronos
-# Press 'v' to cycle to month view
-# Navigate with h/l, add events with 'a'
-# Use 'w'/'b' to jump between events
-```
-
-### Event Management
-
-```bash
-# Search for all meetings this week
-chronos
-# Press '/', enter "meeting", set date range
-# Navigate results with 'n'/'N'
-
-# Copy recurring events
-# Press 'y' to yank event
-# Navigate to new time, press 'p' to paste
-```
-
 ## 🏗️ Architecture
 
 ### Core Components
@@ -372,4 +333,3 @@ for details.
 [💡 Request Features](https://github.com/samuelstranges/chronos/issues)
 
 </div>
-
