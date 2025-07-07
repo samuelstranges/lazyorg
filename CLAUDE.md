@@ -609,8 +609,8 @@ The project recently added:
   and end (23:30) of day navigation
 - **Unified Date Format**: All date fields now use YYYYMMDD format (no dashes)
   for consistency across goto, add/edit, and search forms
-- **Consistent 't' Usage**: Changed "Jump to today" keybinding from 'T' to 't'
-  for consistency with 't' shortcut in date fields
+- **Enhanced 't' Key**: Jump to today's date AND current time (rounded to nearest 30 minutes)
+  for consistency with 't' shortcut in date fields and improved time awareness
 - **Symmetric Day Boundary Navigation**: Fixed time navigation to work
   symmetrically - going up from 00:00 now goes to 23:30 of previous day,
   matching the behavior of going down from 23:30 to 00:00 of next day

@@ -63,7 +63,21 @@ func (c *Calendar) RoundTime() {
 
 func (c *Calendar) JumpToToday() {
 	now := time.Now()
-	c.CurrentDay.Date = time.Date(now.Year(), now.Month(), now.Day(), c.CurrentDay.Date.Hour(), c.CurrentDay.Date.Minute(), 0, 0, now.Location())
+	// Jump to today's date AND current time (rounded to nearest 30 minutes)
+	currentHour := now.Hour()
+	currentMinute := now.Minute()
+	
+	// Round to nearest half hour (0 or 30)
+	roundedMinute := 0
+	if currentMinute >= 15 {
+		roundedMinute = 30
+		if currentMinute >= 45 {
+			roundedMinute = 0
+			currentHour = (currentHour + 1) % 24
+		}
+	}
+	
+	c.CurrentDay.Date = time.Date(now.Year(), now.Month(), now.Day(), currentHour, roundedMinute, 0, 0, now.Location())
 	c.UpdateWeek()
 }
 

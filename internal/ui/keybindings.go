@@ -66,7 +66,7 @@ func initMainKeybindings(g *gocui.Gui, av *views.AppView) error {
 		{gocui.KeyArrowRight, func(g *gocui.Gui, v *gocui.View) error { debugLogKeybinding(gocui.KeyArrowRight, v.Name(), av); av.UpdateToNextDay(g); return nil }},
 		{gocui.KeyArrowDown, func(g *gocui.Gui, v *gocui.View) error { debugLogKeybinding(gocui.KeyArrowDown, v.Name(), av); av.UpdateToNextTime(g); return nil }},
 		{gocui.KeyArrowUp, func(g *gocui.Gui, v *gocui.View) error { debugLogKeybinding(gocui.KeyArrowUp, v.Name(), av); av.UpdateToPrevTime(g); return nil }},
-		{'t', func(g *gocui.Gui, v *gocui.View) error { av.JumpToToday(); return nil }},
+		{'t', func(g *gocui.Gui, v *gocui.View) error { av.JumpToToday(); av.UpdateCurrentView(g); return nil }},
 		{'H', func(g *gocui.Gui, v *gocui.View) error { av.UpdateToPrevWeek(); return nil }},
 		{'L', func(g *gocui.Gui, v *gocui.View) error { av.UpdateToNextWeek(); return nil }},
 		{'d', func(g *gocui.Gui, v *gocui.View) error { av.DeleteEvent(g); return nil }},

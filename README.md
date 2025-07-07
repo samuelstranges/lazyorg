@@ -135,6 +135,7 @@ Chronos provides elegant, non-intrusive current time awareness:
 - **Title Bar**: Shows current event status:
   - `Current Event: Meeting with Team` (when an event is active)
   - `Current Event: None` (when no event is running)
+- **Quick Navigation**: Press `t` to jump to today's date and current time (rounded to nearest 30 minutes)
 - **Responsive**: Works seamlessly with viewport scrolling and terminal resizing
 
 ### Keybindings
@@ -148,7 +149,7 @@ Chronos provides elegant, non-intrusive current time awareness:
 |                | `H/L`          | Previous/Next week               |
 |                | `m/M`          | Previous/Next month              |
 |                | `j/k` or `↑/↓` | Move time cursor                 |
-|                | `t`            | Jump to today                    |
+|                | `t`            | Jump to today and current time   |
 |                | `T`            | Jump to specific date            |
 |                | `w/b/e`        | Next/Previous/End event          |
 |                | `g/G`          | Start/End of day                 |
