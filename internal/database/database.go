@@ -34,7 +34,7 @@ func (database *Database) createTables() error {
         description TEXT,
         location TEXT,
         time DATETIME NOT NULL,
-        duration REAL NOT NULL,
+        duration REAL NOT NULL CHECK (duration > 0 AND duration <= 24 AND (duration * 2) == CAST(duration * 2 AS INTEGER)),
         frequency INTEGER,
         occurence INTEGER,
         color INTEGER DEFAULT 0
