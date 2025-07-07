@@ -60,7 +60,8 @@ go build -o chronos cmd/chronos/main.go
 - **📱 Responsive Design** - Dynamic viewport adjustment for different terminal
   sizes
 - **⌨️ Vim-style Keybindings** - Familiar navigation and shortcuts
-- **⏰ Current Time Indicators** - Elegant bullet (●) in time sidebar and current event status in title bar
+- **⏰ Current Time Indicators** - Elegant bullet (●) in time sidebar and
+  current event status in title bar
 
 ### 🌍 Integrations
 
@@ -133,38 +134,39 @@ Chronos provides elegant, non-intrusive current time awareness:
 
 - **Time Sidebar**: A bullet (●) appears next to the current half-hour slot
 - **Title Bar**: Shows current event status:
-  - `Current Event: Meeting with Team` (when an event is active)
-  - `Current Event: None` (when no event is running)
-- **Quick Navigation**: Press `t` to jump to today's date and current time (rounded to nearest 30 minutes)
+    - `Current Event: Meeting with Team` (when an event is active)
+    - `Current Event: None` (when no event is running)
+- **Quick Navigation**: Press `t` to jump to today's date and current time
+  (rounded to nearest 30 minutes)
 - **Responsive**: Works seamlessly with viewport scrolling and terminal resizing
 
 ### Keybindings
 
-| Category       | Key            | Action                           |
-| -------------- | -------------- | -------------------------------- |
-| **View**       | `q`            | Quit                             |
-|                | `?`            | Show/Hide help                   |
-|                | `v`            | Toggle view mode                 |
-| **Navigation** | `h/l` or `←/→` | Previous/Next day                |
-|                | `H/L`          | Previous/Next week               |
-|                | `m/M`          | Previous/Next month              |
-|                | `j/k` or `↑/↓` | Move time cursor                 |
-|                | `t`            | Jump to today and current time   |
-|                | `T`            | Jump to specific date            |
-|                | `w/b/e`        | Next/Previous/End event          |
-|                | `g/G`          | Start/End of day                 |
-| **Events**     | `a`            | Add new event                    |
-|                | `c`            | Change/Edit event                |
-|                | `C`            | Change event color               |
-|                | `y`            | Yank/Copy event                  |
-|                | `p`            | Paste event                      |
-|                | `d`            | Delete event                     |
-|                | `D`            | Delete all events with same name |
-| **Search**     | `/`            | Search events                    |
-|                | `n/N`          | Next/Previous search result      |
-|                | `Esc`          | Clear search                     |
-| **Operations** | `u`            | Undo last operation              |
-|                | `r`            | Redo last operation              |
+| Category       | Key            | Action                                |
+| -------------- | -------------- | ------------------------------------- |
+| **View**       | `q`            | Quit                                  |
+|                | `?`            | Show/Hide help                        |
+|                | `v`            | Toggle view mode                      |
+| **Navigation** | `h/l` or `←/→` | Previous/Next day                     |
+|                | `H/L`          | Previous/Next week                    |
+|                | `m/M`          | Previous/Next month                   |
+|                | `j/k` or `↑/↓` | Move time cursor                      |
+|                | `t`            | Jump to today and current time        |
+|                | `T`            | Jump to specific date                 |
+|                | `w/b/e`        | Next/Previous/End event               |
+|                | `g/G`          | Start/End of day                      |
+| **Events**     | `a`            | Add new event                         |
+|                | `c`            | Change/Edit event                     |
+|                | `C`            | Change event color                    |
+|                | `y`            | Yank/Copy event                       |
+|                | `p`            | Paste event                           |
+|                | `d`            | Delete event                          |
+|                | `B`            | Bulk Delete all events with same name |
+| **Search**     | `/`            | Search events                         |
+|                | `n/N`          | Next/Previous search result           |
+|                | `Esc`          | Clear search                          |
+| **Operations** | `u`            | Undo last operation                   |
+|                | `r`            | Redo last operation                   |
 
 ### Creating Events
 
@@ -268,7 +270,8 @@ Configure default values for new events:
 
 **Options:**
 
-- `default_color` - Default color for new events ("Red", "Green", "Yellow", "Blue", "Magenta", "Cyan", "White", or empty for auto-generation)
+- `default_color` - Default color for new events ("Red", "Green", "Yellow",
+  "Blue", "Magenta", "Cyan", "White", or empty for auto-generation)
 - `default_event_length` - Default duration in hours (0.1-24.0 hours)
 
 ### Complete Configuration Example

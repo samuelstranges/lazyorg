@@ -70,7 +70,7 @@ func initMainKeybindings(g *gocui.Gui, av *views.AppView) error {
 		{'H', func(g *gocui.Gui, v *gocui.View) error { av.UpdateToPrevWeek(); return nil }},
 		{'L', func(g *gocui.Gui, v *gocui.View) error { av.UpdateToNextWeek(); return nil }},
 		{'d', func(g *gocui.Gui, v *gocui.View) error { av.DeleteEvent(g); return nil }},
-		{'D', func(g *gocui.Gui, v *gocui.View) error { av.DeleteEvents(g); return nil }},
+		{'B', func(g *gocui.Gui, v *gocui.View) error { av.DeleteEvents(g); return nil }},
 		{'y', func(g *gocui.Gui, v *gocui.View) error { av.CopyEvent(g); return nil }},
 		{'p', func(g *gocui.Gui, v *gocui.View) error { return av.PasteEvent(g) }},
 		{'u', func(g *gocui.Gui, v *gocui.View) error { return av.Undo(g) }},

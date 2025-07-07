@@ -42,7 +42,7 @@ func (kbv *KeybindsView) getKeybindingsContent() []string {
 		" y           - Copy event",
 		" p           - Paste event",
 		" d           - Delete event",
-		" D           - Delete all events w/ same name",
+		" B           - Bulk delete all events w/ same name",
 		"",
 		" Advanced Search:",
 		" /           - Search events (name/desc/loc)",
