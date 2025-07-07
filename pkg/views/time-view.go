@@ -71,6 +71,23 @@ func (tv *TimeView) updateBody(v *gocui.View) {
 		tv.ViewportStart = 0
 	}
 
+	// Get current time for current time indicator
+	now := time.Now()
+	currentHour := now.Hour()
+	currentMinute := now.Minute()
+	
+	// Round to nearest half hour (0 or 30)
+	currentHalfHour := 0
+	if currentMinute >= 30 {
+		currentHalfHour = 30
+	}
+	
+	// Calculate current time slot index
+	currentTimeSlot := currentHour*2
+	if currentHalfHour == 30 {
+		currentTimeSlot++
+	}
+
 	for i := 0; i < visibleSlots; i++ {
 		slotIndex := tv.ViewportStart + i
 		if slotIndex >= tv.MaxTimeSlots {
@@ -81,15 +98,30 @@ func (tv *TimeView) updateBody(v *gocui.View) {
 		minute := (slotIndex % 2) * 30
 
 		var timeStr string
+		var prefix string
+		
+		// Check if this is the current time slot
+		isCurrentTime := slotIndex == currentTimeSlot
+		
 		if minute == 0 {
 			formattedHour := utils.FormatHour(hour, 0)
-			timeStr = fmt.Sprintf(" %s - \n", formattedHour)
+			if isCurrentTime {
+				prefix = "●"
+			} else {
+				prefix = " "
+			}
+			timeStr = fmt.Sprintf("%s %s - \n", prefix, formattedHour)
 		} else {
 			formattedHour := utils.FormatHour(hour, 30)
-			timeStr = fmt.Sprintf(" %s \n", formattedHour)
+			if isCurrentTime {
+				prefix = "●"
+			} else {
+				prefix = " "
+			}
+			timeStr = fmt.Sprintf("%s %s \n", prefix, formattedHour)
 		}
 
-		// Show cursor if this is the cursor position
+		// Show cursor if this is the cursor position (takes precedence over current time)
 		if i == tv.Cursor {
 			runes := []rune(timeStr)
 			runes[0] = '>'

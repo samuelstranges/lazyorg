@@ -294,12 +294,6 @@ All event modifications MUST go through the EventManager to ensure:
 - Accessible via color picker (`c` key) with shortcuts: r/g/y/b/m/c/w
 - Events auto-generate colors from name hash if not manually set
 
-**Special System Colors:**
-
-- `calendar.ColorCustomPurple` - Reserved for current time highlighting
-- Uses 256-color palette (color 93) for bright, distinct purple
-- NOT available to users - system-only for time indication
-
 **Color Implementation:**
 
 - Colors stored as `gocui.Attribute` in database as integers
@@ -307,13 +301,12 @@ All event modifications MUST go through the EventManager to ensure:
 - `GenerateColorFromName()` creates consistent auto-colors
 - Color picker supports both single-letter shortcuts and full names
 
-**Current Time Highlighting:**
+**Current Time Indicators:**
 
-- Purple hash characters (`###########`) when no event at current time
-- Purple text color when event exists at current time
-- Background color matches underlying content (event color or day background)
-- Dynamically adapts to cursor state (black when cursor active, grey when
-  inactive)
+- **Time Sidebar Dot**: Minimal bullet (●) appears next to current time in sidebar
+- **Title Bar Status**: Shows "Current Event: [Name]" or "Current Event: None"
+- **Responsive Design**: Works with viewport scrolling and terminal resizing
+- **Elegant Implementation**: No overlays or hash characters that interfere with events
 
 ### UI Architecture
 
@@ -623,13 +616,13 @@ The project recently added:
   matching the behavior of going down from 23:30 to 00:00 of next day
 - **Event Overlap Prevention**: All event operations now prevent scheduling
   conflicts
-- **Current Time Highlighting**: Purple indicators show current half-hour in
-  today's column
+- **Elegant Current Time Indicators**: 
+    - Minimal bullet (●) in time sidebar shows current half-hour
+    - Title bar displays "Current Event: [Name]" or "Current Event: None"
+    - No intrusive overlays or hash characters that interfere with events
+    - Responsive design works with viewport scrolling
 - **Centralized Event Management**: All modifications route through EventManager
-- **Enhanced Color System**: Custom purple for time highlighting, improved color
-  management
-- **Automatic View Refresh**: Current time highlighting updates automatically
-  after all operations
+- **Enhanced Color System**: Improved color management and auto-generation
 - **Enhanced Search with Date Filtering**: Search form now supports text queries
   plus optional date range filtering with 't' shortcut for today
 

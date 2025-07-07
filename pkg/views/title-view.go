@@ -16,12 +16,14 @@ type TitleView struct {
 	ViewMode string
 	CurrentDate time.Time
 	WeatherData string
+	CurrentEvent string
 }
 
 func NewTitleView(c *calendar.Calendar) *TitleView {
 	tv := &TitleView{
 		BaseView: NewBaseView("title"),
 		Calendar: c,
+		CurrentEvent: "None",
 	}
 
 	return tv
@@ -67,12 +69,16 @@ func (tv *TitleView) updateBody(v *gocui.View) {
 		line1 += " | " + tv.WeatherData
 	}
 	
-	// Line 2: View context information (will be updated by AppView)
-	line2 := tv.getContextualInfo()
+	// Line 2: Current event information
+	line2 := "Current event: " + tv.CurrentEvent
+	
+	// Line 3: View context information (will be updated by AppView)
+	line3 := tv.getContextualInfo()
 
 	v.Clear()
 	fmt.Fprintln(v, line1)
 	fmt.Fprintln(v, line2)
+	fmt.Fprint(v, line3)
 }
 
 func (tv *TitleView) getContextualInfo() string {
@@ -98,4 +104,18 @@ func (tv *TitleView) SetViewMode(mode string) {
 // SetWeatherData sets the weather data to display in the title
 func (tv *TitleView) SetWeatherData(weatherData string) {
 	tv.WeatherData = weatherData
+}
+
+// SetCurrentEvent sets the current event to display in the title
+func (tv *TitleView) SetCurrentEvent(eventName string) {
+	if eventName == "" {
+		tv.CurrentEvent = "None"
+	} else {
+		tv.CurrentEvent = eventName
+	}
+}
+
+// GetRequiredHeight returns the number of lines needed for the title view including borders
+func (tv *TitleView) GetRequiredHeight() int {
+	return 4 // 3 content lines + borders (was 3 for 2 lines, so 4 for 3 lines)
 }

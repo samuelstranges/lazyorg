@@ -58,6 +58,7 @@ func (dv *DayView) Update(g *gocui.Gui) error {
 	v.Title = title
 
 
+
 	if err = dv.updateChildViewProperties(g); err != nil {
 		return err
 	}
@@ -77,6 +78,7 @@ func (dv *DayView) updateBgColor(v *gocui.View) {
 		v.BgColor = gocui.ColorDefault
 	}
 }
+
 
 
 

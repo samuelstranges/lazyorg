@@ -140,12 +140,16 @@ func (av *AppView) Update(g *gocui.Gui) error {
 		// Don't fail the entire update if weather fails - just log it
 		// Weather is optional functionality
 	}
+	
+	// Update current event in title
+	av.updateCurrentEvent()
 
 	// Initialize the view mode on first update
 	if !av.viewInitialized {
 		av.initializeViewMode(g)
 		av.viewInitialized = true
 	}
+
 
 	av.updateChildViewProperties()
 
@@ -553,6 +557,40 @@ func (av *AppView) ReturnToMainView(g *gocui.Gui) error {
 	return av.UpdateCurrentView(g)
 }
 
+// updateCurrentEvent finds and sets the current event in the title view
+func (av *AppView) updateCurrentEvent() {
+	if titleView, ok := av.GetChild("title"); ok {
+		if titleViewTyped, ok := titleView.(*TitleView); ok {
+			currentEvent := av.findCurrentEvent()
+			titleViewTyped.SetCurrentEvent(currentEvent)
+		}
+	}
+}
+
+// findCurrentEvent returns the name of the event that is currently running, or empty string if none
+// This reuses the same logic as the --current CLI flag
+func (av *AppView) findCurrentEvent() string {
+	events, err := av.Database.GetEventsByDate(time.Now())
+	if err != nil {
+		return ""
+	}
+
+	now := time.Now()
+	
+	for _, event := range events {
+		// Convert UTC stored time to local time for comparison (matches CLI logic)
+		eventStart := event.Time.Local()
+		eventEnd := eventStart.Add(time.Duration(event.DurationHour * float64(time.Hour)))
+		
+		if (now.After(eventStart) || now.Equal(eventStart)) && now.Before(eventEnd) {
+			return event.Name
+		}
+	}
+	
+	return "" // No current event
+}
+
+
 
 
 
@@ -592,17 +630,21 @@ func (av *AppView) updateChildViewProperties() {
 	sideViewWidth := 0
 	mainViewWidth := av.W - sideViewWidth - 1
 
+	var titleHeight int = TitleViewHeight // fallback to constant
 	if titleView, ok := av.GetChild("title"); ok {
+		if titleViewTyped, ok := titleView.(*TitleView); ok {
+			titleHeight = titleViewTyped.GetRequiredHeight()
+		}
 		titleView.SetProperties(
 			av.X+sideViewWidth+1,
 			av.Y,
 			mainViewWidth,
-			TitleViewHeight,
+			titleHeight,
 		)
 	}
 
 	if mainView, ok := av.GetChild("main"); ok {
-		y := av.Y + TitleViewHeight + 1
+		y := av.Y + titleHeight + 1
 		mainView.SetProperties(
 			av.X+sideViewWidth+1,
 			y,

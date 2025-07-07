@@ -60,7 +60,7 @@ go build -o chronos cmd/chronos/main.go
 - **📱 Responsive Design** - Dynamic viewport adjustment for different terminal
   sizes
 - **⌨️ Vim-style Keybindings** - Familiar navigation and shortcuts
-- **⏰ Current Time Highlighting** - Visual indicators for current time
+- **⏰ Current Time Indicators** - Elegant bullet (●) in time sidebar and current event status in title bar
 
 ### 🌍 Integrations
 
@@ -126,6 +126,16 @@ Chronos provides three main view modes, which can be cycled through with `v`:
 | **Week View**   | 7-day layout with half-hour slots |
 | **Month View**  | Monthly calendar grid             |
 | **Agenda View** | Detailed daily event list         |
+
+### Current Time Indicators
+
+Chronos provides elegant, non-intrusive current time awareness:
+
+- **Time Sidebar**: A bullet (●) appears next to the current half-hour slot
+- **Title Bar**: Shows current event status:
+  - `Current Event: Meeting with Team` (when an event is active)
+  - `Current Event: None` (when no event is running)
+- **Responsive**: Works seamlessly with viewport scrolling and terminal resizing
 
 ### Keybindings
 
