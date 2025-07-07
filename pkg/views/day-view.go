@@ -283,27 +283,43 @@ func (dv *DayView) updateChildViewProperties(g *gocui.Gui) error {
 		x := dv.X
 		// Use the new viewport-aware position calculation
 		timePosition := utils.TimeToPositionWithViewport(event.Time, dv.TimeView.GetViewportStart())
-		
-		
-		// Skip events that are outside the viewport
-		if timePosition < 0 {
-			continue
-		}
-		
-		// Check if event extends beyond the visible area
 		visibleSlots := dv.TimeView.GetVisibleSlots()
+		
+		// Calculate event end time and position
+		eventEndTime := event.Time.Add(time.Duration(event.DurationHour * float64(time.Hour)))
+		eventEndPosition := utils.TimeToPositionWithViewport(eventEndTime, dv.TimeView.GetViewportStart())
+		
+		// Skip events that are completely outside the viewport
+		if timePosition < 0 && eventEndPosition <= 0 {
+			continue // Event ends before viewport starts
+		}
 		if timePosition >= visibleSlots {
-			continue
+			continue // Event starts after viewport ends
 		}
 		
-		y := dv.Y + timePosition
+		// Calculate display position and height
+		var y, h int
+		if timePosition < 0 {
+			// Event starts before viewport - show from top of viewport
+			y = dv.Y
+			// Calculate how much of the event is visible
+			if eventEndPosition > visibleSlots {
+				h = visibleSlots // Event extends past viewport end
+			} else {
+				h = eventEndPosition // Show until event ends
+			}
+		} else {
+			// Event starts within viewport
+			y = dv.Y + timePosition
+			h = utils.DurationToHeight(event.DurationHour) + 1
+			
+			// Truncate event height if it extends beyond visible area
+			if timePosition + h > visibleSlots {
+				h = visibleSlots - timePosition
+			}
+		}
+		
 		w := dv.W
-		h := utils.DurationToHeight(event.DurationHour) + 1
-		
-		// Truncate event height if it extends beyond visible area
-		if timePosition + h > visibleSlots {
-			h = visibleSlots - timePosition
-		}
 		
 		
 		// Ensure minimum height

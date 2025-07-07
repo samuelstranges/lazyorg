@@ -495,9 +495,6 @@ manageable imports.
 
 - visual fixes:
     - form colors are ugly... this might be a limitation of gocui
-    - second line of event shows event location (if enough space in event)
-- additional keybinds:
-    - visually change duration shortcut (running out of keybinds...)
 
 ## Not planned
 
