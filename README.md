@@ -121,38 +121,41 @@ chronos --help
 
 Chronos provides three main view modes:
 
-| View            | Description                                 | Key           |
-| --------------- | ------------------------------------------- | ------------- |
-| **Week View**   | 7-day layout with half-hour slots (default) | `v` to switch |
-| **Month View**  | Monthly calendar grid with weather          | `v` to switch |
-| **Agenda View** | Daily event list with details               | `v` to switch |
+| View            | Description                       |
+| --------------- | --------------------------------- |
+| **Week View**   | 7-day layout with half-hour slots |
+| **Month View**  | Monthly calendar grid             |
+| **Agenda View** | Detailed daily event list         |
+
+To cycle between these use `v`.
 
 ### Essential Keybindings
 
 | Category       | Key            | Action                           |
 | -------------- | -------------- | -------------------------------- |
+| **View**       | `q`            | Quit                             |
+|                | `?`            | Show/Hide help                   |
+|                | `v`            | Toggle view mode                 |
 | **Navigation** | `h/l` or `←/→` | Previous/Next day                |
 |                | `H/L`          | Previous/Next week               |
+|                | `m/M`          | Previous/Next month              |
 |                | `j/k` or `↑/↓` | Move time cursor                 |
 |                | `t`            | Jump to today                    |
 |                | `T`            | Jump to specific date            |
-|                | `w/b`          | Next/Previous event              |
+|                | `w/b/e`        | Next/Previous/End event          |
 |                | `g/G`          | Start/End of day                 |
 | **Events**     | `a`            | Add new event                    |
 |                | `c`            | Change/Edit event                |
-|                | `d`            | Delete event                     |
-|                | `D`            | Delete all events with same name |
+|                | `C`            | Change event color               |
 |                | `y`            | Yank/Copy event                  |
 |                | `p`            | Paste event                      |
-|                | `C`            | Change event color               |
+|                | `d`            | Delete event                     |
+|                | `D`            | Delete all events with same name |
 | **Search**     | `/`            | Search events                    |
 |                | `n/N`          | Next/Previous search result      |
 |                | `Esc`          | Clear search                     |
 | **Operations** | `u`            | Undo last operation              |
 |                | `r`            | Redo last operation              |
-| **View**       | `v`            | Toggle view mode                 |
-|                | `?`            | Show/Hide help                   |
-|                | `q`            | Quit                             |
 
 ### Creating Events
 
@@ -178,7 +181,6 @@ Press `/` to open the search dialog with powerful filtering:
 **Examples:**
 
 - `meeting` - Find all meetings
-- From: `t`, To: `t` - Today's events only
 - `doctor` + From: `t` - Doctor appointments from today
 
 ## ⚙️ Configuration
@@ -212,7 +214,8 @@ Create `~/.config/chronos/config.json`:
 
 ### Weather Integration
 
-Add weather to your calendar:
+Add weather to your calendar (using `wttr.in`). Weather data is polled
+asynchronously every 2 hours, or on restart of chronos:
 
 ```json
 {
@@ -248,8 +251,8 @@ Set up event reminders:
 {
     "default_view": "month",
     "database_path": "/home/user/calendar.db",
-    "weather_location": "London",
-    "weather_unit": "fahrenheit",
+    "weather_location": "Melbourne",
+    "weather_unit": "celsius",
     "notifications_enabled": true,
     "notification_minutes": 30
 }
@@ -293,7 +296,7 @@ chronos -debug
 - **Event Manager** - Handles CRUD operations with undo/redo
 - **UI Layer** - Multiple views with responsive design
 - **Weather Service** - Optional weather integration
-- **Notification Service** - Desktop notification system
+- **Notification Service** - Desktop notification system w/ `beeep`
 
 ### Key Design Principles
 
@@ -304,10 +307,13 @@ chronos -debug
 
 ### Technical Features
 
-- **Smart Caching** - Weather data cached for 2 hours
 - **Viewport System** - Dynamic scrolling for different terminal sizes
 - **UTC Storage** - Timezone-aware event storage
 - **Conflict Detection** - Automatic overlap prevention
+
+### Known limitations
+
+- **Online sync** - Unlikely due to mass processing of events (think `D`)
 
 ## 📄 License
 

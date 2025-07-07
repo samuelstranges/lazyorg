@@ -66,7 +66,7 @@ func (ev *EventView) Update(g *gocui.Gui) error {
 			// Add location on second row if it exists and event is tall enough
 			if ev.Event.Location != "" && ev.H > 2 {
 				fmt.Fprint(v, "\n")
-				fmt.Fprint(v, "Loc: ")
+				fmt.Fprint(v, "@ ")
 				fmt.Fprint(v, ev.Event.Location)
 				// Move to the underline row (account for name + location lines)
 				for i := 2; i < ev.H-1; i++ { fmt.Fprint(v, "\n") }
@@ -92,9 +92,8 @@ func (ev *EventView) Update(g *gocui.Gui) error {
 		// Add location on second row if event is multi-row and has location
 		if ev.H > 2 && ev.Event.Location != "" {
 			const ansiReset = "\x1b[0m"     // Reset all attributes
-			
 			fmt.Fprint(v, "\n")
-			fmt.Fprint(v, "Loc: ")
+			fmt.Fprint(v, "@ ")
 			fmt.Fprint(v, ev.Event.Location)
 			fmt.Fprint(v, ansiReset)
 		}
