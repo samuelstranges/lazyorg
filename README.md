@@ -70,7 +70,7 @@ go build -o chronos cmd/chronos/main.go
 - **🖥️ CLI Query Interface** - Get event information from command line without
   launching GUI
 - **📄 iCalendar Export** - Export events to `.ics` format for other calendar
-  apps
+  apps. Repeated events are exported as individual events, allowing for unique metadata per instance.
 
 ### 🔒 Data Management
 

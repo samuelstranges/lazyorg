@@ -37,11 +37,8 @@ func (e *ICSExporter) ExportEvents(events []*calendar.Event) string {
 	builder.WriteString("CALSCALE:GREGORIAN\r\n")
 	builder.WriteString(fmt.Sprintf("METHOD:%s\r\n", METHOD))
 
-	// Filter events to avoid duplicating recurring events
-	filteredEvents := e.filterRecurringEvents(events)
-
 	// Write events
-	for _, event := range filteredEvents {
+	for _, event := range events {
 		builder.WriteString(e.formatEvent(event))
 	}
 
@@ -51,34 +48,7 @@ func (e *ICSExporter) ExportEvents(events []*calendar.Event) string {
 	return builder.String()
 }
 
-// filterRecurringEvents removes duplicate instances of recurring events,
-// keeping only the first occurrence of each recurring event series
-func (e *ICSExporter) filterRecurringEvents(events []*calendar.Event) []*calendar.Event {
-	var filtered []*calendar.Event
-	seen := make(map[string]*calendar.Event)
 
-	for _, event := range events {
-		if event.FrequencyDay > 0 && event.Occurence > 1 {
-			// This is a recurring event - create a key based on name, frequency, and occurrence
-			key := fmt.Sprintf("%s_%d_%d", event.Name, event.FrequencyDay, event.Occurence)
-			
-			if existing, exists := seen[key]; !exists || event.Time.Before(existing.Time) {
-				// Either first time seeing this recurring event, or this is an earlier instance
-				seen[key] = event
-			}
-		} else {
-			// Non-recurring event - always include
-			filtered = append(filtered, event)
-		}
-	}
-
-	// Add the earliest instance of each recurring event
-	for _, event := range seen {
-		filtered = append(filtered, event)
-	}
-
-	return filtered
-}
 
 // formatEvent formats a single event as a VEVENT component
 func (e *ICSExporter) formatEvent(event *calendar.Event) string {
@@ -116,12 +86,7 @@ func (e *ICSExporter) formatEvent(event *calendar.Event) string {
 		builder.WriteString(fmt.Sprintf("LOCATION:%s\r\n", e.escapeText(event.Location)))
 	}
 	
-	// RRULE - Recurrence rule (only for recurring events)
-	if event.FrequencyDay > 0 && event.Occurence > 1 {
-		// Create recurrence rule for daily frequency
-		builder.WriteString(fmt.Sprintf("RRULE:FREQ=DAILY;INTERVAL=%d;COUNT=%d\r\n", 
-			event.FrequencyDay, event.Occurence))
-	}
+	
 
 	builder.WriteString("END:VEVENT\r\n")
 
