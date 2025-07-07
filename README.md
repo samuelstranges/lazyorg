@@ -1,252 +1,198 @@
 # Chronos
 
-A sophisticated terminal-based calendar and event management system with
-advanced scheduling features. Forked from
-[HubertBel/lazyorg](https://github.com/HubertBel/lazyorg), and from there just
-basically gave Claude Code the reins...
+<div align="center">
 
-## Features
+**A sophisticated terminal-based calendar and event management system**
 
-- **Multiple View Modes**: Week view, month view and agenda (day) views (toggle
-  with `v`)
-- **CLI Query Interface**: Get event information from command line without
-  launching GUI
-- **Intuitive vim-like functionality**
-- 📅 **Smart Event Management**: Advanced event creation with automatic overlap
-  prevention
-- 🔄 **Undo/Redo System**: Full operation history with `u` and `r` keys
-- 🎨 **Colored Events**: Automatic color assignment or manual color selection
-  with `C`
-- 📋 **Yank/Paste Events**: Copy events with `y`, paste with `p`, delete with
-  `d`
-- 🔍 **Smart Search**: Search events across all dates with `/` (supports text
-  and date filtering)
-- 🎯 **Jump Navigation**: Quick navigation with `g` and event jumping with
-  `w`/`b`
-- ⏰ **Current Time Highlighting**: Visual indicators for current time
-- 🌤️ **Weather Integration**: 3-day weather forecast in month view with
-  configurable location and units
-- 🔔 **Desktop Notifications**: Configurable event reminders (0-60 minutes
-  before events)
-- ⌨️ **Vim-style Keybindings**: Familiar navigation and shortcuts
-- 🔒 **Conflict Prevention**: Automatic detection and prevention of overlapping
-  events
-- 📱 **Responsive Design**: Dynamic viewport adjustment for different terminal
-  sizes
+[![Go](https://img.shields.io/badge/Go-1.21+-00ADD8?style=flat&logo=go&logoColor=white)](https://golang.org/)
+[![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Platform](https://img.shields.io/badge/Platform-Linux%20%7C%20macOS-lightgrey)](https://github.com/samuelstranges/chronos)
 
-## Installation
+*Vim-inspired • Terminal-native • Offline-first*
+
+</div>
+
+## 🚀 Quick Start
 
 ```bash
+# Clone and build
 git clone https://github.com/samuelstranges/chronos.git
 cd chronos
-go build cmd/chronos/main.go
-./main
-
-# Or build with specific output name
 go build -o chronos cmd/chronos/main.go
+
+# Run
 ./chronos
 
-# Custom database location
-./chronos -db /path/to/custom/database.db
+# Press ? for help, q to quit
+```
 
-# Backup database
-./chronos -backup /path/to/backup.db
+## 📖 Table of Contents
 
-# Enable debug logging
-./chronos -debug
+- [Features](#-features)
+- [Installation](#-installation)
+- [Usage](#-usage)
+- [Configuration](#️-configuration)
+- [CLI Interface](#-cli-interface)
+- [Examples](#-examples)
+- [Architecture](#️-architecture)
+- [Contributing](#-contributing)
+- [License](#-license)
 
-# Show all available command-line options
+## ✨ Features
+
+### 🎯 Core Features
+- **📅 Smart Event Management** - Create, edit, and delete events with automatic overlap prevention
+- **🔄 Undo/Redo System** - Full operation history with vim-style `u` and `r` keys
+- **🎨 Colored Events** - Automatic color assignment or manual selection with `C`
+- **📋 Yank/Paste Events** - Copy events with `y`, paste with `p`, delete with `d`
+- **🔍 Smart Search** - Search events across all dates with `/` (supports text and date filtering)
+
+### 🖥️ Interface
+- **Multiple View Modes** - Week view, month view, and agenda view (toggle with `v`)
+- **📱 Responsive Design** - Dynamic viewport adjustment for different terminal sizes
+- **⌨️ Vim-style Keybindings** - Familiar navigation and shortcuts
+- **⏰ Current Time Highlighting** - Visual indicators for current time
+
+### 🌍 Integrations
+- **🌤️ Weather Integration** - 3-day weather forecast in month view with configurable location
+- **🔔 Desktop Notifications** - Configurable event reminders (0-60 minutes before events)
+- **🖥️ CLI Query Interface** - Get event information from command line without launching GUI
+- **📄 iCalendar Export** - Export events to `.ics` format for other calendar apps
+
+### 🔒 Data Management
+- **🗃️ SQLite Database** - Lightweight, fast, and reliable local storage
+- **💾 Backup Support** - Easy database backup and restore
+- **🔄 Conflict Prevention** - Automatic detection and prevention of overlapping events
+- **🚀 Offline-First** - No internet connection required for core functionality
+
+## 🛠️ Installation
+
+### Prerequisites
+- Go 1.21 or higher
+- Linux or macOS (Windows support not tested)
+
+### Build from Source
+
+```bash
+# Clone the repository
+git clone https://github.com/samuelstranges/chronos.git
+cd chronos
+
+# Build the application
+go build -o chronos cmd/chronos/main.go
+
+# Optional: Install to system PATH
+sudo mv chronos /usr/local/bin/
+```
+
+### Quick Test
+```bash
+# Run with default settings
+./chronos
+
+# Run with custom database
+./chronos -db ~/my-calendar.db
+
+# Get help
 ./chronos --help
 ```
 
-## Command-Line Options
+## 📚 Usage
 
-### Database and Configuration
+### Interface Overview
 
-- **`-db <path>`** - Specify custom database file location  
-  Default: `~/.local/share/chronos/data.db`
-- **`-backup <path>`** - Backup database to specified location and exit
-- **`-debug`** - Enable debug logging to `/tmp/chronos_debug.txt` and
-  `/tmp/chronos_getevents_debug.txt`
-- **`--help`** - Show all available command-line options
+Chronos provides three main view modes:
 
-### Configuration File
+| View | Description | Key |
+|------|-------------|-----|
+| **Week View** | 7-day layout with half-hour slots (default) | `v` to switch |
+| **Month View** | Monthly calendar grid with weather | `v` to switch |
+| **Agenda View** | Daily event list with details | `v` to switch |
 
-Create `~/.config/chronos/config.json` to customize application settings:
+### Essential Keybindings
 
-```json
-{
-    "database_path": "/path/to/custom/database.db",
-    "default_view": "month"
-}
-```
+| Category | Key | Action |
+|----------|-----|--------|
+| **Navigation** | `h/l` or `←/→` | Previous/Next day |
+| | `H/L` | Previous/Next week |
+| | `j/k` or `↑/↓` | Move time cursor |
+| | `t` | Jump to today |
+| | `T` | Jump to specific date |
+| | `w/b` | Next/Previous event |
+| | `g/G` | Start/End of day |
+| **Events** | `a` | Add new event |
+| | `c` | Change/Edit event |
+| | `d` | Delete event |
+| | `D` | Delete all events with same name |
+| | `y` | Yank/Copy event |
+| | `p` | Paste event |
+| | `C` | Change event color |
+| **Search** | `/` | Search events |
+| | `n/N` | Next/Previous search result |
+| | `Esc` | Clear search |
+| **Operations** | `u` | Undo last operation |
+| | `r` | Redo last operation |
+| **View** | `v` | Toggle view mode |
+| | `?` | Show/Hide help |
+| | `q` | Quit |
 
-**Available Options:**
+### Creating Events
 
-- **`database_path`** - Custom database file location (overrides default)
-- **`default_view`** - Default view mode on startup: `"week"` (default),
-  `"month"`, or `"agenda"`
+When adding a new event (`a` key):
 
-**Example Configurations:**
+1. **Name** - Event title
+2. **Date** - YYYYMMDD format (e.g., 20250707)
+3. **Time** - HH:MM format (30-minute intervals)
+4. **Duration** - In hours (0.5 = 30 minutes)
+5. **Location** - Optional location
+6. **Frequency** - Repeat interval in days (7 = weekly)
+7. **Occurrences** - Number of repetitions
+8. **Description** - Optional details
 
-```json
-// Start in month view
-{"default_view": "month"}
+### Search System
 
-// Start in agenda view with custom database
-{"default_view": "agenda", "database_path": "/home/user/my_calendar.db"}
-```
+Press `/` to open the search dialog with powerful filtering:
 
-### Event Queries (CLI Mode)
-
-- **`--next`** - Return next upcoming event
-- **`--current`** - Return current event (if exists)
-- **`--agenda [YYYYMMDD]`** - Export agenda for today or specified date
-- **`--ics <path>`** - Export all events to iCalendar (.ics) file (experimental)
-- **`--test-notification`** - Send a test desktop notification
-
-### CLI Query Examples
-
-```bash
-# Get next upcoming event
-./chronos --next
-
-# Get current event (if any)
-./chronos --current
-
-# Get today's agenda
-./chronos --agenda
-
-# Get agenda for specific date (June 17, 2025)
-./chronos --agenda 20250617
-
-# Export all events to iCalendar file
-./chronos --ics ~/my_calendar.ics
-
-# Test desktop notifications
-./chronos --test-notification
-```
-
-## Usage
-
-Press `?` in the application to see all available keybindings, or see the quick
-reference below:
-
-### Navigation
-
-- `h/l` or `←/→` - Previous/Next day
-- `H/L` - Previous/Next week
-- `m/M` - Previous/Next month (in month view)
-- `j/k` or `↑/↓` - Move time cursor up/down
-- `t` - Jump to today
-- `T` - To specific date
-- `w/b` - Jump to next/previous event
-- `e` - Jump to end of current event, or next event if already at end
-- `g/G` - Jump to start/end of day (00:00/23:30)
-
-### View Modes
-
-- `v` - Toggle between Week View, Month View, and Agenda View
-    - **Week View**: 7-day calendar with half-hour time slots (default)
-        - **Responsive Design**: Automatically adjusts to terminal size
-        - **Smart Scrolling**: Viewport centers around cursor position
-        - **Border-Aware**: Ensures all time slots are visible (including 23:30)
-    - **Month View**: Monthly calendar grid overview
-    - **Agenda View**: Daily event list with detailed information
-
-### Events
-
-- `a` - Add new event
-- `c` - Change current event
-- `d` - Delete current event (also copies to clipboard)
-- `D` - Delete all events with same name
-- `y` - Copy/yank current event
-- `p` - Paste copied event
-- `C` - Change event color
-
-### Search
-
-- `/` - Search events with text and date filters
-- `n/N` - Go to next/previous search result
-- `Esc` - Clear search
-
-#### Search Filters
-
-The search function supports multiple types of filters:
-
-**Text Search:**
-
-- Search across event names, descriptions, and locations
-- Case-insensitive matching
-- Partial text matching supported
-
-**Date Filters:**
-
-- **From Date**: Filter events starting from a specific date
-- **To Date**: Filter events ending by a specific date
-- **Date Format**: Use `YYYYMMDD` format (e.g., `20241225`)
-- **Today Shortcut**: Use `t` to represent today's date
+- **Text Search** - Search names, descriptions, locations
+- **Date Range** - Filter by date range (YYYYMMDD format)
+- **Today Shortcut** - Use `t` for today's date
 
 **Examples:**
+- `meeting` - Find all meetings
+- From: `t`, To: `t` - Today's events only
+- `doctor` + From: `t` - Doctor appointments from today
 
-- Text only: `meeting` (finds all events containing "meeting")
-- Date range: From `20240101` to `20240131` (January events)
-- Today shortcut: From `t` to `t` (today's events only)
-- Mixed: `doctor` with From Date `t` (appointments with "doctor" from today
-  onwards)
-
-### Operations
-
-- `u` - Undo last operation
-- `r` - Redo last undone operation
-
-### View Controls
-
-- `?` - Show/Hide help menu
-- `q` - Quit application
-
-### Event Creation
-
-When creating a new event (`a`), you'll be prompted to fill in:
-
-- **Name**: Title of event
-- **Date**: Date of the event (YYYYMMDD format)
-- **Time**: Time of the event (HH:MM format, 30-minute intervals)
-- **Location** (optional): Location of the event
-- **Duration**: Duration of the event in hours (0.5 = 30 minutes)
-- **Frequency**: Repeat interval in days (default: 7 for weekly)
-- **Occurence**: Number of repetitions (default: 1)
-- **Description** (optional): Additional notes or details
-
-## Configuration
+## ⚙️ Configuration
 
 ### Database Location
 
-By default, the database is created at `~/.local/share/chronos/data.db`. You can
-specify a custom location:
+**Default:** `~/.local/share/chronos/data.db`
 
-**Command Line:**
-
+**Custom location:**
 ```bash
-./chronos -db /path/to/custom/database.db
-```
+# Command line
+./chronos -db /path/to/custom.db
 
-**Config File:** Edit `~/.config/chronos/config.json`:
-
-```json
+# Config file: ~/.config/chronos/config.json
 {
-    "database_path": "/path/to/custom/database.db"
+    "database_path": "/path/to/custom.db"
 }
 ```
 
-Command line flags take precedence over config file settings.
+### Basic Configuration
+
+Create `~/.config/chronos/config.json`:
+
+```json
+{
+    "default_view": "week",
+    "database_path": "~/.local/share/chronos/data.db"
+}
+```
 
 ### Weather Integration
 
-Chronos supports optional weather integration that displays current weather in
-the title bar and 3-day forecasts in month view.
-
-**Configuration:** Edit `~/.config/chronos/config.json`:
+Add weather to your calendar:
 
 ```json
 {
@@ -255,58 +201,13 @@ the title bar and 3-day forecasts in month view.
 }
 ```
 
-**Weather Configuration Options:**
-
-- `weather_location` (string): Location for weather data (required to enable
-  weather)
-
-    - Examples: `"London"`, `"New York"`, `"Tokyo"`, `"Melbourne"`
-    - Supports cities, airports (3-letter codes), coordinates
-    - Leave empty or omit to disable weather features
-
-- `weather_unit` (string): Temperature unit preference (optional)
-    - `"celsius"` or `"c"` - Show temperatures in Celsius (default)
-    - `"fahrenheit"` or `"f"` - Show temperatures in Fahrenheit
-    - Invalid values default to Celsius
-
-**Weather Display:**
-
-- **Title Bar**: Shows current weather in all views (e.g., "Melbourne: ☁️ 21°C")
-- **Month View**: Shows 3-day forecast next to day numbers (e.g., "6• 17°⛅", "7
-  16°☀️")
-
-**Features:**
-
-- **Smart Caching**: Weather data cached for 2 hours to minimize API calls
-- **Background Loading**: Weather preloads on startup to prevent lag when
-  switching views
-- **Automatic Updates**: Data refreshes every 2 hours automatically
-- **Emoji Support**: Uses weather emojis (☀️, ⛅, ☁️, 🌧️, etc.) for visual
-  indicators
-
-**Technical Notes:**
-
-- Weather icons appear last in day display due to emoji width rendering issues
-  in terminals
-- Supports wttr.in service locations (IP-based, coordinates, city names, airport
-  codes)
-- No API key required - uses the free wttr.in weather service
-- Graceful fallback - weather failures don't affect calendar functionality
-
-**Example Month View with Weather:**
-
-```
-│ 6• 17°⛅           │ 7 16°☀️            │ 8 14°⛅            │
-│06:00 Morning       │06:00 Morning       │06:00 Morning       │
-│08:30 Pump up tyres │18:00 Meeting       │                    │
-```
+**Options:**
+- `weather_location` - City name, airport code, or coordinates
+- `weather_unit` - "celsius" or "fahrenheit"
 
 ### Desktop Notifications
 
-Chronos supports optional desktop notifications that can remind you of upcoming
-events 0-60 minutes before they start.
-
-**Configuration:** Edit `~/.config/chronos/config.json`:
+Set up event reminders:
 
 ```json
 {
@@ -315,198 +216,156 @@ events 0-60 minutes before they start.
 }
 ```
 
-**Notification Configuration Options:**
+**Options:**
+- `notifications_enabled` - true/false
+- `notification_minutes` - 0-60 minutes before event
 
-- `notifications_enabled` (boolean): Enable or disable desktop notifications
+### Complete Configuration Example
 
-    - `true` - Enable desktop notifications (default: `false`)
-    - `false` - Disable desktop notifications
-
-- `notification_minutes` (integer): Minutes before event to show notification
-    - Valid range: 0-60 minutes
-    - Default: 15 minutes
-    - Values outside range default to 15 minutes
-
-**Features:**
-
-- **Cross-Platform**: Works on macOS and Linux desktop environments
-- **Smart Timing**: Notifications appear exactly N minutes before events start
-- **Duplicate Prevention**: Won't spam multiple notifications for the same event
-- **Timezone Aware**: Properly handles timezone conversions between local time
-  and UTC storage
-- **Event Details**: Shows event name, time, location, and description
-  (truncated if long)
-- **Test Function**: Use `--test-notification` flag to verify notifications work
-
-**Example Notification:**
-
-```
-Title: "Upcoming Event"
-Message: "Team Meeting
-         2:30 PM - 3:30 PM
-         Location: Conference Room A
-         Weekly project sync and updates"
+```json
+{
+    "default_view": "month",
+    "database_path": "/home/user/calendar.db",
+    "weather_location": "London",
+    "weather_unit": "fahrenheit",
+    "notifications_enabled": true,
+    "notification_minutes": 30
+}
 ```
 
-**Testing Notifications:**
+## 🖥️ CLI Interface
+
+Query events without opening the GUI:
 
 ```bash
-# Test if notifications work
+# Get next upcoming event
+./chronos --next
+
+# Get current event
+./chronos --current
+
+# Get today's agenda
+./chronos --agenda
+
+# Get specific date agenda
+./chronos --agenda 20250707
+
+# Export to iCalendar
+./chronos --ics ~/calendar.ics
+
+# Test notifications
 ./chronos --test-notification
 
-# If notifications are disabled, you'll see:
-# "Notifications are disabled in config"
-# "To enable notifications, add the following to ~/.config/chronos/config.json:"
+# Backup database
+./chronos -backup ~/backup.db
+
+# Enable debug mode
+./chronos -debug
 ```
 
-**Technical Notes:**
+## 📋 Examples
 
-- Uses the `beeep` library for cross-platform desktop notifications
-- Notifications run in background every 30 seconds to check for upcoming events
-- Automatically starts when you launch Chronos (if enabled)
-- Events stored in UTC, notifications calculated in local timezone
-- Won't duplicate notifications for events within 1 hour window
+### Daily Workflow
+```bash
+# Morning: Check today's agenda
+./chronos --agenda
 
-## Responsive Design
+# Add a quick meeting
+./chronos
+# Press 'a', fill in details, press Tab to save
 
-### Week View Viewport System
+# Afternoon: Check next event
+./chronos --next
+```
 
-The week view features a sophisticated responsive viewport system that
-automatically adjusts to your terminal size, providing a seamless experience
-similar to responsive web applications.
+### Weekly Planning
+```bash
+# Open in month view for overview
+./chronos
+# Press 'v' to cycle to month view
+# Navigate with h/l, add events with 'a'
+# Use 'w'/'b' to jump between events
+```
 
-**Key Features:**
+### Event Management
+```bash
+# Search for all meetings this week
+./chronos
+# Press '/', enter "meeting", set date range
+# Navigate results with 'n'/'N'
 
-- **Automatic Terminal Adaptation**: The viewport dynamically calculates how
-  many time slots can fit in your terminal height
-- **Intelligent Scrolling**: Always keeps the cursor-selected time visible by
-  automatically centering the viewport
-- **Border-Aware Calculations**: Properly accounts for view borders to ensure
-  complete visibility of time slots
-- **23:30 Visibility**: Special handling ensures the last time slot (23:30) is
-  never hidden at the bottom edge
+# Copy recurring events
+# Press 'y' to yank event
+# Navigate to new time, press 'p' to paste
+```
 
-**How It Works:**
+## 🏗️ Architecture
 
-- **Small Terminals**: Shows fewer time slots and automatically scrolls as you
-  navigate
-- **Large Terminals**: Can display the entire day (all 48 half-hour slots) if
-  terminal is tall enough
-- **Window Resize**: Instantly adapts when you resize your terminal window
-- **Smart Centering**: Viewport automatically follows your cursor to maintain
-  optimal visibility
+### Core Components
 
-**Technical Implementation:**
+- **Database Layer** - SQLite for event storage
+- **Event Manager** - Handles CRUD operations with undo/redo
+- **UI Layer** - Multiple views with responsive design
+- **Weather Service** - Optional weather integration
+- **Notification Service** - Desktop notification system
 
-The system uses a viewport-based approach where:
+### Key Design Principles
 
-- **Viewport Start**: Tracks which time slot appears at the top (0=00:00,
-  47=23:30)
-- **Visible Slots**: Calculates `terminal_height - 1` to reserve space for
-  borders
-- **Event Positioning**: All events are positioned relative to the current
-  viewport
-- **Automatic Adjustment**: Triggered on every UI update and navigation
+- **Offline-First** - No internet required for core functionality
+- **Vim-Inspired** - Familiar keybindings for power users
+- **Responsive** - Adapts to any terminal size
+- **Fast** - Optimized for quick navigation and editing
 
-This ensures that whether you're using a small terminal or a large monitor,
-Chronos adapts to provide the best possible experience without cutting off
-content or requiring manual scrolling.
+### Technical Features
 
-## Calendar Export
+- **Smart Caching** - Weather data cached for 2 hours
+- **Viewport System** - Dynamic scrolling for different terminal sizes
+- **UTC Storage** - Timezone-aware event storage
+- **Conflict Detection** - Automatic overlap prevention
 
-### iCalendar (.ics) Export (Experimental)
+## 🤝 Contributing
 
-Chronos supports exporting all your events to iCalendar (.ics) format for
-importing into other calendar applications like Google Calendar, Apple Calendar,
-Outlook, and more.
+Contributions are welcome! This project follows standard Go practices:
 
-> **⚠️ Experimental Feature**: The ICS export functionality is currently
-> experimental. While it follows RFC 5545 standards and has been tested with
-> major calendar applications, you may encounter compatibility issues with some
-> calendar software. Please test imports with a small subset of events first.
+1. Fork the repository
+2. Create a feature branch
+3. Write tests for new functionality
+4. Ensure all tests pass: `go test ./tests/...`
+5. Submit a pull request
+
+### Development Setup
 
 ```bash
-# Export all events to an iCalendar file
-./chronos --ics ~/my_calendar.ics
-./chronos --ics /path/to/export/calendar.ics
+# Clone and build
+git clone https://github.com/samuelstranges/chronos.git
+cd chronos
+go mod tidy
+
+# Run tests
+go test ./tests/...
+
+# Build and test
+go build -o chronos cmd/chronos/main.go
+./chronos -debug
 ```
 
-**Features:**
+## 📄 License
 
-- **RFC 5545 Compliant**: Full compliance with the iCalendar standard
-- **Smart Recurring Events**: Automatically consolidates recurring event
-  instances into proper RRULE definitions
-- **Cross-Platform Compatible**: Works with all major calendar applications
-  (Google Calendar, Apple Calendar, Outlook, etc.)
-- **Complete Event Data**: Exports event names, descriptions, locations,
-  start/end times, and recurrence patterns
-- **Timezone Handling**: Proper UTC timezone conversion for maximum
-  compatibility
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
 
-**What Gets Exported:**
+## 🙏 Acknowledgments
 
-- All event titles, descriptions, and locations
-- Accurate start and end times (converted to UTC)
-- Recurring events as single entries with RRULE patterns instead of hundreds of
-  duplicates
-- Event creation timestamps and unique identifiers
-
-**Supported Calendar Applications:**
-
-- **macOS Calendar**: Native import support
-- **Google Calendar**: Import via "Import & Export" settings
-- **Microsoft Outlook**: Import via "File > Import" menu
-- **Mozilla Thunderbird**: Lightning calendar add-on
-- **Any RFC 5545 compatible calendar application**
-
-**Example Output Structure:**
-
-```ics
-BEGIN:VCALENDAR
-VERSION:2.0
-PRODID:-//Chronos//Chronos Calendar Application//EN
-CALSCALE:GREGORIAN
-METHOD:PUBLISH
-BEGIN:VEVENT
-UID:chronos-event-1@chronos.local
-DTSTART:20250706T060000Z
-DTEND:20250706T070000Z
-SUMMARY:Morning Routine
-RRULE:FREQ=DAILY;INTERVAL=1;COUNT=365
-END:VEVENT
-END:VCALENDAR
-```
-
-**Performance Benefits:**
-
-Instead of exporting hundreds of individual recurring event instances, Chronos
-intelligently exports:
-
-- 1 "Morning" event with `RRULE:FREQ=DAILY;INTERVAL=1;COUNT=365` (daily for a
-  year)
-- 1 "Weekly Meeting" event with `RRULE:FREQ=DAILY;INTERVAL=7;COUNT=52` (weekly
-  for a year)
-- Individual non-recurring events as separate entries
-
-This approach prevents calendar application overload and creates clean,
-manageable imports.
-
-## Future
-
-- visual fixes:
-    - form colors are ugly... this might be a limitation of gocui
-
-## Not planned
-
-- syncing: using a local database as a single source of truth improves speed and
-  flexibility (undo/redo of mass change of events would be hard to sync), and
-  fits well within the constraints of a TUI
-- import not planned due to limitations of 30 min events
-- shift-tab through forms: not supported by gocui
-- handle events that wraparound the end of a day into the next day (i cant
-  imaging handling multi multi day events... )
-
-## Acknowledgments
-
-- Forked from [HubertBel/lazyorg](https://github.com/HubertBel/lazyorg)
+- Originally forked from [HubertBel/lazyorg](https://github.com/HubertBel/lazyorg)
 - Built with [gocui](https://github.com/jroimartin/gocui) TUI framework
+- Weather data provided by [wttr.in](https://wttr.in)
+- Notifications powered by [beeep](https://github.com/gen2brain/beeep)
+
+---
+
+<div align="center">
+
+**Made with ❤️ for terminal enthusiasts**
+
+[⭐ Star this repo](https://github.com/samuelstranges/chronos) • [🐛 Report Issues](https://github.com/samuelstranges/chronos/issues) • [💡 Request Features](https://github.com/samuelstranges/chronos/issues)
+
+</div>
