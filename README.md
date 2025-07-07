@@ -244,6 +244,22 @@ Set up event reminders:
 - `notifications_enabled` - true/false
 - `notification_minutes` - 0-60 minutes before event
 
+### Default Event Settings
+
+Configure default values for new events:
+
+```json
+{
+    "default_color": "Blue",
+    "default_event_length": 2.0
+}
+```
+
+**Options:**
+
+- `default_color` - Default color for new events ("Red", "Green", "Yellow", "Blue", "Magenta", "Cyan", "White", or empty for auto-generation)
+- `default_event_length` - Default duration in hours (0.1-24.0 hours)
+
 ### Complete Configuration Example
 
 ```json
@@ -253,7 +269,9 @@ Set up event reminders:
     "weather_location": "Melbourne",
     "weather_unit": "celsius",
     "notifications_enabled": true,
-    "notification_minutes": 30
+    "notification_minutes": 30,
+    "default_color": "Blue",
+    "default_event_length": 1.5
 }
 ```
 

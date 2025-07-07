@@ -211,6 +211,20 @@ go mod download                    # Download dependencies
 - **Example**: `{"notifications_enabled": true, "notification_minutes": 30}`
 - **Test**: Use `./chronos --test-notification` to verify notifications work
 
+### Default Event Configuration
+
+- **Config file**: Set `default_color` and `default_event_length` in
+  `~/.config/chronos/config.json`
+- **Default Color**: Sets the default color for new events
+    - Valid values: `"Red"`, `"Green"`, `"Yellow"`, `"Blue"`, `"Magenta"`, `"Cyan"`, `"White"`
+    - Empty string or invalid values: Auto-generate color from event name hash
+    - Default: `""` (auto-generation)
+- **Default Event Length**: Sets the default duration for new events in hours
+    - Valid range: 0.1-24.0 hours (0.1 = 6 minutes, 24.0 = 24 hours)
+    - Values outside range default to 1.0 hour
+    - Default: 1.0 hour
+- **Example**: `{"default_color": "Blue", "default_event_length": 2.0}`
+
 ### Testing Strategy
 
 - Unit tests focus on EventManager functionality
