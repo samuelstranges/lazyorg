@@ -60,8 +60,6 @@ go build -o chronos cmd/chronos/main.go
 - **📱 Responsive Design** - Dynamic viewport adjustment for different terminal
   sizes
 - **⌨️ Vim-style Keybindings** - Familiar navigation and shortcuts
-- **⏰ Current Time Indicators** - Elegant bullet (●) in time sidebar and
-  current event status in title bar
 
 ### 🌍 Integrations
 
@@ -128,18 +126,6 @@ Chronos provides three main view modes, which can be cycled through with `v`:
 | **Month View**  | Monthly calendar grid             |
 | **Agenda View** | Detailed daily event list         |
 
-### Current Time Indicators
-
-Chronos provides elegant, non-intrusive current time awareness:
-
-- **Time Sidebar**: A bullet (●) appears next to the current half-hour slot
-- **Title Bar**: Shows current event status:
-    - `Current Event: Meeting with Team` (when an event is active)
-    - `Current Event: None` (when no event is running)
-- **Quick Navigation**: Press `t` to jump to today's date and current time
-  (rounded to nearest 30 minutes)
-- **Responsive**: Works seamlessly with viewport scrolling and terminal resizing
-
 ### Keybindings
 
 | Category       | Key            | Action                                |
@@ -151,7 +137,7 @@ Chronos provides elegant, non-intrusive current time awareness:
 |                | `H/L`          | Previous/Next week                    |
 |                | `m/M`          | Previous/Next month                   |
 |                | `j/k` or `↑/↓` | Move time cursor                      |
-|                | `t`            | Jump to today and current time        |
+|                | `t`            | Jump to current date/time             |
 |                | `T`            | Jump to specific date                 |
 |                | `w/b/e`        | Next/Previous/End event               |
 |                | `g/G`          | Start/End of day                      |
@@ -162,7 +148,7 @@ Chronos provides elegant, non-intrusive current time awareness:
 |                | `y`            | Yank/Copy event                       |
 |                | `p`            | Paste event                           |
 |                | `d`            | Delete event                          |
-|                | `B`            | Bulk Delete all events with same name |
+|                | `B`            | Bulk delete all events with same name |
 | **Search**     | `/`            | Search events                         |
 |                | `n/N`          | Next/Previous search result           |
 |                | `Esc`          | Clear search                          |
