@@ -39,9 +39,6 @@ func GenerateColorFromName(name string) gocui.Attribute {
 	return colors[h.Sum32()%uint32(len(colors))]
 }
 
-// Custom purple color - using 256-color palette index for a nice purple
-// Color 93 is a bright/vibrant purple that stands out from event colors
-var ColorCustomPurple = gocui.Attribute(93)
 
 func GetAvailableColors() []gocui.Attribute {
 	return []gocui.Attribute{

@@ -554,32 +554,7 @@ func (av *AppView) ReturnToMainView(g *gocui.Gui) error {
 }
 
 
-// refreshCurrentTimeHighlighting updates the current time highlighting for today's column
-func (av *AppView) refreshCurrentTimeHighlighting(g *gocui.Gui) {
-	// Iterate through all day views and update their current time highlighting
-	for _, day := range av.Calendar.CurrentWeek.Days {
-		if view, ok := av.FindChildView(WeekdayNames[day.Date.Weekday()]); ok {
-			if dayView, ok := view.(*DayView); ok {
-				// Call the new update method on each day view
-				dayView.updateCurrentTimeHighlight(g)
-			}
-		}
-	}
-}
 
-// Override UpdateChildren to automatically refresh current time highlighting
-func (av *AppView) UpdateChildren(g *gocui.Gui) error {
-	// Call the base UpdateChildren implementation
-	err := av.BaseView.UpdateChildren(g)
-	if err != nil {
-		return err
-	}
-	
-	// Automatically refresh current time highlighting after any child update
-	av.refreshCurrentTimeHighlighting(g)
-	
-	return nil
-}
 
 func (av *AppView) ShowKeybinds(g *gocui.Gui) error {
 	if view, ok := av.GetChild("keybinds"); ok {
