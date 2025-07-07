@@ -158,6 +158,7 @@ Chronos provides elegant, non-intrusive current time awareness:
 | **Events**     | `a`            | Add new event                         |
 |                | `c`            | Change/Edit event                     |
 |                | `C`            | Change event color                    |
+|                | `D`            | Change event duration                 |
 |                | `y`            | Yank/Copy event                       |
 |                | `p`            | Paste event                           |
 |                | `d`            | Delete event                          |

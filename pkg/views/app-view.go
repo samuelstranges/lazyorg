@@ -29,6 +29,8 @@ type AppView struct {
 	
 	colorPickerEvent  *EventView
 	colorPickerActive bool
+	durationEvent *EventView
+	durationPopupActive bool
 	copiedEvent       *calendar.Event
 	
 	// Search functionality

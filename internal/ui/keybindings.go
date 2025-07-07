@@ -58,6 +58,7 @@ func initMainKeybindings(g *gocui.Gui, av *views.AppView) error {
 		{'a', func(g *gocui.Gui, v *gocui.View) error { debugLogKeybinding('a', v.Name(), av); return av.ShowNewEventPopup(g) }},
 		{'c', func(g *gocui.Gui, v *gocui.View) error { debugLogKeybinding('c', v.Name(), av); return av.ShowEditEventPopup(g) }},
 		{'C', func(g *gocui.Gui, v *gocui.View) error { debugLogKeybinding('C', v.Name(), av); return av.ShowColorPicker(g) }},
+		{'D', func(g *gocui.Gui, v *gocui.View) error { debugLogKeybinding('D', v.Name(), av); return av.ShowDurationPopup(g) }},
 		{'h', func(g *gocui.Gui, v *gocui.View) error { debugLogKeybinding('h', v.Name(), av); av.UpdateToPrevDay(g); return nil }},
 		{'l', func(g *gocui.Gui, v *gocui.View) error { debugLogKeybinding('l', v.Name(), av); av.UpdateToNextDay(g); return nil }},
 		{'j', func(g *gocui.Gui, v *gocui.View) error { debugLogKeybinding('j', v.Name(), av); av.UpdateToNextTime(g); return nil }},

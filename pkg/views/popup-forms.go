@@ -64,6 +64,15 @@ func (epv *EventPopupView) ColorPickerForm(g *gocui.Gui, title string) *componen
 	return form
 }
 
+// DurationForm creates a form for changing an event's duration
+func (epv *EventPopupView) DurationForm(g *gocui.Gui, title string) *component.Form {
+	form := component.NewForm(g, title, epv.X, epv.Y, epv.W, epv.H)
+
+	form.AddInputField("Duration", LabelWidth, FieldWidth).SetText("").AddValidate("Invalid duration", utils.ValidateDuration)
+
+	return form
+}
+
 // SearchForm creates a form for searching events with optional date filters
 func (epv *EventPopupView) SearchForm(g *gocui.Gui, title string) *component.Form {
 	form := component.NewForm(g, title, epv.X, epv.Y, epv.W, epv.H)

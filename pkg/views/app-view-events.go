@@ -107,6 +107,44 @@ func (av *AppView) ShowColorPicker(g *gocui.Gui) error {
 	return nil
 }
 
+// ShowDurationPopup displays the duration popup for the event at cursor position
+func (av *AppView) ShowDurationPopup(g *gocui.Gui) error {
+	hoveredView := av.GetHoveredOnView(g)
+	if eventView, ok := hoveredView.(*EventView); ok {
+		// Ensure we have a valid event before showing duration popup
+		if eventView.Event == nil {
+			return nil
+		}
+
+		av.durationEvent = eventView
+		av.durationPopupActive = true
+
+		if popup, ok := av.FindChildView("popup"); ok {
+			if popupView, ok := popup.(*EventPopupView); ok {
+				// Set up callback for duration selection
+				popupView.DurationCallback = func(duration float64) error {
+					av.durationEvent.Event.DurationHour = duration
+					if !av.EventManager.UpdateEvent(av.durationEvent.Event.Id, av.durationEvent.Event) {
+						// Error is handled by EventManager internally
+						return nil
+					}
+					av.CloseDurationPopup(g)
+					return nil
+				}
+
+				popup.SetProperties(
+					av.X+(av.W-PopupWidth)/2,
+					av.Y+(av.H-PopupHeight)/2,
+					PopupWidth,
+					PopupHeight,
+				)
+				return popupView.ShowDurationPopup(g)
+			}
+		}
+	}
+	return nil
+}
+
 // IsColorPickerActive returns whether the color picker is currently active
 func (av *AppView) IsColorPickerActive() bool {
 	return av.colorPickerActive
@@ -116,6 +154,18 @@ func (av *AppView) IsColorPickerActive() bool {
 func (av *AppView) CloseColorPicker(g *gocui.Gui) error {
 	av.colorPickerActive = false
 	av.colorPickerEvent = nil
+	return nil
+}
+
+// IsDurationPopupActive returns whether the duration popup is currently active
+func (av *AppView) IsDurationPopupActive() bool {
+	return av.durationPopupActive
+}
+
+// CloseDurationPopup closes the duration popup and resets state
+func (av *AppView) CloseDurationPopup(g *gocui.Gui) error {
+	av.durationPopupActive = false
+	av.durationEvent = nil
 	return nil
 }
 

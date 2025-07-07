@@ -139,7 +139,7 @@ func ValidateDuration(value string) bool {
 		return false
 	}
 
-	if duration <= 0.0 {
+	if duration <= 0.0 || duration > 24.0 {
 		return false
 	}
 

@@ -173,6 +173,36 @@ func (epv *EventPopupView) SelectColor(g *gocui.Gui, v *gocui.View) error {
 	return epv.Close(g, v)
 }
 
+// SetDuration handler for duration selection
+func (epv *EventPopupView) SetDuration(g *gocui.Gui, v *gocui.View) error {
+	if !epv.IsVisible {
+		return nil
+	}
+
+	// Check if the form is valid before proceeding
+	for _, v := range epv.Form.GetInputs() {
+		if !v.IsValid() {
+			return nil
+		}
+	}
+
+	durationInput := epv.Form.GetFieldText("Duration")
+	duration, err := strconv.ParseFloat(durationInput, 64)
+	if err != nil {
+		// This should ideally not be reached if validation is correct
+		return nil
+	}
+
+	// Use callback to handle duration selection
+	if epv.DurationCallback != nil {
+		if err := epv.DurationCallback(duration); err != nil {
+			return err
+		}
+	}
+
+	return epv.Close(g, v)
+}
+
 // ExecuteSearch handler for executing search
 func (epv *EventPopupView) ExecuteSearch(g *gocui.Gui, v *gocui.View) error {
 	if !epv.IsVisible {

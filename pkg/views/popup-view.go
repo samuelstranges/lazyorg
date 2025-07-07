@@ -24,6 +24,7 @@ type EventPopupView struct {
 	IsVisible bool
 	SearchCallback func(criteria database.SearchCriteria) error
 	ColorPickerCallback func(colorName string) error
+	DurationCallback func(duration float64) error
 }
 
 func NewEvenPopup(g *gocui.Gui, c *calendar.Calendar, db *database.Database, em *eventmanager.EventManager, cfg *config.Config) *EventPopupView {
@@ -233,6 +234,28 @@ func (epv *EventPopupView) ShowColorPickerPopup(g *gocui.Gui) error {
 	epv.addKeybind(gocui.KeyEnter, epv.SelectColor)
 
 	epv.Form.AddButton("Select", epv.SelectColor)
+	epv.Form.AddButton("Cancel", epv.Close)
+
+	epv.Form.SetCurrentItem(0)
+	epv.IsVisible = true
+	epv.Form.Draw()
+
+	epv.positionCursorsAtEnd(g)
+
+	return nil
+}
+
+func (epv *EventPopupView) ShowDurationPopup(g *gocui.Gui) error {
+	if epv.IsVisible {
+		return nil
+	}
+
+	epv.Form = epv.DurationForm(g, "Duration (eg. 1.5)")
+
+	epv.addKeybind(gocui.KeyEsc, epv.Close)
+	epv.addKeybind(gocui.KeyEnter, epv.SetDuration)
+
+	epv.Form.AddButton("Set", epv.SetDuration)
 	epv.Form.AddButton("Cancel", epv.Close)
 
 	epv.Form.SetCurrentItem(0)

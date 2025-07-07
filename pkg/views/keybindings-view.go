@@ -39,6 +39,7 @@ func (kbv *KeybindsView) getKeybindingsContent() []string {
 		" a           - Add new event",
 		" c           - Change event",
 		" C           - Color picker",
+		" D           - Change duration",
 		" y           - Copy event",
 		" p           - Paste event",
 		" d           - Delete event",
