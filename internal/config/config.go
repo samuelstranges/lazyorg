@@ -160,8 +160,9 @@ func GetDefaultColor(config *Config) string {
 // GetDefaultEventLength returns the configured default event length in hours
 func GetDefaultEventLength(config *Config) float64 {
 	length := config.DefaultEventLength
-	if length <= 0 || length > 24 {
-		return 1.0 // Default to 1 hour if invalid (0-24 hours allowed)
+	// Validate that length is a whole number or ends in .5 and is 0.5 < x < 24
+	    if length < 0.5 || length > 24 || int(length*10)%5 != 0 {
+		return 1.0 // Default to 1 hour if invalid
 	}
 	return length
 }
