@@ -22,7 +22,7 @@ func (kbv *KeybindsView) getKeybindingsContent() []string {
 	return []string{
 		" Views:",
 		" q           - Exit chronos",
-		" ?           - Show/hide help"
+		" ?           - Show/hide help",
 		" v           - Toggle view (Week→Month→Agenda)",
 		"",
 		" Navigation:",

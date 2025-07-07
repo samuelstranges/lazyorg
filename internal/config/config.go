@@ -13,6 +13,8 @@ type Config struct {
 	WeatherUnit             string `json:"weather_unit,omitempty"`
 	NotificationsEnabled    bool   `json:"notifications_enabled,omitempty"`
 	NotificationMinutes     int    `json:"notification_minutes,omitempty"`
+	DefaultColor            string `json:"default_color,omitempty"`
+	DefaultEventLength      float64 `json:"default_event_length,omitempty"`
 }
 
 func GetDefaultConfig() *Config {
@@ -23,6 +25,8 @@ func GetDefaultConfig() *Config {
 		WeatherUnit:             "celsius", // Default to celsius
 		NotificationsEnabled:    false, // Default to disabled
 		NotificationMinutes:     15, // Default to 15 minutes before
+		DefaultColor:            "", // Empty means auto-generate from event name
+		DefaultEventLength:      1.0, // Default to 1 hour
 	}
 }
 
@@ -136,4 +140,28 @@ func GetNotificationMinutes(config *Config) int {
 		return 15 // Default to 15 minutes if invalid
 	}
 	return minutes
+}
+
+// GetDefaultColor returns the configured default color or empty string for auto-generation
+func GetDefaultColor(config *Config) string {
+	if config.DefaultColor == "" {
+		return "" // Empty means auto-generate from event name
+	}
+	
+	// Validate color name
+	switch config.DefaultColor {
+	case "Red", "Green", "Yellow", "Blue", "Magenta", "Cyan", "White":
+		return config.DefaultColor
+	default:
+		return "" // Invalid color defaults to auto-generation
+	}
+}
+
+// GetDefaultEventLength returns the configured default event length in hours
+func GetDefaultEventLength(config *Config) float64 {
+	length := config.DefaultEventLength
+	if length <= 0 || length > 24 {
+		return 1.0 // Default to 1 hour if invalid (0-24 hours allowed)
+	}
+	return length
 }

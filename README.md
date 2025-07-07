@@ -119,7 +119,7 @@ chronos --help
 
 ### Interface Overview
 
-Chronos provides three main view modes:
+Chronos provides three main view modes, which can be cycled through with `v`:
 
 | View            | Description                       |
 | --------------- | --------------------------------- |
@@ -127,9 +127,7 @@ Chronos provides three main view modes:
 | **Month View**  | Monthly calendar grid             |
 | **Agenda View** | Detailed daily event list         |
 
-To cycle between these use `v`.
-
-### Essential Keybindings
+### Keybindings
 
 | Category       | Key            | Action                           |
 | -------------- | -------------- | -------------------------------- |
@@ -164,19 +162,20 @@ When adding a new event (`a` key):
 1. **Name** - Event title
 2. **Date** - YYYYMMDD format (e.g., 20250707)
 3. **Time** - HH:MM format (30-minute intervals)
-4. **Duration** - In hours (0.5 = 30 minutes)
-5. **Location** - Optional location
-6. **Frequency** - Repeat interval in days (7 = weekly)
+4. **Location** - Optional location
+5. **Duration** - In hours (0.5 = 30 minutes)
+6. **Frequency** - Repeat interval in days (1 = daily, 7 = weekly)
 7. **Occurrences** - Number of repetitions
-8. **Description** - Optional details
+8. **Color** - leave blank for default
+9. **Description** - Optional details
 
 ### Search System
 
 Press `/` to open the search dialog with powerful filtering:
 
 - **Text Search** - Search names, descriptions, locations
-- **Date Range** - Filter by date range (YYYYMMDD format)
-- **Today Shortcut** - Use `t` for today's date
+- **Date Range** - Filter text search by date range (YYYYMMDD format)
+- **Today Shortcut** - Use `t` for today's date (works on start and end dates)
 
 **Examples:**
 
@@ -215,7 +214,7 @@ Create `~/.config/chronos/config.json`:
 ### Weather Integration
 
 Add weather to your calendar (using `wttr.in`). Weather data is polled
-asynchronously every 2 hours, or on restart of chronos:
+asynchronously on restart, then every two hours:
 
 ```json
 {
@@ -295,8 +294,9 @@ chronos -debug
 - **Database Layer** - SQLite for event storage
 - **Event Manager** - Handles CRUD operations with undo/redo
 - **UI Layer** - Multiple views with responsive design
-- **Weather Service** - Optional weather integration
-- **Notification Service** - Desktop notification system w/ `beeep`
+- **Weather Service** - Optional weather integration using `wttr.in`
+- **Notification Service** - Desktop notification system using
+  [beeep](https://github.com/gen2brain/beeep)
 
 ### Key Design Principles
 
@@ -313,7 +313,12 @@ chronos -debug
 
 ### Known limitations
 
-- **Online sync** - Unlikely due to mass processing of events (think `D`)
+- **Online sync** - Unlikely due to mass processing of events (think `D`).
+  Having a local database as single source of truth improves speed & flexibility
+- **.ics imports** - due to limitations of non overlapping events of increments
+  of 30 mins
+- **Shift-tab through forms** - not supported by gocui
+- **Wraparound events past 12am** - things get wonky fast...
 
 ## 📄 License
 
@@ -328,15 +333,3 @@ for details.
 - Built with [gocui](https://github.com/jroimartin/gocui) TUI framework
 - Weather data provided by [wttr.in](https://wttr.in)
 - Notifications powered by [beeep](https://github.com/gen2brain/beeep)
-
----
-
-<div align="center">
-
-**Made with ❤️ for terminal enthusiasts**
-
-[⭐ Star this repo](https://github.com/samuelstranges/chronos) •
-[🐛 Report Issues](https://github.com/samuelstranges/chronos/issues) •
-[💡 Request Features](https://github.com/samuelstranges/chronos/issues)
-
-</div>

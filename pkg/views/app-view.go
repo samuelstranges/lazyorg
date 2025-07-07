@@ -68,7 +68,7 @@ func NewAppView(g *gocui.Gui, db *database.Database, cfg *config.Config) *AppVie
 	defaultView := config.GetDefaultView(cfg)
 	titleView.SetViewMode(defaultView)
 	av.AddChild("title", titleView)
-	av.AddChild("popup", NewEvenPopup(g, c, db, av.EventManager))
+	av.AddChild("popup", NewEvenPopup(g, c, db, av.EventManager, cfg))
 	av.AddChild("main", NewMainView(c, db, av.EventManager))
 	
 	// Set up error handler for EventManager after popup is created

@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/samuelstranges/chronos/internal/calendar"
+	"github.com/samuelstranges/chronos/internal/config"
 	"github.com/samuelstranges/chronos/internal/database"
 	"github.com/samuelstranges/chronos/internal/eventmanager"
 	component "github.com/j-04/gocui-component"
@@ -18,13 +19,14 @@ type EventPopupView struct {
 	Calendar     *calendar.Calendar
 	Database     *database.Database
 	EventManager *eventmanager.EventManager
+	Config       *config.Config
 
 	IsVisible bool
 	SearchCallback func(criteria database.SearchCriteria) error
 	ColorPickerCallback func(colorName string) error
 }
 
-func NewEvenPopup(g *gocui.Gui, c *calendar.Calendar, db *database.Database, em *eventmanager.EventManager) *EventPopupView {
+func NewEvenPopup(g *gocui.Gui, c *calendar.Calendar, db *database.Database, em *eventmanager.EventManager, cfg *config.Config) *EventPopupView {
 
 	epv := &EventPopupView{
 		BaseView:     NewBaseView("popup"),
@@ -32,6 +34,7 @@ func NewEvenPopup(g *gocui.Gui, c *calendar.Calendar, db *database.Database, em 
 		Calendar:     c,
 		Database:     db,
 		EventManager: em,
+		Config:       cfg,
 		IsVisible:    false,
 	}
 
@@ -52,7 +55,11 @@ func (epv *EventPopupView) ShowNewEventPopup(g *gocui.Gui) error {
 	defaultDate := fmt.Sprintf("%04d%02d%02d", currentDate.Year(), currentDate.Month(), currentDate.Day())
 	defaultTime := currentDate.Format("15:04")
 	
-	epv.Form = epv.NewEventForm(g, "New Event", "", defaultDate, defaultTime, "", "", "7", "1", "", "Red")
+	// Get defaults from config
+	defaultColor := config.GetDefaultColor(epv.Config)
+	defaultDuration := fmt.Sprintf("%.1f", config.GetDefaultEventLength(epv.Config))
+	
+	epv.Form = epv.NewEventForm(g, "New Event", "", defaultDate, defaultTime, "", defaultDuration, "7", "1", "", defaultColor)
 
 	epv.addKeybind(gocui.KeyEsc, epv.Close)
 	epv.addKeybind(gocui.KeyEnter, epv.AddEvent)

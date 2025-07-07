@@ -3,6 +3,14 @@
 This file provides guidance to Claude Code (claude.ai/code) when working with
 code in this repository.
 
+## IMPORTANT
+
+- you dont have access to a TTY so you cant do testing yourself... put yourself
+  in the best position possible by writing debug code for the user so he can run
+  it for you... then ask him to do it
+- write debug stuff to /tmp/ and then request access to those files so you don't
+  have to keep asking for output from user with `cat`
+
 ## Project Overview
 
 Chronos is a sophisticated terminal-based calendar and event management system
@@ -100,23 +108,28 @@ go mod download                    # Download dependencies
 - `internal/eventmanager/eventmanager.go` - Event management with undo/redo
   functionality
 - `internal/calendar/` - Calendar domain models (Event, Day, Week, Calendar)
-- `internal/weather/weather.go` - Weather data fetching, caching, and forecast management
+- `internal/weather/weather.go` - Weather data fetching, caching, and forecast
+  management
 
 **UI Layer:**
 
-- `pkg/views/` - All UI view components (day-view, week-view, month-view, agenda-view, event-view, etc.)
+- `pkg/views/` - All UI view components (day-view, week-view, month-view,
+  agenda-view, event-view, etc.)
 - Uses `gocui` TUI framework for terminal interface
 - Vim-style keybindings throughout
 - Multiple view modes: Week View (default), Month View, and Agenda View
 
 ### Key Features
 
-- **Multiple View Modes**: Week View, Month View, and Agenda View (toggle with `v`)
-- **Weather Integration**: Optional 3-day weather forecast display with configurable location and temperature units
+- **Multiple View Modes**: Week View, Month View, and Agenda View (toggle with
+  `v`)
+- **Weather Integration**: Optional 3-day weather forecast display with
+  configurable location and temperature units
 - **Undo/Redo System**: Full undo/redo support for event operations (add,
   delete, edit, bulk delete)
 - **Event Management**: Create, edit, delete events with recurrence support
-- **Search**: Search events across all dates with `/` (supports text and date filtering)
+- **Search**: Search events across all dates with `/` (supports text and date
+  filtering)
 - **Yank/Paste**: Copy events with `y` and paste with `p`
 - **Color Coding**: Events are automatically colored or manually assigned colors
 - **Notepad**: Integrated note-taking functionality
@@ -125,18 +138,21 @@ go mod download                    # Download dependencies
 ### View Modes
 
 **Week View (Default):**
+
 - Shows 7-day week layout with half-hour time slots
 - Current day highlighted with distinct formatting
 - Current time indicator (purple highlighting)
 - Primary view for event management and navigation
 
 **Month View (`v` key to switch):**
+
 - Calendar grid showing entire month
 - Events displayed as abbreviated text within date cells
 - Navigate between months with `m`/`M` keys
 - Useful for overview and long-term planning
 
 **Agenda View (`v` key to cycle):**
+
 - Day-focused vertical list of events
 - Shows events for current day in chronological order
 - Detailed event information display
@@ -161,31 +177,37 @@ go mod download                    # Download dependencies
 
 - **Config file**: Set `default_view` in `~/.config/chronos/config.json`
 - **Options**: `"week"` (default), `"month"`, or `"agenda"`
-- **Example**: `{"default_view": "month"}` - Application will start in month view
+- **Example**: `{"default_view": "month"}` - Application will start in month
+  view
 - **Validation**: Invalid values automatically fallback to week view
 
 ### Weather Configuration
 
-- **Config file**: Set `weather_location` and `weather_unit` in `~/.config/chronos/config.json`
+- **Config file**: Set `weather_location` and `weather_unit` in
+  `~/.config/chronos/config.json`
 - **Weather Location**: Required to enable weather features
-  - Examples: `"Melbourne"`, `"London"`, `"NYC"`, `"LAX"` (airport codes), coordinates
-  - Empty or omitted disables weather entirely
+    - Examples: `"Melbourne"`, `"London"`, `"NYC"`, `"LAX"` (airport codes),
+      coordinates
+    - Empty or omitted disables weather entirely
 - **Weather Unit**: Optional temperature unit preference
-  - `"celsius"` or `"c"` - Celsius temperatures (default)
-  - `"fahrenheit"` or `"f"` - Fahrenheit temperatures
-  - Invalid values default to Celsius
+    - `"celsius"` or `"c"` - Celsius temperatures (default)
+    - `"fahrenheit"` or `"f"` - Fahrenheit temperatures
+    - Invalid values default to Celsius
 - **Example**: `{"weather_location": "Melbourne", "weather_unit": "fahrenheit"}`
 
 ### Notification Configuration
 
-- **Config file**: Set `notifications_enabled` and `notification_minutes` in `~/.config/chronos/config.json`
-- **Notifications Enabled**: Boolean flag to enable/disable desktop notifications
-  - `true` - Enable desktop notifications
-  - `false` - Disable desktop notifications (default)
-- **Notification Minutes**: Integer value for minutes before event to notify (0-60)
-  - Valid range: 0-60 minutes
-  - Default: 15 minutes
-  - Values outside range default to 15 minutes
+- **Config file**: Set `notifications_enabled` and `notification_minutes` in
+  `~/.config/chronos/config.json`
+- **Notifications Enabled**: Boolean flag to enable/disable desktop
+  notifications
+    - `true` - Enable desktop notifications
+    - `false` - Disable desktop notifications (default)
+- **Notification Minutes**: Integer value for minutes before event to notify
+  (0-60)
+    - Valid range: 0-60 minutes
+    - Default: 15 minutes
+    - Values outside range default to 15 minutes
 - **Example**: `{"notifications_enabled": true, "notification_minutes": 30}`
 - **Test**: Use `./chronos --test-notification` to verify notifications work
 
@@ -209,7 +231,8 @@ All event modifications MUST go through the EventManager to ensure:
 - Event overlap prevention is applied
 - Consistent error handling and validation
 - Proper state management
-- **Transparent UTC conversion**: Local time ↔ UTC conversion handled automatically
+- **Transparent UTC conversion**: Local time ↔ UTC conversion handled
+  automatically
 
 **EventManager Methods:**
 
@@ -238,11 +261,14 @@ All event modifications MUST go through the EventManager to ensure:
 
 - **Storage Layer**: All events stored in UTC timezone in database
 - **UI Layer**: All events displayed and manipulated in local timezone
-- **Conversion Layer**: EventManager handles automatic conversion between timezones
+- **Conversion Layer**: EventManager handles automatic conversion between
+  timezones
 - **Write Operations**: Local time → UTC conversion before database storage
 - **Read Operations**: UTC → Local time conversion after database retrieval
-- **Query Operations**: Local time boundaries → UTC conversion for database queries
-- **Date Queries**: Local day/month boundaries converted to UTC before database comparison
+- **Query Operations**: Local time boundaries → UTC conversion for database
+  queries
+- **Date Queries**: Local day/month boundaries converted to UTC before database
+  comparison
 - **Undo/Redo**: Events stored in local time in undo stacks for UI consistency
 - **Transparent**: No changes required to UI code, forms, or display logic
 
@@ -353,27 +379,37 @@ finding events across the entire database.
 
 ### Responsive Viewport System
 
-The week view implements a responsive viewport system that automatically adjusts to terminal size, providing a web-app-like responsive experience.
+The week view implements a responsive viewport system that automatically adjusts
+to terminal size, providing a web-app-like responsive experience.
 
 **Core Features:**
 
-- **Dynamic View Adjustment**: Automatically calculates visible time slots based on terminal height
-- **Intelligent Scrolling**: Centers viewport around cursor position to prevent content cutoff
-- **Border-Aware Calculations**: Accounts for view borders to ensure all time slots are properly visible
-- **23:30 Special Handling**: Ensures the last time slot (23:30) is comfortably visible, not hidden at bottom edge
+- **Dynamic View Adjustment**: Automatically calculates visible time slots based
+  on terminal height
+- **Intelligent Scrolling**: Centers viewport around cursor position to prevent
+  content cutoff
+- **Border-Aware Calculations**: Accounts for view borders to ensure all time
+  slots are properly visible
+- **23:30 Special Handling**: Ensures the last time slot (23:30) is comfortably
+  visible, not hidden at bottom edge
 
 **Implementation Architecture:**
 
-- **TimeView Viewport Management**: 
-  - `ViewportStart`: Starting time slot for visible area (0-47, representing 00:00-23:30)
-  - `MaxTimeSlots`: Total available time slots (48 for 24-hour day)
-  - `AutoAdjustViewport()`: Automatically centers viewport based on cursor position
-  - `GetVisibleSlots()`: Calculates visible slots as `terminal_height - 1` (reserves border space)
+- **TimeView Viewport Management**:
 
-- **Event Positioning**: 
-  - `TimeToPositionWithViewport()`: Calculates viewport-relative positions for events
-  - Events outside viewport are automatically skipped during rendering
-  - Event heights are truncated if they extend beyond visible area
+    - `ViewportStart`: Starting time slot for visible area (0-47, representing
+      00:00-23:30)
+    - `MaxTimeSlots`: Total available time slots (48 for 24-hour day)
+    - `AutoAdjustViewport()`: Automatically centers viewport based on cursor
+      position
+    - `GetVisibleSlots()`: Calculates visible slots as `terminal_height - 1`
+      (reserves border space)
+
+- **Event Positioning**:
+    - `TimeToPositionWithViewport()`: Calculates viewport-relative positions for
+      events
+    - Events outside viewport are automatically skipped during rendering
+    - Event heights are truncated if they extend beyond visible area
 
 **Key Functions:**
 
@@ -384,16 +420,20 @@ The week view implements a responsive viewport system that automatically adjusts
 
 **Responsive Behavior:**
 
-- **Small Terminals**: Shows fewer time slots, automatically scrolls to keep cursor visible
-- **Large Terminals**: Shows more/all time slots, may show entire day if terminal is tall enough
+- **Small Terminals**: Shows fewer time slots, automatically scrolls to keep
+  cursor visible
+- **Large Terminals**: Shows more/all time slots, may show entire day if
+  terminal is tall enough
 - **Window Resize**: Viewport automatically readjusts on terminal size changes
 - **Navigation**: Viewport follows cursor movement to maintain visibility
 
 **Technical Details:**
 
 - Viewport calculations use `tv.H - 1` to reserve space for view borders
-- Special logic for 23:30 positioning prevents it from being hidden at bottom edge
-- Events are positioned using `utils.TimeToPositionWithViewport()` for viewport awareness
+- Special logic for 23:30 positioning prevents it from being hidden at bottom
+  edge
+- Events are positioned using `utils.TimeToPositionWithViewport()` for viewport
+  awareness
 - MainView coordinates viewport adjustment during UI updates
 
 ### Known Issues and Technical Debt
@@ -412,11 +452,16 @@ information:
 
 **Resolution**:
 
-- **UTC Storage Implementation**: EventManager now handles transparent UTC conversion
-- **Workaround Code Removed**: All temporary timezone workaround code has been cleaned up
-- **Consistent Storage**: All events now stored consistently in UTC timezone via EventManager
-- **Transparent Conversion**: UI works in local time, database stores in UTC, conversion handled automatically
-- **Simplified Code**: Event comparison logic no longer needs timezone normalization workarounds
+- **UTC Storage Implementation**: EventManager now handles transparent UTC
+  conversion
+- **Workaround Code Removed**: All temporary timezone workaround code has been
+  cleaned up
+- **Consistent Storage**: All events now stored consistently in UTC timezone via
+  EventManager
+- **Transparent Conversion**: UI works in local time, database stores in UTC,
+  conversion handled automatically
+- **Simplified Code**: Event comparison logic no longer needs timezone
+  normalization workarounds
 
 #### Navigation Bug Due to Mixed Timezone Storage - RESOLVED
 
@@ -440,11 +485,16 @@ incorrect chronological sorting:
 
 **Resolution**:
 
-- **UTC Storage Implementation**: EventManager now handles transparent UTC conversion
-- **Workaround Code Removed**: All temporary timezone workaround code has been cleaned up from navigation functions
-- **Simplified Navigation**: Navigation functions now use direct time comparisons without timezone workarounds
-- **Transparent Conversion**: UI works in local time, database stores in UTC, conversion handled automatically
-- **Consistent Sorting**: Event chronological ordering is now reliable across all views
+- **UTC Storage Implementation**: EventManager now handles transparent UTC
+  conversion
+- **Workaround Code Removed**: All temporary timezone workaround code has been
+  cleaned up from navigation functions
+- **Simplified Navigation**: Navigation functions now use direct time
+  comparisons without timezone workarounds
+- **Transparent Conversion**: UI works in local time, database stores in UTC,
+  conversion handled automatically
+- **Consistent Sorting**: Event chronological ordering is now reliable across
+  all views
 
 #### Form Component Field/Button Name Conflicts
 
@@ -539,13 +589,17 @@ event overlap issues:
 The project recently added:
 
 - **CLI Query Interface**: New command-line flags for event queries:
-  - `--next` - Get next upcoming event
-  - `--current` - Get current event (if active)
-  - `--agenda [YYYYMMDD]` - Get agenda for today or specified date
-- **Enhanced View System**: Improved view toggling with `v` key cycling through Week → Month → Agenda views
-- **Vim-like Navigation**: Added `e` key for end-of-event navigation (moves to end of current event, or next event if already at end)
-- **Keybinding Reorganization**: Moved goto functionality from `g` to `T` (To specific date/time)
-- **Start/End of Day Navigation**: Added `g`/`G` keys for vim-like start (00:00) and end (23:30) of day navigation
+    - `--next` - Get next upcoming event
+    - `--current` - Get current event (if active)
+    - `--agenda [YYYYMMDD]` - Get agenda for today or specified date
+- **Enhanced View System**: Improved view toggling with `v` key cycling through
+  Week → Month → Agenda views
+- **Vim-like Navigation**: Added `e` key for end-of-event navigation (moves to
+  end of current event, or next event if already at end)
+- **Keybinding Reorganization**: Moved goto functionality from `g` to `T` (To
+  specific date/time)
+- **Start/End of Day Navigation**: Added `g`/`G` keys for vim-like start (00:00)
+  and end (23:30) of day navigation
 - **Unified Date Format**: All date fields now use YYYYMMDD format (no dashes)
   for consistency across goto, add/edit, and search forms
 - **Consistent 't' Usage**: Changed "Jump to today" keybinding from 'T' to 't'
@@ -570,19 +624,25 @@ Previous features:
 - Colored events with color picker (`C` key)
 - Undo/redo functionality (`u` and `r` keys)
 - Yank/paste system for events (`y`, `p`, `d` keys)
-- Jump navigation (`T` key for 'To' specific date/time, `g`/`G` for start/end of day)
+- Jump navigation (`T` key for 'To' specific date/time, `g`/`G` for start/end of
+  day)
 - Enhanced search with date filtering (`/` key) - supports text queries and date
   ranges with 't' shortcut
 - Previous/next event navigation within week (`w` and `b` keys)
-- End of event navigation (`e` key) - vim-like movement to end of current event, or next event if already at end
-- CLI query flags (`--next`, `--current`, `--agenda`) for command-line event access
-- **Weather Integration**: Optional 3-day forecast display with background preloading and smart caching
+- End of event navigation (`e` key) - vim-like movement to end of current event,
+  or next event if already at end
+- CLI query flags (`--next`, `--current`, `--agenda`) for command-line event
+  access
+- **Weather Integration**: Optional 3-day forecast display with background
+  preloading and smart caching
 
 ## Weather Integration Architecture
 
 ### Overview
 
-Weather integration is optional and only enabled when `weather_location` is configured. The system provides:
+Weather integration is optional and only enabled when `weather_location` is
+configured. The system provides:
+
 - Current weather in title bar (all views)
 - 3-day forecast in month view day cells
 - Background preloading to prevent UI lag
@@ -591,6 +651,7 @@ Weather integration is optional and only enabled when `weather_location` is conf
 ### Core Components
 
 **Weather Package** (`internal/weather/weather.go`):
+
 - `WeatherCache`: 2-hour TTL caching for both current weather and forecasts
 - `WeatherData`: Current weather information (temp, condition, icon, etc.)
 - `WeatherForecast`: Multi-day forecast with `DayForecast` entries
@@ -598,14 +659,18 @@ Weather integration is optional and only enabled when `weather_location` is conf
 - `fetchWeatherForecast()`: Gets 3-day forecast from wttr.in JSON API
 
 **Configuration** (`internal/config/config.go`):
+
 - `GetWeatherLocation()`: Returns configured location or empty string
 - `GetWeatherUnit()`: Returns "celsius" or "fahrenheit" with validation
 - `IsWeatherEnabled()`: Checks if weather_location is set
 
 **UI Integration**:
+
 - `AppView.preloadWeatherData()`: Background goroutine preloads on startup
-- `AppView.updateWeatherData()`: Updates title bar weather (called on every UI update)
-- `AppView.updateMonthViewWeather()`: Updates month view forecast (when in month mode)
+- `AppView.updateWeatherData()`: Updates title bar weather (called on every UI
+  update)
+- `AppView.updateMonthViewWeather()`: Updates month view forecast (when in month
+  mode)
 - `MonthView.UpdateWeatherData()`: Sets weather icons/temps on day views
 - `MonthDayView.SetWeatherData()`: Sets icon and temperature for display
 
@@ -613,46 +678,54 @@ Weather integration is optional and only enabled when `weather_location` is conf
 
 1. **Startup**: `preloadWeatherData()` runs in background goroutine
 2. **UI Updates**: `updateWeatherData()` uses cached data for title bar
-3. **Month View**: `updateMonthViewWeather()` updates day cells when in month mode
+3. **Month View**: `updateMonthViewWeather()` updates day cells when in month
+   mode
 4. **Caching**: 2-hour TTL prevents API calls on every UI update
 5. **API Source**: wttr.in provides free weather data (no API key required)
 
 ### Display Logic
 
 **Month Day Format**: `[day][today_indicator] [temp]°[weather_icon]`
+
 - Example: `6• 17°⛅` (day 6, today, 17°C, partly cloudy)
 - Example: `7 16°☀️` (day 7, 16°C, sunny)
 
 **Title Bar Format**: `[location]: [icon] [temp]`
+
 - Example: `Melbourne: ☁️ 21°C`
 
 ### Technical Implementation Details
 
 **Weather Icon Positioning**:
+
 - Icons must appear LAST in display string due to emoji width rendering issues
 - Some weather emojis (☀️, ☁️) are 2 Unicode runes, others (⛅) are 1 rune
 - Terminal display width varies by emoji and font, causing text truncation
 - Solution: Place temperature before icon, icon gets truncated if necessary
 
 **Temperature Units**:
+
 - API returns both Celsius and Fahrenheit
 - `DayForecast` stores both `MaxTempC` and `MaxTempF`
 - Display chooses appropriate unit based on config
 - Graceful fallback to Celsius for invalid config values
 
 **Caching Strategy**:
+
 - Separate caches for current weather (`data`) and forecasts (`forecasts`)
 - Separate TTL tracking (`lastFetch`, `lastForecast`)
 - 2-hour cache prevents API abuse while keeping data reasonably fresh
 - Cache key normalization (lowercase location names)
 
 **Error Handling**:
+
 - Weather failures never crash the application
 - Missing weather data results in empty display (no weather shown)
 - Network timeouts set to 10 seconds
 - Graceful degradation when weather service unavailable
 
 **Performance Optimizations**:
+
 - Background preloading prevents view switch lag
 - Cached responses for 2 hours (720 API calls/month maximum per location)
 - Month view only updates weather when actually in month mode
@@ -661,18 +734,24 @@ Weather integration is optional and only enabled when `weather_location` is conf
 ### Known Issues and Workarounds
 
 **Emoji Width Problems**:
+
 - Different terminals render emojis with different display widths
 - Some emojis appear as 1 character, others as 2 characters wide
-- Text truncation occurs when cell width calculations don't account for emoji width
+- Text truncation occurs when cell width calculations don't account for emoji
+  width
 - Workaround: Always place weather icons at the end of display strings
 
 **Month View Cell Width**:
+
 - Month view cells have limited width (typically 17-19 characters)
 - Weather string `6• 17°⛅` can exceed cell width with wide emoji rendering
-- Solution: Compact format with temperature before emoji for better truncation behavior
+- Solution: Compact format with temperature before emoji for better truncation
+  behavior
 
 **API Rate Limiting**:
-- wttr.in has no official rate limits but good practice suggests reasonable usage
+
+- wttr.in has no official rate limits but good practice suggests reasonable
+  usage
 - 2-hour caching provides good balance of freshness vs API usage
 - Approximately 12 API calls per day per location (very reasonable)
 
