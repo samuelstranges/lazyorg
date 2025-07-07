@@ -8,7 +8,7 @@
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/Platform-Linux%20%7C%20macOS-lightgrey)](https://github.com/samuelstranges/chronos)
 
-*Vim-inspired • Terminal-native • Offline-first*
+_Vim-inspired • Terminal-native • Offline-first_
 
 </div>
 
@@ -20,7 +20,7 @@ git clone https://github.com/samuelstranges/chronos.git
 cd chronos
 go build -o chronos cmd/chronos/main.go
 
-# Run
+# Run in local directory
 ./chronos
 
 # Press ? for help, q to quit
@@ -41,33 +41,50 @@ go build -o chronos cmd/chronos/main.go
 ## ✨ Features
 
 ### 🎯 Core Features
-- **📅 Smart Event Management** - Create, edit, and delete events with automatic overlap prevention
-- **🔄 Undo/Redo System** - Full operation history with vim-style `u` and `r` keys
-- **🎨 Colored Events** - Automatic color assignment or manual selection with `C`
-- **📋 Yank/Paste Events** - Copy events with `y`, paste with `p`, delete with `d`
-- **🔍 Smart Search** - Search events across all dates with `/` (supports text and date filtering)
+
+- **📅 Smart Event Management** - Create, edit, and delete events with automatic
+  overlap prevention
+- **🔄 Undo/Redo System** - Full operation history with vim-style `u` and `r`
+  keys
+- **🎨 Colored Events** - Automatic color assignment or manual selection with
+  `C`
+- **📋 Yank/Paste Events** - Copy events with `y`, paste with `p`, delete with
+  `d`
+- **🔍 Smart Search** - Search events across all dates with `/` (supports text
+  and date filtering)
 
 ### 🖥️ Interface
-- **Multiple View Modes** - Week view, month view, and agenda view (toggle with `v`)
-- **📱 Responsive Design** - Dynamic viewport adjustment for different terminal sizes
+
+- **Multiple View Modes** - Week view, month view, and agenda view (toggle with
+  `v`)
+- **📱 Responsive Design** - Dynamic viewport adjustment for different terminal
+  sizes
 - **⌨️ Vim-style Keybindings** - Familiar navigation and shortcuts
 - **⏰ Current Time Highlighting** - Visual indicators for current time
 
 ### 🌍 Integrations
-- **🌤️ Weather Integration** - 3-day weather forecast in month view with configurable location
-- **🔔 Desktop Notifications** - Configurable event reminders (0-60 minutes before events)
-- **🖥️ CLI Query Interface** - Get event information from command line without launching GUI
-- **📄 iCalendar Export** - Export events to `.ics` format for other calendar apps
+
+- **🌤️ Weather Integration** - 3-day weather forecast in month view with
+  configurable location
+- **🔔 Desktop Notifications** - Configurable event reminders (0-60 minutes
+  before events)
+- **🖥️ CLI Query Interface** - Get event information from command line without
+  launching GUI
+- **📄 iCalendar Export** - Export events to `.ics` format for other calendar
+  apps
 
 ### 🔒 Data Management
+
 - **🗃️ SQLite Database** - Lightweight, fast, and reliable local storage
 - **💾 Backup Support** - Easy database backup and restore
-- **🔄 Conflict Prevention** - Automatic detection and prevention of overlapping events
+- **🔄 Conflict Prevention** - Automatic detection and prevention of overlapping
+  events
 - **🚀 Offline-First** - No internet connection required for core functionality
 
 ## 🛠️ Installation
 
 ### Prerequisites
+
 - Go 1.21 or higher
 - Linux or macOS (Windows support not tested)
 
@@ -86,15 +103,16 @@ sudo mv chronos /usr/local/bin/
 ```
 
 ### Quick Test
+
 ```bash
 # Run with default settings
-./chronos
+chronos
 
 # Run with custom database
-./chronos -db ~/my-calendar.db
+chronos -db ~/my-calendar.db
 
 # Get help
-./chronos --help
+chronos --help
 ```
 
 ## 📚 Usage
@@ -103,38 +121,38 @@ sudo mv chronos /usr/local/bin/
 
 Chronos provides three main view modes:
 
-| View | Description | Key |
-|------|-------------|-----|
-| **Week View** | 7-day layout with half-hour slots (default) | `v` to switch |
-| **Month View** | Monthly calendar grid with weather | `v` to switch |
-| **Agenda View** | Daily event list with details | `v` to switch |
+| View            | Description                                 | Key           |
+| --------------- | ------------------------------------------- | ------------- |
+| **Week View**   | 7-day layout with half-hour slots (default) | `v` to switch |
+| **Month View**  | Monthly calendar grid with weather          | `v` to switch |
+| **Agenda View** | Daily event list with details               | `v` to switch |
 
 ### Essential Keybindings
 
-| Category | Key | Action |
-|----------|-----|--------|
-| **Navigation** | `h/l` or `←/→` | Previous/Next day |
-| | `H/L` | Previous/Next week |
-| | `j/k` or `↑/↓` | Move time cursor |
-| | `t` | Jump to today |
-| | `T` | Jump to specific date |
-| | `w/b` | Next/Previous event |
-| | `g/G` | Start/End of day |
-| **Events** | `a` | Add new event |
-| | `c` | Change/Edit event |
-| | `d` | Delete event |
-| | `D` | Delete all events with same name |
-| | `y` | Yank/Copy event |
-| | `p` | Paste event |
-| | `C` | Change event color |
-| **Search** | `/` | Search events |
-| | `n/N` | Next/Previous search result |
-| | `Esc` | Clear search |
-| **Operations** | `u` | Undo last operation |
-| | `r` | Redo last operation |
-| **View** | `v` | Toggle view mode |
-| | `?` | Show/Hide help |
-| | `q` | Quit |
+| Category       | Key            | Action                           |
+| -------------- | -------------- | -------------------------------- |
+| **Navigation** | `h/l` or `←/→` | Previous/Next day                |
+|                | `H/L`          | Previous/Next week               |
+|                | `j/k` or `↑/↓` | Move time cursor                 |
+|                | `t`            | Jump to today                    |
+|                | `T`            | Jump to specific date            |
+|                | `w/b`          | Next/Previous event              |
+|                | `g/G`          | Start/End of day                 |
+| **Events**     | `a`            | Add new event                    |
+|                | `c`            | Change/Edit event                |
+|                | `d`            | Delete event                     |
+|                | `D`            | Delete all events with same name |
+|                | `y`            | Yank/Copy event                  |
+|                | `p`            | Paste event                      |
+|                | `C`            | Change event color               |
+| **Search**     | `/`            | Search events                    |
+|                | `n/N`          | Next/Previous search result      |
+|                | `Esc`          | Clear search                     |
+| **Operations** | `u`            | Undo last operation              |
+|                | `r`            | Redo last operation              |
+| **View**       | `v`            | Toggle view mode                 |
+|                | `?`            | Show/Hide help                   |
+|                | `q`            | Quit                             |
 
 ### Creating Events
 
@@ -158,6 +176,7 @@ Press `/` to open the search dialog with powerful filtering:
 - **Today Shortcut** - Use `t` for today's date
 
 **Examples:**
+
 - `meeting` - Find all meetings
 - From: `t`, To: `t` - Today's events only
 - `doctor` + From: `t` - Doctor appointments from today
@@ -169,6 +188,7 @@ Press `/` to open the search dialog with powerful filtering:
 **Default:** `~/.local/share/chronos/data.db`
 
 **Custom location:**
+
 ```bash
 # Command line
 ./chronos -db /path/to/custom.db
@@ -202,6 +222,7 @@ Add weather to your calendar:
 ```
 
 **Options:**
+
 - `weather_location` - City name, airport code, or coordinates
 - `weather_unit` - "celsius" or "fahrenheit"
 
@@ -217,6 +238,7 @@ Set up event reminders:
 ```
 
 **Options:**
+
 - `notifications_enabled` - true/false
 - `notification_minutes` - 0-60 minutes before event
 
@@ -239,58 +261,61 @@ Query events without opening the GUI:
 
 ```bash
 # Get next upcoming event
-./chronos --next
+chronos --next
 
 # Get current event
-./chronos --current
+chronos --current
 
 # Get today's agenda
-./chronos --agenda
+chronos --agenda
 
 # Get specific date agenda
-./chronos --agenda 20250707
+chronos --agenda 20250707
 
 # Export to iCalendar
-./chronos --ics ~/calendar.ics
+chronos --ics ~/calendar.ics
 
 # Test notifications
-./chronos --test-notification
+chronos --test-notification
 
 # Backup database
-./chronos -backup ~/backup.db
+chronos -backup ~/backup.db
 
 # Enable debug mode
-./chronos -debug
+chronos -debug
 ```
 
 ## 📋 Examples
 
 ### Daily Workflow
+
 ```bash
 # Morning: Check today's agenda
-./chronos --agenda
+chronos --agenda
 
 # Add a quick meeting
-./chronos
+chronos
 # Press 'a', fill in details, press Tab to save
 
 # Afternoon: Check next event
-./chronos --next
+chronos --next
 ```
 
 ### Weekly Planning
+
 ```bash
 # Open in month view for overview
-./chronos
+chronos
 # Press 'v' to cycle to month view
 # Navigate with h/l, add events with 'a'
 # Use 'w'/'b' to jump between events
 ```
 
 ### Event Management
+
 ```bash
 # Search for all meetings this week
-./chronos
+chronos
 # Press '/', enter "meeting", set date range
 # Navigate results with 'n'/'N'
 
@@ -323,39 +348,15 @@ Query events without opening the GUI:
 - **UTC Storage** - Timezone-aware event storage
 - **Conflict Detection** - Automatic overlap prevention
 
-## 🤝 Contributing
-
-Contributions are welcome! This project follows standard Go practices:
-
-1. Fork the repository
-2. Create a feature branch
-3. Write tests for new functionality
-4. Ensure all tests pass: `go test ./tests/...`
-5. Submit a pull request
-
-### Development Setup
-
-```bash
-# Clone and build
-git clone https://github.com/samuelstranges/chronos.git
-cd chronos
-go mod tidy
-
-# Run tests
-go test ./tests/...
-
-# Build and test
-go build -o chronos cmd/chronos/main.go
-./chronos -debug
-```
-
 ## 📄 License
 
-This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file
+for details.
 
 ## 🙏 Acknowledgments
 
-- Originally forked from [HubertBel/lazyorg](https://github.com/HubertBel/lazyorg)
+- Originally forked from
+  [HubertBel/lazyorg](https://github.com/HubertBel/lazyorg)
 - Built with [gocui](https://github.com/jroimartin/gocui) TUI framework
 - Weather data provided by [wttr.in](https://wttr.in)
 - Notifications powered by [beeep](https://github.com/gen2brain/beeep)
@@ -366,6 +367,9 @@ This project is licensed under the MIT License. See the [LICENSE](LICENSE) file 
 
 **Made with ❤️ for terminal enthusiasts**
 
-[⭐ Star this repo](https://github.com/samuelstranges/chronos) • [🐛 Report Issues](https://github.com/samuelstranges/chronos/issues) • [💡 Request Features](https://github.com/samuelstranges/chronos/issues)
+[⭐ Star this repo](https://github.com/samuelstranges/chronos) •
+[🐛 Report Issues](https://github.com/samuelstranges/chronos/issues) •
+[💡 Request Features](https://github.com/samuelstranges/chronos/issues)
 
 </div>
+
