@@ -317,7 +317,8 @@ for details.
 ## 🙏 Acknowledgments
 
 - Originally forked from
-  [HubertBel/lazyorg](https://github.com/HubertBel/lazyorg)
+  [HubertBel/lazyorg](https://github.com/HubertBel/lazyorg), from there, gave
+  Claude Code the reins...
 - Built with [gocui](https://github.com/jroimartin/gocui) TUI framework
 - Weather data provided by [wttr.in](https://wttr.in)
 - Notifications powered by [beeep](https://github.com/gen2brain/beeep)
