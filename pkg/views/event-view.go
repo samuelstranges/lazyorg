@@ -53,16 +53,28 @@ func (ev *EventView) Update(g *gocui.Gui) error {
 		// ANSI escape codes for underlining and resetting formatting.
 		const ansiUnderline = "\x1b[4m" // Start underline
 		const ansiBlackFg = "\x1b[30m"  // Set foreground color to black
-		const ansiReset = "\x1b[0m"    // Reset all attributes
+		const ansiGrey = "\x1b[90m"     // Grey color for location text
+		const ansiReset = "\x1b[0m"     // Reset all attributes
 		
 		// If the event is tall enough, add underscores on the second-to-last row
 		if ev.H > 2 {
 			fmt.Fprint(v, ev.Event.Name)
-			// Move to the second-to-last row (account for the +1 in height calculation)
-			for i := 1; i < ev.H-1; i++ { fmt.Fprint(v, "\n") }
 
 			fmt.Fprint(v, ansiBlackFg)
 			fmt.Fprint(v, ansiUnderline)
+			
+			// Add location on second row if it exists and event is tall enough
+			if ev.Event.Location != "" && ev.H > 2 {
+				fmt.Fprint(v, "\n")
+				fmt.Fprint(v, "Loc: ")
+				fmt.Fprint(v, ev.Event.Location)
+				// Move to the underline row (account for name + location lines)
+				for i := 2; i < ev.H-1; i++ { fmt.Fprint(v, "\n") }
+			} else {
+				// Move to the underline row (account for the +1 in height calculation)
+				for i := 1; i < ev.H-1; i++ { fmt.Fprint(v, "\n") }
+			}
+
 			for i := 0; i < ev.W; i++ { fmt.Fprint(v, "	") } // a non 'space character'
 			fmt.Fprint(v, ansiReset)
 		} else {
@@ -74,7 +86,18 @@ func (ev *EventView) Update(g *gocui.Gui) error {
 			fmt.Fprint(v, ansiReset)
 		}
 	} else {
+		// Normal rendering (no bottom border)
 		fmt.Fprint(v, ev.Event.Name)
+		
+		// Add location on second row if event is multi-row and has location
+		if ev.H > 2 && ev.Event.Location != "" {
+			const ansiReset = "\x1b[0m"     // Reset all attributes
+			
+			fmt.Fprint(v, "\n")
+			fmt.Fprint(v, "Loc: ")
+			fmt.Fprint(v, ev.Event.Location)
+			fmt.Fprint(v, ansiReset)
+		}
 	}
 
 	// Set text color based on whether this is current time event

@@ -148,9 +148,9 @@ reference below:
 
 - `v` - Toggle between Week View, Month View, and Agenda View
     - **Week View**: 7-day calendar with half-hour time slots (default)
-      - **Responsive Design**: Automatically adjusts to terminal size
-      - **Smart Scrolling**: Viewport centers around cursor position
-      - **Border-Aware**: Ensures all time slots are visible (including 23:30)
+        - **Responsive Design**: Automatically adjusts to terminal size
+        - **Smart Scrolling**: Viewport centers around cursor position
+        - **Border-Aware**: Ensures all time slots are visible (including 23:30)
     - **Month View**: Monthly calendar grid overview
     - **Agenda View**: Daily event list with detailed information
 
@@ -371,39 +371,59 @@ Message: "Team Meeting
 
 ### Week View Viewport System
 
-The week view features a sophisticated responsive viewport system that automatically adjusts to your terminal size, providing a seamless experience similar to responsive web applications.
+The week view features a sophisticated responsive viewport system that
+automatically adjusts to your terminal size, providing a seamless experience
+similar to responsive web applications.
 
 **Key Features:**
 
-- **Automatic Terminal Adaptation**: The viewport dynamically calculates how many time slots can fit in your terminal height
-- **Intelligent Scrolling**: Always keeps the cursor-selected time visible by automatically centering the viewport
-- **Border-Aware Calculations**: Properly accounts for view borders to ensure complete visibility of time slots
-- **23:30 Visibility**: Special handling ensures the last time slot (23:30) is never hidden at the bottom edge
+- **Automatic Terminal Adaptation**: The viewport dynamically calculates how
+  many time slots can fit in your terminal height
+- **Intelligent Scrolling**: Always keeps the cursor-selected time visible by
+  automatically centering the viewport
+- **Border-Aware Calculations**: Properly accounts for view borders to ensure
+  complete visibility of time slots
+- **23:30 Visibility**: Special handling ensures the last time slot (23:30) is
+  never hidden at the bottom edge
 
 **How It Works:**
 
-- **Small Terminals**: Shows fewer time slots and automatically scrolls as you navigate
-- **Large Terminals**: Can display the entire day (all 48 half-hour slots) if terminal is tall enough
+- **Small Terminals**: Shows fewer time slots and automatically scrolls as you
+  navigate
+- **Large Terminals**: Can display the entire day (all 48 half-hour slots) if
+  terminal is tall enough
 - **Window Resize**: Instantly adapts when you resize your terminal window
-- **Smart Centering**: Viewport automatically follows your cursor to maintain optimal visibility
+- **Smart Centering**: Viewport automatically follows your cursor to maintain
+  optimal visibility
 
 **Technical Implementation:**
 
 The system uses a viewport-based approach where:
-- **Viewport Start**: Tracks which time slot appears at the top (0=00:00, 47=23:30)
-- **Visible Slots**: Calculates `terminal_height - 1` to reserve space for borders
-- **Event Positioning**: All events are positioned relative to the current viewport
+
+- **Viewport Start**: Tracks which time slot appears at the top (0=00:00,
+  47=23:30)
+- **Visible Slots**: Calculates `terminal_height - 1` to reserve space for
+  borders
+- **Event Positioning**: All events are positioned relative to the current
+  viewport
 - **Automatic Adjustment**: Triggered on every UI update and navigation
 
-This ensures that whether you're using a small terminal or a large monitor, Chronos adapts to provide the best possible experience without cutting off content or requiring manual scrolling.
+This ensures that whether you're using a small terminal or a large monitor,
+Chronos adapts to provide the best possible experience without cutting off
+content or requiring manual scrolling.
 
 ## Calendar Export
 
 ### iCalendar (.ics) Export (Experimental)
 
-Chronos supports exporting all your events to iCalendar (.ics) format for importing into other calendar applications like Google Calendar, Apple Calendar, Outlook, and more.
+Chronos supports exporting all your events to iCalendar (.ics) format for
+importing into other calendar applications like Google Calendar, Apple Calendar,
+Outlook, and more.
 
-> **⚠️ Experimental Feature**: The ICS export functionality is currently experimental. While it follows RFC 5545 standards and has been tested with major calendar applications, you may encounter compatibility issues with some calendar software. Please test imports with a small subset of events first.
+> **⚠️ Experimental Feature**: The ICS export functionality is currently
+> experimental. While it follows RFC 5545 standards and has been tested with
+> major calendar applications, you may encounter compatibility issues with some
+> calendar software. Please test imports with a small subset of events first.
 
 ```bash
 # Export all events to an iCalendar file
@@ -414,16 +434,21 @@ Chronos supports exporting all your events to iCalendar (.ics) format for import
 **Features:**
 
 - **RFC 5545 Compliant**: Full compliance with the iCalendar standard
-- **Smart Recurring Events**: Automatically consolidates recurring event instances into proper RRULE definitions
-- **Cross-Platform Compatible**: Works with all major calendar applications (Google Calendar, Apple Calendar, Outlook, etc.)
-- **Complete Event Data**: Exports event names, descriptions, locations, start/end times, and recurrence patterns
-- **Timezone Handling**: Proper UTC timezone conversion for maximum compatibility
+- **Smart Recurring Events**: Automatically consolidates recurring event
+  instances into proper RRULE definitions
+- **Cross-Platform Compatible**: Works with all major calendar applications
+  (Google Calendar, Apple Calendar, Outlook, etc.)
+- **Complete Event Data**: Exports event names, descriptions, locations,
+  start/end times, and recurrence patterns
+- **Timezone Handling**: Proper UTC timezone conversion for maximum
+  compatibility
 
 **What Gets Exported:**
 
 - All event titles, descriptions, and locations
 - Accurate start and end times (converted to UTC)
-- Recurring events as single entries with RRULE patterns instead of hundreds of duplicates
+- Recurring events as single entries with RRULE patterns instead of hundreds of
+  duplicates
 - Event creation timestamps and unique identifiers
 
 **Supported Calendar Applications:**
@@ -454,12 +479,17 @@ END:VCALENDAR
 
 **Performance Benefits:**
 
-Instead of exporting hundreds of individual recurring event instances, Chronos intelligently exports:
-- 1 "Morning" event with `RRULE:FREQ=DAILY;INTERVAL=1;COUNT=365` (daily for a year)
-- 1 "Weekly Meeting" event with `RRULE:FREQ=DAILY;INTERVAL=7;COUNT=52` (weekly for a year)
+Instead of exporting hundreds of individual recurring event instances, Chronos
+intelligently exports:
+
+- 1 "Morning" event with `RRULE:FREQ=DAILY;INTERVAL=1;COUNT=365` (daily for a
+  year)
+- 1 "Weekly Meeting" event with `RRULE:FREQ=DAILY;INTERVAL=7;COUNT=52` (weekly
+  for a year)
 - Individual non-recurring events as separate entries
 
-This approach prevents calendar application overload and creates clean, manageable imports.
+This approach prevents calendar application overload and creates clean,
+manageable imports.
 
 ## Future
 
@@ -468,9 +498,6 @@ This approach prevents calendar application overload and creates clean, manageab
     - second line of event shows event location (if enough space in event)
 - additional keybinds:
     - visually change duration shortcut (running out of keybinds...)
-- additional export formats:
-    - `--json`
-    - `--csv`
 
 ## Not planned
 
