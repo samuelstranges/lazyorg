@@ -338,7 +338,7 @@ func (av *AppView) JumpToEndOfDay() {
 	av.Calendar.UpdateWeek()
 }
 
-// ShowGotoPopup displays the goto date/time popup
+// ShowGotoPopup displays the goto time popup
 func (av *AppView) ShowGotoPopup(g *gocui.Gui) error {
 	if popup, ok := av.FindChildView("popup"); ok {
 		if popupView, ok := popup.(*EventPopupView); ok {
@@ -349,6 +349,22 @@ func (av *AppView) ShowGotoPopup(g *gocui.Gui) error {
 				PopupHeight,
 			)
 			return popupView.ShowGotoPopup(g)
+		}
+	}
+	return nil
+}
+
+// ShowDatePopup displays the goto date popup
+func (av *AppView) ShowDatePopup(g *gocui.Gui) error {
+	if popup, ok := av.FindChildView("popup"); ok {
+		if popupView, ok := popup.(*EventPopupView); ok {
+			popup.SetProperties(
+				av.X+(av.W-PopupWidth)/2,
+				av.Y+(av.H-PopupHeight)/2,
+				PopupWidth,
+				PopupHeight,
+			)
+			return popupView.ShowDatePopup(g)
 		}
 	}
 	return nil

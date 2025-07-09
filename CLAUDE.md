@@ -216,7 +216,8 @@ go mod download                    # Download dependencies
 - **Config file**: Set `default_color` and `default_event_length` in
   `~/.config/chronos/config.json`
 - **Default Color**: Sets the default color for new events
-    - Valid values: `"Red"`, `"Green"`, `"Yellow"`, `"Blue"`, `"Magenta"`, `"Cyan"`, `"White"`
+    - Valid values: `"Red"`, `"Green"`, `"Yellow"`, `"Blue"`, `"Magenta"`,
+      `"Cyan"`, `"White"`
     - Empty string or invalid values: Auto-generate color from event name hash
     - Default: `""` (auto-generation)
 - **Default Event Length**: Sets the default duration for new events in hours
@@ -303,10 +304,12 @@ All event modifications MUST go through the EventManager to ensure:
 
 **Current Time Indicators:**
 
-- **Time Sidebar Dot**: Minimal bullet (●) appears next to current time in sidebar
+- **Time Sidebar Dot**: Minimal bullet (●) appears next to current time in
+  sidebar
 - **Title Bar Status**: Shows "Current Event: [Name]" or "Current Event: None"
 - **Responsive Design**: Works with viewport scrolling and terminal resizing
-- **Elegant Implementation**: No overlays or hash characters that interfere with events
+- **Elegant Implementation**: No overlays or hash characters that interfere with
+  events
 
 ### UI Architecture
 
@@ -609,14 +612,15 @@ The project recently added:
   and end (23:30) of day navigation
 - **Unified Date Format**: All date fields now use YYYYMMDD format (no dashes)
   for consistency across goto, add/edit, and search forms
-- **Enhanced 't' Key**: Jump to today's date AND current time (rounded to nearest 30 minutes)
-  for consistency with 't' shortcut in date fields and improved time awareness
+- **Enhanced 't' Key**: Jump to today's date AND current time (rounded to
+  nearest 30 minutes) for consistency with 't' shortcut in date fields and
+  improved time awareness
 - **Symmetric Day Boundary Navigation**: Fixed time navigation to work
   symmetrically - going up from 00:00 now goes to 23:30 of previous day,
   matching the behavior of going down from 23:30 to 00:00 of next day
 - **Event Overlap Prevention**: All event operations now prevent scheduling
   conflicts
-- **Elegant Current Time Indicators**: 
+- **Elegant Current Time Indicators**:
     - Minimal bullet (●) in time sidebar shows current half-hour
     - Title bar displays "Current Event: [Name]" or "Current Event: None"
     - No intrusive overlays or hash characters that interfere with events
@@ -631,8 +635,7 @@ Previous features:
 - Colored events with color picker (`C` key)
 - Undo/redo functionality (`u` and `r` keys)
 - Yank/paste system for events (`y`, `p`, `d` keys)
-- Jump navigation (`T` key for 'To' specific date/time, `g`/`G` for start/end of
-  day)
+- Jump navigation (`T` key for 'To' specific time, `g`/`G` for start/end of day)
 - Enhanced search with date filtering (`/` key) - supports text queries and date
   ranges with 't' shortcut
 - Previous/next event navigation within week (`w` and `b` keys)

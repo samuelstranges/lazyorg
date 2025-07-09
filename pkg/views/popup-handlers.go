@@ -100,7 +100,7 @@ func (epv *EventPopupView) EditEvent(g *gocui.Gui, v *gocui.View, event *calenda
 	return epv.Close(g, v)
 }
 
-// Goto handler for navigating to specific date/time
+// Goto handler for navigating to specific time on the same day
 func (epv *EventPopupView) Goto(g *gocui.Gui, v *gocui.View) error {
 	if !epv.IsVisible {
 		return nil
@@ -112,17 +112,39 @@ func (epv *EventPopupView) Goto(g *gocui.Gui, v *gocui.View) error {
 		}
 	}
 
-	dateStr := epv.Form.GetFieldText("Date")
 	hourStr := epv.Form.GetFieldText("Hour")
+	hour, _ := strconv.Atoi(hourStr)
+
+	// Set time on the same day
+	currentDate := epv.Calendar.CurrentDay.Date
+	newDate := time.Date(currentDate.Year(), currentDate.Month(), currentDate.Day(), hour, 0, 0, 0, currentDate.Location())
+	epv.Calendar.CurrentDay.Date = newDate
+	epv.Calendar.UpdateWeek()
+
+	return epv.Close(g, v)
+}
+
+// GotoDate handler for navigating to specific date
+func (epv *EventPopupView) GotoDate(g *gocui.Gui, v *gocui.View) error {
+	if !epv.IsVisible {
+		return nil
+	}
+
+	for _, v := range epv.Form.GetInputs() {
+		if !v.IsValid() {
+			return nil
+		}
+	}
+
+	dateStr := epv.Form.GetFieldText("Date")
 	
 	year, _ := strconv.Atoi(dateStr[:4])
 	month, _ := strconv.Atoi(dateStr[4:6])
 	day, _ := strconv.Atoi(dateStr[6:8])
-	hour, _ := strconv.Atoi(hourStr)
 
-	// Set both date and time together
+	// Set date, keeping current time
 	currentDate := epv.Calendar.CurrentDay.Date
-	newDate := time.Date(year, time.Month(month), day, hour, 0, 0, 0, currentDate.Location())
+	newDate := time.Date(year, time.Month(month), day, currentDate.Hour(), currentDate.Minute(), currentDate.Second(), currentDate.Nanosecond(), currentDate.Location())
 	epv.Calendar.CurrentDay.Date = newDate
 	epv.Calendar.UpdateWeek()
 

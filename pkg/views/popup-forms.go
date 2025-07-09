@@ -40,16 +40,26 @@ func (epv *EventPopupView) EditEventForm(g *gocui.Gui, title, name, date, time, 
 	return form
 }
 
-// GotoForm creates a form for navigating to a specific date/time
+// GotoForm creates a form for navigating to a specific time on the same day
 func (epv *EventPopupView) GotoForm(g *gocui.Gui, title string) *component.Form {
 	form := component.NewForm(g, title, epv.X, epv.Y, epv.W, epv.H)
 
 	currentTime := epv.Calendar.CurrentDay.Date
-	defaultDate := fmt.Sprintf("%04d%02d%02d", currentTime.Year(), currentTime.Month(), currentTime.Day())
 	defaultHour := fmt.Sprintf("%02d", currentTime.Hour())
 	
-	form.AddInputField("Date", LabelWidth, FieldWidth).SetText(defaultDate).AddValidate("Invalid date (YYYYMMDD)", utils.ValidateDate)
 	form.AddInputField("Hour", LabelWidth, FieldWidth).SetText(defaultHour).AddValidate("Invalid hour (00-23)", utils.ValidateHourMinute)
+
+	return form
+}
+
+// DateForm creates a form for navigating to a specific date
+func (epv *EventPopupView) DateForm(g *gocui.Gui, title string) *component.Form {
+	form := component.NewForm(g, title, epv.X, epv.Y, epv.W, epv.H)
+
+	currentTime := epv.Calendar.CurrentDay.Date
+	defaultDate := fmt.Sprintf("%04d%02d%02d", currentTime.Year(), currentTime.Month(), currentTime.Day())
+	
+	form.AddInputField("Date", LabelWidth, FieldWidth).SetText(defaultDate).AddValidate("Invalid date (YYYYMMDD)", utils.ValidateDate)
 
 	return form
 }

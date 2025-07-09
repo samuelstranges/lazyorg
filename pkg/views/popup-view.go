@@ -206,12 +206,34 @@ func (epv *EventPopupView) ShowGotoPopup(g *gocui.Gui) error {
 		return nil
 	}
 
-	epv.Form = epv.GotoForm(g, "To Date/Time")
+	epv.Form = epv.GotoForm(g, "To Time")
 
 	epv.addKeybind(gocui.KeyEsc, epv.Close)
 	epv.addKeybind(gocui.KeyEnter, epv.Goto)
 
 	epv.Form.AddButton("Goto", epv.Goto)
+	epv.Form.AddButton("Cancel", epv.Close)
+
+	epv.Form.SetCurrentItem(0)
+	epv.IsVisible = true
+	epv.Form.Draw()
+
+	epv.positionCursorsAtEnd(g)
+
+	return nil
+}
+
+func (epv *EventPopupView) ShowDatePopup(g *gocui.Gui) error {
+	if epv.IsVisible {
+		return nil
+	}
+
+	epv.Form = epv.DateForm(g, "To Date")
+
+	epv.addKeybind(gocui.KeyEsc, epv.Close)
+	epv.addKeybind(gocui.KeyEnter, epv.GotoDate)
+
+	epv.Form.AddButton("Goto", epv.GotoDate)
 	epv.Form.AddButton("Cancel", epv.Close)
 
 	epv.Form.SetCurrentItem(0)

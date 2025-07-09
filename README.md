@@ -139,11 +139,12 @@ Chronos provides three main view modes, which can be cycled through with `v`:
 |                | `m/M`          | Previous/Next month                   |
 |                | `j/k` or `↑/↓` | Move time cursor                      |
 |                | `t`            | Jump to current date/time             |
-|                | `T`            | Jump to specific date                 |
+|                | `D`            | Jump to specific date/time            |
+|                | `T`            | Jump to specific time                 |
 |                | `w/b/e`        | Next/Previous/End event               |
 |                | `g/G`          | Start/End of day                      |
 | **Events**     | `a`            | Add new event                         |
-|                | `c`            | Change/Edit event                     |
+|                | `c`            | Change event details                  |
 |                | `C`            | Change event color                    |
 |                | `d`            | Change event duration                 |
 |                | `y`            | Yank/Copy event                       |
