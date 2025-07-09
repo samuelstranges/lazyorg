@@ -112,12 +112,27 @@ func (epv *EventPopupView) Goto(g *gocui.Gui, v *gocui.View) error {
 		}
 	}
 
-	hourStr := epv.Form.GetFieldText("Hour")
-	hour, _ := strconv.Atoi(hourStr)
+	hourStr := strings.TrimSpace(epv.Form.GetFieldText("Hour"))
+	var hour, minute int
+
+	// Try to parse as float first (e.g., 14.5 for 14:30)
+	if floatHour, err := strconv.ParseFloat(hourStr, 64); err == nil {
+		hour = int(floatHour)
+		fractional := floatHour - float64(hour)
+		if fractional == 0.5 {
+			minute = 30
+		} else {
+			minute = 0
+		}
+	} else {
+		// Parse as integer
+		hour, _ = strconv.Atoi(hourStr)
+		minute = 0
+	}
 
 	// Set time on the same day
 	currentDate := epv.Calendar.CurrentDay.Date
-	newDate := time.Date(currentDate.Year(), currentDate.Month(), currentDate.Day(), hour, 0, 0, 0, currentDate.Location())
+	newDate := time.Date(currentDate.Year(), currentDate.Month(), currentDate.Day(), hour, minute, 0, 0, currentDate.Location())
 	epv.Calendar.CurrentDay.Date = newDate
 	epv.Calendar.UpdateWeek()
 

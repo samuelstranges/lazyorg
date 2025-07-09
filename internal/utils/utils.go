@@ -280,3 +280,31 @@ func ValidateOptionalEventTime(value string) bool {
 	}
 	return ValidateEventTime(value)
 }
+
+func ValidateFlexibleHour(value string) bool {
+	value = strings.TrimSpace(value)
+	if value == "" {
+		return false // Hour is required
+	}
+
+	// Try to parse as float (e.g., 14.5 for 14:30)
+	if floatHour, err := strconv.ParseFloat(value, 64); err == nil {
+		// Check if hour is in valid range
+		if floatHour < 0 || floatHour >= 24 {
+			return false
+		}
+		// Check if fractional part is valid (only .0 or .5 allowed)
+		fractional := floatHour - math.Floor(floatHour)
+		if fractional != 0.0 && fractional != 0.5 {
+			return false
+		}
+		return true
+	}
+
+	// If not a float, must be an integer
+	if hour, err := strconv.Atoi(value); err == nil {
+		return hour >= 0 && hour <= 23
+	}
+
+	return false
+}

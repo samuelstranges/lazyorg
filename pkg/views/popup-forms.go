@@ -44,10 +44,8 @@ func (epv *EventPopupView) EditEventForm(g *gocui.Gui, title, name, date, time, 
 func (epv *EventPopupView) GotoForm(g *gocui.Gui, title string) *component.Form {
 	form := component.NewForm(g, title, epv.X, epv.Y, epv.W, epv.H)
 
-	currentTime := epv.Calendar.CurrentDay.Date
-	defaultHour := fmt.Sprintf("%02d", currentTime.Hour())
-	
-	form.AddInputField("Hour", LabelWidth, FieldWidth).SetText(defaultHour).AddValidate("Invalid hour (00-23)", utils.ValidateHourMinute)
+	// Empty by default, accepts simplified formats like 6 or 14.5
+	form.AddInputField("Hour", LabelWidth, FieldWidth).SetText("").AddValidate("Invalid hour (0-23 or decimal like 14.5)", utils.ValidateFlexibleHour)
 
 	return form
 }
