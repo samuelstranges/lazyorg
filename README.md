@@ -70,7 +70,8 @@ go build -o chronos cmd/chronos/main.go
 - **🖥️ CLI Query Interface** - Get event information from command line without
   launching GUI
 - **📄 iCalendar Export** - Export events to `.ics` format for other calendar
-  apps. Repeated events are exported as individual events, allowing for unique metadata per instance.
+  apps. Repeated events are exported as individual events, allowing for unique
+  metadata per instance.
 
 ### 🔒 Data Management
 
@@ -144,10 +145,10 @@ Chronos provides three main view modes, which can be cycled through with `v`:
 | **Events**     | `a`            | Add new event                         |
 |                | `c`            | Change/Edit event                     |
 |                | `C`            | Change event color                    |
-|                | `D`            | Change event duration                 |
+|                | `d`            | Change event duration                 |
 |                | `y`            | Yank/Copy event                       |
 |                | `p`            | Paste event                           |
-|                | `d`            | Delete event                          |
+|                | `x`            | Delete event                          |
 |                | `B`            | Bulk delete all events with same name |
 | **Search**     | `/`            | Search events                         |
 |                | `n/N`          | Next/Previous search result           |
