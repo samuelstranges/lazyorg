@@ -45,7 +45,16 @@ func (epv *EventPopupView) CreateEventFromInputs(existingEvent *calendar.Event) 
 		// If field is empty and we're editing, preserve original duration
 		duration = existingEvent.DurationHour
 	}
-	frequency, _ := strconv.Atoi(epv.Form.GetFieldText("Frequency"))
+	frequencyStr := strings.TrimSpace(epv.Form.GetFieldText("Frequency"))
+	frequency := 0
+	
+	if strings.ToLower(frequencyStr) == "w" {
+		// Weekday mode - we'll handle this specially
+		frequency = -1 // Special marker for weekday mode
+	} else {
+		frequency, _ = strconv.Atoi(frequencyStr)
+	}
+	
 	occurence, _ := strconv.Atoi(epv.Form.GetFieldText("Occurence"))
 	colorName := epv.Form.GetFieldText("Color")
 	description := epv.Form.GetFieldText("Description")

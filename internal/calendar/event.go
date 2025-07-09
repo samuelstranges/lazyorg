@@ -147,14 +147,41 @@ func (e *Event) FormatBody() string {
 }
 
 func (e Event) GetReccuringEvents() []Event {
-
 	var events []Event
 	f := e.FrequencyDay
 	initTime := e.Time
 
-	for i := range e.Occurence {
-		e.Time = initTime.AddDate(0, 0, i*f)
-		events = append(events, e)
+	// Special handling for weekday recurrence (frequency = -1)
+	if f == -1 {
+		currentDate := initTime
+		eventsAdded := 0
+		
+		// Start from the initial date or the next weekday
+		if !utils.IsWeekday(currentDate) {
+			// If starting on weekend, move to next Monday
+			for !utils.IsWeekday(currentDate) {
+				currentDate = currentDate.AddDate(0, 0, 1)
+			}
+		}
+		
+		// Add weekday events until we reach the occurrence count
+		for eventsAdded < e.Occurence {
+			if utils.IsWeekday(currentDate) {
+				e.Time = currentDate
+				events = append(events, e)
+				eventsAdded++
+			}
+			// Only advance to next day if we haven't reached occurrence count
+			if eventsAdded < e.Occurence {
+				currentDate = currentDate.AddDate(0, 0, 1)
+			}
+		}
+	} else {
+		// Regular recurrence
+		for i := range e.Occurence {
+			e.Time = initTime.AddDate(0, 0, i*f)
+			events = append(events, e)
+		}
 	}
 
 	return events

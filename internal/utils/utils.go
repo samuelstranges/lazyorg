@@ -308,3 +308,30 @@ func ValidateFlexibleHour(value string) bool {
 
 	return false
 }
+
+func ValidateFrequency(value string) bool {
+	value = strings.TrimSpace(value)
+	
+	// Accept 'w' for weekdays
+	if value == "w" || value == "W" {
+		return true
+	}
+	
+	// Otherwise, must be a positive number
+	n, err := strconv.Atoi(value)
+	if err != nil {
+		return false
+	}
+	
+	if n <= 0 {
+		return false
+	}
+	
+	return true
+}
+
+// IsWeekday returns true if the given time is a weekday (Monday-Friday)
+func IsWeekday(t time.Time) bool {
+	day := t.Weekday()
+	return day >= time.Monday && day <= time.Friday
+}

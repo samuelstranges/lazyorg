@@ -166,10 +166,19 @@ When adding a new event (`a` key):
 3. **Time** - HH:MM format (30-minute intervals)
 4. **Location** - Optional location
 5. **Duration** - In hours (0.5 = 30 minutes)
-6. **Frequency** - Repeat interval in days (1 = daily, 7 = weekly)
+6. **Frequency** - Repeat interval:
+   - **Numbers**: Every N days (1 = daily, 7 = weekly)
+   - **'w' or 'W'**: Weekdays only (Monday-Friday)
 7. **Occurrences** - Number of repetitions
 8. **Color** - leave blank for default
 9. **Description** - Optional details
+
+**Recurring Events Examples:**
+- Event on Monday with frequency `w` and occurrence `5` creates events Mon-Fri
+- Event on Saturday with frequency `w` and occurrence `8` starts on next Monday and creates 8 weekday events
+- Event with frequency `7` and occurrence `4` creates 4 weekly events
+
+**Important:** Recurring events will stop creating new instances if an existing event is found at the same time slot (overlap prevention). The occurrence count may not be fully reached if overlaps are detected.
 
 ### Search System
 

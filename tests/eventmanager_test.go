@@ -1078,4 +1078,196 @@ func TestSearchEventsWithTodayShortcut(t *testing.T) {
 			}
 		})
 	}
+}// Additional tests for weekday recurrence functionality
+
+// TestIsWeekday tests the IsWeekday utility function
+func TestIsWeekday(t *testing.T) {
+	tests := []struct {
+		name     string
+		date     time.Time
+		expected bool
+	}{
+		{
+			name:     "Monday is weekday",
+			date:     time.Date(2024, 1, 1, 10, 0, 0, 0, time.Local), // Monday
+			expected: true,
+		},
+		{
+			name:     "Tuesday is weekday",
+			date:     time.Date(2024, 1, 2, 10, 0, 0, 0, time.Local), // Tuesday
+			expected: true,
+		},
+		{
+			name:     "Wednesday is weekday",
+			date:     time.Date(2024, 1, 3, 10, 0, 0, 0, time.Local), // Wednesday
+			expected: true,
+		},
+		{
+			name:     "Thursday is weekday",
+			date:     time.Date(2024, 1, 4, 10, 0, 0, 0, time.Local), // Thursday
+			expected: true,
+		},
+		{
+			name:     "Friday is weekday",
+			date:     time.Date(2024, 1, 5, 10, 0, 0, 0, time.Local), // Friday
+			expected: true,
+		},
+		{
+			name:     "Saturday is not weekday",
+			date:     time.Date(2024, 1, 6, 10, 0, 0, 0, time.Local), // Saturday
+			expected: false,
+		},
+		{
+			name:     "Sunday is not weekday",
+			date:     time.Date(2024, 1, 7, 10, 0, 0, 0, time.Local), // Sunday
+			expected: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := utils.IsWeekday(tt.date)
+			if result != tt.expected {
+				t.Errorf("IsWeekday(%s) = %v, expected %v", tt.date.Format("Monday"), result, tt.expected)
+			}
+		})
+	}
+}
+
+// TestValidateFrequency tests the ValidateFrequency utility function
+func TestValidateFrequency(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    string
+		expected bool
+	}{
+		{
+			name:     "Valid number frequency",
+			input:    "7",
+			expected: true,
+		},
+		{
+			name:     "Valid single digit",
+			input:    "1",
+			expected: true,
+		},
+		{
+			name:     "Valid large number",
+			input:    "30",
+			expected: true,
+		},
+		{
+			name:     "Lowercase 'w' for weekdays",
+			input:    "w",
+			expected: true,
+		},
+		{
+			name:     "Uppercase 'W' for weekdays",
+			input:    "W",
+			expected: true,
+		},
+		{
+			name:     "Empty string invalid",
+			input:    "",
+			expected: false,
+		},
+		{
+			name:     "Zero is invalid",
+			input:    "0",
+			expected: false,
+		},
+		{
+			name:     "Negative number invalid",
+			input:    "-1",
+			expected: false,
+		},
+		{
+			name:     "Non-numeric non-w string invalid",
+			input:    "abc",
+			expected: false,
+		},
+		{
+			name:     "Whitespace around valid input",
+			input:    "  7  ",
+			expected: true,
+		},
+		{
+			name:     "Whitespace around 'w'",
+			input:    "  w  ",
+			expected: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := utils.ValidateFrequency(tt.input)
+			if result != tt.expected {
+				t.Errorf("ValidateFrequency(%q) = %v, expected %v", tt.input, result, tt.expected)
+			}
+		})
+	}
+}
+
+// TestGetReccuringEventsWeekdayStartingMonday tests weekday recurrence starting on Monday
+func TestGetReccuringEventsWeekdayStartingMonday(t *testing.T) {
+	// Test weekday recurrence starting on Monday
+	startDate := time.Date(2024, 1, 1, 9, 0, 0, 0, time.Local) // Monday
+	event := calendar.NewEvent("Daily Standup", "Weekday standup", "Office", startDate, 1.0, -1, 5, 0)
+	
+	recurring := event.GetReccuringEvents()
+	
+	if len(recurring) != 5 {
+		t.Errorf("Expected 5 recurring events, got %d", len(recurring))
+	}
+	
+	// Check dates are correct (Mon, Tue, Wed, Thu, Fri)
+	expectedDates := []time.Time{
+		time.Date(2024, 1, 1, 9, 0, 0, 0, time.Local), // Monday
+		time.Date(2024, 1, 2, 9, 0, 0, 0, time.Local), // Tuesday
+		time.Date(2024, 1, 3, 9, 0, 0, 0, time.Local), // Wednesday
+		time.Date(2024, 1, 4, 9, 0, 0, 0, time.Local), // Thursday
+		time.Date(2024, 1, 5, 9, 0, 0, 0, time.Local), // Friday
+	}
+	
+	for i, event := range recurring {
+		if !event.Time.Equal(expectedDates[i]) {
+			t.Errorf("Event %d: expected time %s, got %s", i, expectedDates[i].Format("2006-01-02 15:04"), event.Time.Format("2006-01-02 15:04"))
+		}
+		
+		// Verify all events are on weekdays
+		if !utils.IsWeekday(event.Time) {
+			t.Errorf("Event %d is not on a weekday: %s", i, event.Time.Format("Monday"))
+		}
+	}
+}
+
+// TestGetReccuringEventsWeekdayStartingSaturday tests weekday recurrence starting on weekend
+func TestGetReccuringEventsWeekdayStartingSaturday(t *testing.T) {
+	// Test weekday recurrence starting on Saturday (should move to Monday)
+	startDate := time.Date(2024, 1, 6, 9, 0, 0, 0, time.Local) // Saturday
+	event := calendar.NewEvent("Daily Standup", "Weekday standup", "Office", startDate, 1.0, -1, 3, 0)
+	
+	recurring := event.GetReccuringEvents()
+	
+	if len(recurring) != 3 {
+		t.Errorf("Expected 3 recurring events, got %d", len(recurring))
+	}
+	
+	// Check dates are correct (should start on Monday, not Saturday)
+	expectedDates := []time.Time{
+		time.Date(2024, 1, 8, 9, 0, 0, 0, time.Local),  // Monday (moved from Saturday)
+		time.Date(2024, 1, 9, 9, 0, 0, 0, time.Local),  // Tuesday
+		time.Date(2024, 1, 10, 9, 0, 0, 0, time.Local), // Wednesday
+	}
+	
+	for i, event := range recurring {
+		if !event.Time.Equal(expectedDates[i]) {
+			t.Errorf("Event %d: expected time %s, got %s", i, expectedDates[i].Format("2006-01-02 15:04"), event.Time.Format("2006-01-02 15:04"))
+		}
+		
+		// Verify all events are on weekdays
+		if !utils.IsWeekday(event.Time) {
+			t.Errorf("Event %d is not on a weekday: %s", i, event.Time.Format("Monday"))
+		}
+	}
 }

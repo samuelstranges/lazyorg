@@ -17,7 +17,7 @@ func (epv *EventPopupView) NewEventForm(g *gocui.Gui, title, name, date, time, l
 	form.AddInputField("Time", LabelWidth, FieldWidth).SetText(time).AddValidate("Invalid time (HH:MM)", utils.ValidateEventTime)
 	form.AddInputField("Location", LabelWidth, FieldWidth).SetText(location)
 	form.AddInputField("Duration (eg. 1.5)", LabelWidth, FieldWidth).SetText(duration).AddValidate("Invalid duration", utils.ValidateDuration)
-	form.AddInputField("Frequency", LabelWidth, FieldWidth).SetText(frequency).AddValidate("Invalid frequency", utils.ValidateNumber)
+	form.AddInputField("Frequency", LabelWidth, FieldWidth).SetText(frequency).AddValidate("Invalid frequency (number or 'w' for weekdays)", utils.ValidateFrequency)
 	form.AddInputField("Occurence", LabelWidth, FieldWidth).SetText(occurence).AddValidate("Invalid occurence", utils.ValidateNumber)
 	form.AddInputField("Color", LabelWidth, FieldWidth).SetText(color)
 	form.AddInputField("Description", LabelWidth, FieldWidth).SetText(description)

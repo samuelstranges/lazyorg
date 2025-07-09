@@ -128,6 +128,8 @@ go mod download                    # Download dependencies
 - **Undo/Redo System**: Full undo/redo support for event operations (add,
   delete, edit, bulk delete)
 - **Event Management**: Create, edit, delete events with recurrence support
+  - **Weekday Recurrence**: Use 'w' in frequency field for weekday-only events
+  - **Regular Recurrence**: Use numbers for every N days (e.g., 7 for weekly)
 - **Search**: Search events across all dates with `/` (supports text and date
   filtering)
 - **Yank/Paste**: Copy events with `y` and paste with `p`
@@ -157,6 +159,36 @@ go mod download                    # Download dependencies
 - Shows events for current day in chronological order
 - Detailed event information display
 - Ideal for focused daily planning
+
+### Event Creation and Recurrence
+
+**Creating Events** (Press `a` to add new event):
+
+- **Name**: Event title
+- **Date**: YYYYMMDD format (e.g., 20241225)
+- **Time**: HH:MM format in 30-minute increments (e.g., 14:30)
+- **Location**: Event location (optional)
+- **Duration**: Hours in decimal format (e.g., 1.5 for 90 minutes)
+- **Frequency**: Recurrence pattern
+  - **Numbers**: Every N days (e.g., `7` for weekly, `1` for daily)
+  - **'w' or 'W'**: Weekdays only (Monday-Friday)
+- **Occurrence**: Number of times to repeat
+- **Color**: Event color (optional, auto-generated if empty)
+- **Description**: Event details (optional)
+
+**Weekday Recurrence Examples**:
+- Event on Monday with frequency `w` and occurrence `5` creates events Mon-Fri
+- Event on Saturday with frequency `w` and occurrence `8` starts on next Monday and creates 8 weekday events
+- Event on Wednesday with frequency `w` and occurrence `3` creates events Wed-Fri of the same week
+
+**Regular Recurrence Examples**:
+- Event with frequency `7` and occurrence `4` creates 4 weekly events
+- Event with frequency `1` and occurrence `10` creates 10 daily events
+
+**Important Notes**:
+- Recurring events will stop creating new instances if an existing event is found at the same time slot (overlap prevention)
+- This applies to both weekday and regular recurrence patterns
+- The occurrence count may not be fully reached if overlaps are detected
 
 ### Database Schema
 
