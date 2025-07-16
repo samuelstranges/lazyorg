@@ -167,18 +167,22 @@ When adding a new event (`a` key):
 4. **Location** - Optional location
 5. **Duration** - In hours (0.5 = 30 minutes)
 6. **Frequency** - Repeat interval:
-   - **Numbers**: Every N days (1 = daily, 7 = weekly)
-   - **'w' or 'W'**: Weekdays only (Monday-Friday)
+    - **Numbers**: Every N days (1 = daily, 7 = weekly)
+    - **'w' or 'W'**: Weekdays only (Monday-Friday)
 7. **Occurrences** - Number of repetitions
 8. **Color** - leave blank for default
 9. **Description** - Optional details
 
 **Recurring Events Examples:**
+
 - Event on Monday with frequency `w` and occurrence `5` creates events Mon-Fri
-- Event on Saturday with frequency `w` and occurrence `8` starts on next Monday and creates 8 weekday events
+- Event on Saturday with frequency `w` and occurrence `8` starts on next Monday
+  and creates 8 weekday events
 - Event with frequency `7` and occurrence `4` creates 4 weekly events
 
-**Important:** Recurring events will stop creating new instances if an existing event is found at the same time slot (overlap prevention). The occurrence count may not be fully reached if overlaps are detected.
+**Important:** Recurring events will stop creating new instances if an existing
+event is found at the same time slot (overlap prevention). The occurrence count
+may not be fully reached if overlaps are detected.
 
 ### Search System
 
@@ -343,8 +347,9 @@ chronos -debug
 
 ### Known limitations
 
-- **Online sync** - Unlikely due to mass processing of events (think `D`).
-  Having a local database as single source of truth improves speed & flexibility
+- **Online sync** - Unlikely due to mass processing of events (think bulk
+  delete). Having a local database as single source of truth improves speed &
+  flexibility
 - **.ics imports** - due to limitations of non overlapping events of increments
   of 30 mins
 - **Shift-tab through forms** - not supported by gocui
